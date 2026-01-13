@@ -1,0 +1,68 @@
+{
+    "create_quote": {
+        "method": "post",
+        "access_type": "private",
+        "display_name": "Create Pricing Quote",
+        "interaction": "create_quote",
+        "scopes": [
+            {
+                "type": "allowed"
+            }
+        ]
+    },
+    "record_actual": {
+        "method": "post",
+        "access_type": "private",
+        "display_name": "Record Actual Vendor Price",
+        "interaction": "record_actual",
+        "scopes": [
+            {
+                "type": "allowed"
+            }
+        ]
+    },
+    "admin/update_config": {
+        "method": "patch",
+        "access_type": "private",
+        "display_name": "Update Pricing Config (Admin)",
+        "interaction": "admin/update_config",
+        "scopes": [
+            {
+                "type": "admin_only"
+            }
+        ]
+    },
+    "admin/create_surge_rule": {
+        "method": "post",
+        "access_type": "private",
+        "display_name": "Create Surge Rule (Admin)",
+        "interaction": "admin/create_surge_rule",
+        "scopes": [
+            {
+                "type": "admin_only"
+            }
+        ]
+    },
+    "admin/list_configs": {
+        "method": "get",
+        "access_type": "private",
+        "display_name": "List All Configs (Admin)",
+        "interaction": "admin/list_configs",
+        "scopes": [
+            {
+                "type": "admin_only"
+            }
+        ]
+    },
+    "admin/deactivate_surge_rule": {
+        "method": "patch",
+        "access_type": "private",
+        "display_name": "Deactivate Surge Rule (Admin)",
+        "interaction": "admin/deactivate_surge_rule",
+        "scopes": [
+            {
+                "type": "admin_only"
+            }
+        ]
+    }
+}
