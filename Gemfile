@@ -49,3 +49,5 @@ end
 gem "redis", "~> 5.4"
 
 gem "activerecord-cockroachdb-adapter", "~> 8.0"
+
+gem "dotenv-rails", "~> 3.2", groups: [:development, :test]

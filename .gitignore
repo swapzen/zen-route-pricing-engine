@@ -1,3 +1,40 @@
+# Environment variables (contains secrets!)
+.env
+.env.local
+.env.*.local
+
+# Rails credentials
 config/master.key
 config/credentials/*.key
+
+# Temporary files
 tmp/
+log/
+storage/
+
+# Database
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-*
+
+# Bootsnap cache
+tmp/cache/bootsnap/
+
+# Ruby version manager files
+.ruby-version
+.rbenv-vars
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Kamal deployment secrets
+.kamal/secrets
+config/deploy.yml.backup
