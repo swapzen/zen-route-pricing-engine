@@ -1,109 +1,74 @@
-# Environment Variables Setup Guide
+# Environment Variables Setup
 
-## Overview
-
-The Zen Route Pricing Engine uses **environment variables** instead of Rails encrypted credentials for better deployment flexibility and security.
-
----
-
-## Setup Instructions
-
-### 1. Local Development
+## Quick Start
 
 ```bash
-# Copy the example file
+# Copy template
 cp .env.example .env
 
-# Edit with your actual values
+# Edit with your values
 nano .env
 ```
 
-**Required variables:**
-- `GOOGLE_MAPS_API_KEY` - Your Google Maps API key
-- `DATABASE_URL` - Connection to shared CockroachDB
-- `REDIS_URL` - Redis connection for caching
-- `SECRET_KEY_BASE` - Generate with `rails secret`
+---
 
-### 2. Production Deployment
+## Required Variables
 
-**DO NOT commit `.env` to Git!**
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `GOOGLE_MAPS_API_KEY` | Google Maps Distance Matrix API key | `AIzaSyC...` |
+| `DATABASE_URL` | CockroachDB connection (shared with swapzen-api) | `postgresql://root@localhost:26257/swapzen_development` |
+| `SECRET_KEY_BASE` | Rails session encryption (generate with `rails secret`) | Run: `rails secret` |
 
-On your production server:
+## Optional Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `REDIS_URL` | (none) | Redis for route caching - **recommended for production** |
+| `ROUTE_PROVIDER_STRATEGY` | `google` | Route provider: `google`, `local`, or `haversine` |
+| `RAILS_ENV` | `development` | Environment: `development`, `production`, `test` |
+| `PORT` | `3000` | Server port (suggest `3001` for pricing engine) |
+| `RAILS_MAX_THREADS` | `5` | Puma thread count (affects DB pool size) |
+
+---
+
+## Setup by Environment
+
+### Local Development
 
 ```bash
-# Create .env file
-nano .env
+cp .env.example .env
+```
 
-# Paste production values
+Edit `.env`:
+```bash
+GOOGLE_MAPS_API_KEY=your_dev_api_key
+DATABASE_URL=postgresql://root@localhost:26257/swapzen_development
+REDIS_URL=redis://localhost:6379/0
+SECRET_KEY_BASE=$(rails secret)
+ROUTE_PROVIDER_STRATEGY=local  # Use Haversine fallback
+RAILS_ENV=development
+PORT=3001
+```
+
+### Production Server
+
+Create `/path/to/app/.env`:
+```bash
 GOOGLE_MAPS_API_KEY=prod_key_here
-DATABASE_URL=postgresql://user:pass@prod-db:26257/swapzen_production
+DATABASE_URL=postgresql://user:pass@prod-db:26257/swapzen_production?sslmode=require
 REDIS_URL=redis://prod-redis:6379/0
-SECRET_KEY_BASE=long_random_string_here
+SECRET_KEY_BASE=long_random_production_key_here
 ROUTE_PROVIDER_STRATEGY=google
 RAILS_ENV=production
 PORT=3001
 ```
 
-**Secure the file:**
+Secure the file:
 ```bash
 chmod 600 .env
 chown app_user:app_user .env
 ```
-
-### 3. Docker/Kamal Deployment
-
-Add to `.kamal/secrets`:
-```bash
-GOOGLE_MAPS_API_KEY=xxx
-DATABASE_URL=xxx
-REDIS_URL=xxx
-SECRET_KEY_BASE=xxx
-```
-
----
-
-## Required Environment Variables
-
-### Critical (Must Set)
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `GOOGLE_MAPS_API_KEY` | Google Maps Distance Matrix API key | `AIzaSyC...` |
-| `DATABASE_URL` | CockroachDB connection string | `postgresql://root@localhost:26257/swapzen_development` |
-| `SECRET_KEY_BASE` | Rails session encryption key | `rails secret` |
-
-### Important (Recommended)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `REDIS_URL` | (none) | Redis for route caching - **highly recommended** |
-| `ROUTE_PROVIDER_STRATEGY` | `google` | Route provider: `google`, `local`, `haversine` |
-| `RAILS_ENV` | `development` | Environment: `development`, `production`, `test` |
-| `PORT` | `3000` | Server port (suggest `3001` for pricing engine) |
-
-### Optional
-
-| Variable | Description |
-|----------|-------------|
-| `RAILS_LOG_LEVEL` | Log verbosity: `debug`, `info`, `warn`, `error` |
-| `RAILS_MAX_THREADS` | Puma thread count (affects DB pool) |
-| `SENTRY_DSN` | Error tracking |
-| `NEW_RELIC_LICENSE_KEY` | Performance monitoring |
-
----
-
-## Generating Secrets
-
-### SECRET_KEY_BASE
-```bash
-rails secret
-```
-
-### GOOGLE_MAPS_API_KEY
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable "Distance Matrix API"
-3. Create credentials → API Key
-4. Restrict to your server IPs
 
 ---
 
@@ -112,68 +77,61 @@ rails secret
 Test your configuration:
 
 ```bash
-# Check variables are loaded
-rails runner 'puts ENV["GOOGLE_MAPS_API_KEY"].present? ? "✅ API key loaded" : "❌ Missing API key"'
+# Check API key is loaded
+rails runner 'puts ENV["GOOGLE_MAPS_API_KEY"] ? "✅ API key loaded" : "❌ Missing"'
 
-# Test database connection
-rails runner 'puts PricingConfig.count; puts "✅ Database connected"'
+# Test database
+rails runner 'puts PricingConfig.count; puts "✅ Database OK"'
 
-# Test Redis connection
-rails runner 'Rails.cache.write("test", "ok"); puts Rails.cache.read("test") == "ok" ? "✅ Redis working" : "❌ Redis failed"'
-
-# Run full test
-rails runner test_pricing.rb
+# Test Redis
+rails runner 'Rails.cache.write("test", "ok"); puts Rails.cache.read("test") == "ok" ? "✅ Redis OK" : "⚠️ Using memory store"'
 ```
 
 ---
 
-## Security Best Practices
+## Getting API Keys
 
-1. **Never commit `.env`** - Already in `.gitignore` ✅
-2. **Use different keys per environment** - Dev, staging, prod should have separate keys
-3. **Rotate secrets regularly** - Especially `SECRET_KEY_BASE` and API keys
-4. **Restrict API key** - Limit Google Maps key to production IPs only
-5. **Use secret managers** - For production, consider AWS Secrets Manager or similar
+### Google Maps API Key
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Enable "Distance Matrix API"
+3. Create credentials → API Key
+4. **Restrict key:** Limit to production server IPs only
+
+### SECRET_KEY_BASE
+```bash
+rails secret
+```
 
 ---
 
 ## Troubleshooting
 
-### "Config not found" error
+**"Config not found" error:**
 ```bash
-# Check DATABASE_URL is set
-echo $DATABASE_URL
-
-# Run seeds
-rails db:seed
+rails db:seed  # Load pricing configs
 ```
 
-### "Google Maps API" error
+**Google Maps API error:**
 ```bash
-# Verify API key
-echo $GOOGLE_MAPS_API_KEY
-
-# Test with fallback
+# Use fallback temporarily
 ROUTE_PROVIDER_STRATEGY=local rails runner test_pricing.rb
 ```
 
-### Redis connection error
+**Redis connection failed:**
 ```bash
 # Check Redis is running
 redis-cli ping  # Should return "PONG"
 
-# Or use memory store temporarily
+# Or run without Redis (uses memory store)
 unset REDIS_URL
 ```
 
 ---
 
-## Migration from Rails Credentials
+## Security
 
-We moved from `config/credentials.yml.enc` to `.env` files for:
-- ✅ Easier deployment (no master.key distribution)
-- ✅ Better Docker/Kamal integration  
-- ✅ Industry-standard approach
-- ✅ No risk of committing secrets to Git
-
-Old master.key is no longer needed.
+- ✅ `.env` is already in `.gitignore`
+- ✅ Never commit `.env` to version control
+- ✅ Use different keys for dev/staging/production  
+- ✅ Rotate secrets regularly
+- ✅ Restrict Google Maps API key to production IPs
