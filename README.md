@@ -21,22 +21,24 @@ Calculates competitive delivery costs for SwapZen's marketplace, ensuring profit
 # 1. Install dependencies
 bundle install
 
-# 2. Configure database (shared with swapzen-api)
-# Edit config/database.yml if needed
+# 2. Configure environment variables
+cp .env.example .env
+nano .env  # Add your actual keys
 
-# 3. Run migrations (if not already run)
+# 3. Configure database (shared with swapzen-api)
+# Edit .env: DATABASE_URL=postgresql://root@localhost:26257/swapzen_development
+
+# 4. Run migrations (if not already run)
 rails db:migrate
 
-# 4. Seed pricing configs
+# 5. Seed pricing configs
 rails db:seed
-
-# 5. Set environment variables
-export GOOGLE_MAPS_API_KEY='your_key_here'
-export ROUTE_PROVIDER_STRATEGY='google'  # or 'local' for dev
 
 # 6. Start server
 rails server -p 3001
 ```
+
+**See [ENV_SETUP.md](ENV_SETUP.md) for detailed environment variable configuration.**
 
 ---
 
@@ -201,16 +203,28 @@ Deactivate a surge rule.
 
 ## ⚙️ Environment Variables
 
+**All secrets are managed via `.env` file (not committed to Git).**
+
+Copy `.env.example` to `.env` and fill in your values:
+
+```bash
+cp .env.example .env
+nano .env
+```
+
 ### Required for Production
 - `GOOGLE_MAPS_API_KEY` - Google Maps Distance Matrix API key
 - `DATABASE_URL` - CockroachDB connection string
 - `REDIS_URL` - Redis connection string (for caching)
+- `SECRET_KEY_BASE` - Rails session encryption key
 
 ### Optional
-- `ROUTE_PROVIDER_STRATEGY` - Provider selection
-  - `google` (default) - Use Google Maps API
-  - `local` / `haversine` - Use Haversine fallback (dev/test)
+- `ROUTE_PROVIDER_STRATEGY` - Provider selection: `google` (default), `local`, `haversine`
+- `RAILS_ENV` - Environment: `development`, `production`, `test`
+- `PORT` - Server port (default: 3000, suggest 3001)
 - `RAILS_MAX_THREADS` - Puma thread pool size (default: 5)
+
+**See [ENV_SETUP.md](ENV_SETUP.md) for complete documentation.**
 
 ---
 
