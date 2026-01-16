@@ -28,7 +28,7 @@ module RoutePricing
             response = call_google_api(pickup_lat, pickup_lng, drop_lat, drop_lng)
             parse_google_response(response)
           rescue StandardError => e
-            Rails.logger.warn("Google Maps AP failed: #{e.message}. Falling back to Haversine.")
+            Rails.logger.warn("Google Maps API failed: #{e.message}. Falling back to Haversine.")
             haversine_fallback(pickup_lat, pickup_lng, drop_lat, drop_lng)
           end
         end
@@ -46,7 +46,23 @@ module RoutePricing
           }
           uri.query = URI.encode_www_form(params)
 
-          response = Net::HTTP.get_response(uri)
+          # Configure HTTP with SSL settings
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = true
+          http.open_timeout = 10
+          http.read_timeout = 10
+          
+          # Fix SSL certificate verification issues in development
+          # TODO: Use proper CA certificates in production
+          if Rails.env.development? || Rails.env.test?
+            http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+          else
+            http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+          end
+
+          request = Net::HTTP::Get.new(uri)
+          response = http.request(request)
+          
           raise "API request failed: #{response.code}" unless response.is_a?(Net::HTTPSuccess)
 
           JSON.parse(response.body)

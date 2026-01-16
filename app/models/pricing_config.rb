@@ -3,6 +3,7 @@
 class PricingConfig < ApplicationRecord
   # Associations
   has_many :pricing_surge_rules, dependent: :destroy
+  has_many :pricing_distance_slabs, dependent: :destroy
   belongs_to :created_by, class_name: 'User', foreign_key: 'created_by_id', optional: true
 
   # Validations
@@ -17,36 +18,123 @@ class PricingConfig < ApplicationRecord
   # Scopes
   scope :active, -> { where(active: true) }
   
-  # Returns current active config for city × vehicle
-  scope :current_version, ->(city_code, vehicle_type) {
-    where(
-      city_code: city_code,
-      vehicle_type: vehicle_type,
-      active: true,
-      effective_until: nil
-    ).where('effective_from <= ?', Time.current)
-     .order(version: :desc)
-     .first
-  }
+  # Returns current active config for city × vehicle (class method, not scope)
+  # Note: city_code comparison is case-insensitive
+  def self.current_version(city_code, vehicle_type)
+    where('LOWER(city_code) = LOWER(?)', city_code)
+      .where(
+        vehicle_type: vehicle_type,
+        active: true,
+        effective_until: nil
+      )
+      .where('effective_from <= ?', Time.current)
+      .order(version: :desc)
+      .first
+  end
 
-  # Calculate dynamic surge multiplier based on current time and traffic
-  def calculate_surge_multiplier(time: Time.current, traffic_ratio: nil)
+  # ================================================================
+  # v3.0: Vehicle groupings (SINGLE SOURCE OF TRUTH)
+  # ================================================================
+  SMALL_VEHICLES = %w[two_wheeler scooter mini_3w].freeze
+  MID_TRUCKS     = %w[three_wheeler three_wheeler_ev tata_ace pickup_8ft].freeze
+  HEAVY_TRUCKS   = %w[eeco tata_407 canter_14ft].freeze
+
+  # ================================================================
+  # v3.0: Enhanced surge multiplier with time-of-day + distance awareness
+  # ================================================================
+  # Calculate dynamic surge multiplier based on time, distance, vehicle type, and traffic
+  # @param time [Time] Quote time (defaults to current time)
+  # @param distance_km [Float] Trip distance in kilometers
+  # @param vehicle_type [String] Vehicle type code
+  # @param traffic_ratio [Float] Traffic ratio (ignored for time pricing, kept for compatibility)
+  # @return [Float] Surge multiplier (1.0 = no surge)
+  def calculate_surge_multiplier(time: Time.current, distance_km: nil, vehicle_type: nil, traffic_ratio: nil)
+    # If distance_km or vehicle_type not provided, return 1.0 (neutral)
+    return 1.0 unless distance_km && vehicle_type
+    
     # Convert time to city's local timezone
     local_time = time.in_time_zone(timezone)
     
-    # Get all active surge rules
-    applicable_rules = pricing_surge_rules.active.select do |rule|
-      rule.applicable?(time: local_time, traffic_ratio: traffic_ratio)
-    end
+    # Determine time band and distance category
+    time_period = time_band(local_time.hour)
+    dist_category = distance_category(distance_km)
 
-    # If rules found, multiply their multipliers
-    if applicable_rules.any?
-      applicable_rules.inject(1.0) { |product, rule| product * rule.multiplier }
-    else
-      # Fallback to config's surge_multiplier
-      surge_multiplier
+    # Get base multiplier for this vehicle + time period
+    base_mult = base_time_multiplier(vehicle_type, time_period)
+    
+    # Apply distance-aware scaling
+    scale = distance_scaler(dist_category)
+    
+    # Calculate effective multiplier
+    effective_mult = 1.0 + (base_mult - 1.0) * scale
+    
+    # Enhanced logging for debugging (only if detailed logs enabled)
+    log_pricing_decision(vehicle_type, time_period, dist_category, base_mult, scale, effective_mult) if ENV['PRICING_DETAILED_LOGS'] == 'true'
+    
+    effective_mult
+  end
+
+  private
+
+  # ================================================================
+  # v3.0 Helper Methods
+  # ================================================================
+
+  def time_band(hour)
+    case hour
+    when 6...12  then :morning
+    when 12...18 then :afternoon
+    else              :evening  # 18-6 (includes night)
     end
   end
+
+  def distance_category(distance_km)
+    case distance_km
+    when 0...5   then :micro
+    when 5...12  then :short
+    when 12...20 then :medium
+    else              :long
+    end
+  end
+
+  def base_time_multiplier(vehicle_type, time_period)
+    if SMALL_VEHICLES.include?(vehicle_type)
+      small_vehicle_multipliers[time_period] || 1.0
+    elsif MID_TRUCKS.include?(vehicle_type)
+      mid_truck_multipliers[time_period] || 1.0
+    else # HEAVY_TRUCKS
+      heavy_truck_multipliers[time_period] || 1.0
+    end
+  end
+
+  def small_vehicle_multipliers
+    { morning: 0.98, afternoon: 1.02, evening: 1.00 }  # Near neutral for small
+  end
+
+  def mid_truck_multipliers
+    { morning: 0.98, afternoon: 1.05, evening: 1.15 }  # Reduced from 1.45
+  end
+
+  def heavy_truck_multipliers
+    { morning: 1.00, afternoon: 1.05, evening: 1.10 }  # Reduced from 1.25
+  end
+
+  def distance_scaler(category)
+    { micro: 1.5, short: 1.0, medium: 0.8, long: 0.7 }[category] || 1.0
+  end
+
+  def log_pricing_decision(vehicle_type, time_period, dist_category, base_mult, scale, effective_mult)
+    Rails.logger.info({
+      event: 'v3_time_pricing',
+      vehicle_type: vehicle_type,
+      time_period: time_period,
+      distance_band: dist_category,
+      base_multiplier: base_mult.round(3),
+      distance_scale: scale.round(3),
+      effective_multiplier: effective_mult.round(3)
+    }.to_json)
+  end
+
 
   # Create new version of this config
   def create_new_version(attrs, user)

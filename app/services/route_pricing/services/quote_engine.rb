@@ -8,7 +8,7 @@ module RoutePricing
         @route_resolver = route_resolver
       end
 
-      def create_quote(city_code:, vehicle_type:, pickup_lat:, pickup_lng:, drop_lat:, drop_lng:, item_value_paise: nil, request_id: nil)
+      def create_quote(city_code:, vehicle_type:, pickup_lat:, pickup_lng:, drop_lat:, drop_lng:, item_value_paise: nil, request_id: nil, quote_time: Time.current)
         # 1. Fetch current config
         config = PricingConfig.current_version(city_code, vehicle_type)
         return { error: 'Config not found for city/vehicle combination', code: 404 } unless config
@@ -23,14 +23,18 @@ module RoutePricing
           vehicle_type: vehicle_type
         )
 
-        # 3. Calculate price
+        # 3. Calculate price (pass coordinates for zone multiplier + quote_time for v3.0)
         calculator = PriceCalculator.new(config: config)
         pricing_result = calculator.calculate(
           distance_m: route_data[:distance_m],
-          duration_s: route_data[:duration_s],  # Pass resolver's duration
+          duration_s: route_data[:duration_s],
           duration_in_traffic_s: route_data[:duration_in_traffic_s],
+          pickup_lat: pickup_lat,
+          pickup_lng: pickup_lng,
+          drop_lat: drop_lat,
+          drop_lng: drop_lng,
           item_value_paise: item_value_paise,
-          quote_time: Time.current
+          quote_time: quote_time  # v3.0: Allow override for testing
         )
 
         # 4. Persist quote

@@ -1,0 +1,284 @@
+---
+alwaysApply: true
+---
+
+# Zen Route Pricing Engine - Project Rules & Guardrails (v4.5 Zone-Aware Architecture)
+
+## 🧠 High-Level Behavior
+
+1. **Act as a senior logistics architect**
+   - Always think like someone who has built/operated systems like Porter / Uber / Rapido.
+   - Prioritize: unit economics, driver earnings, customer fairness, and predictability.
+   - Before big changes, explain the approach in comments or a short design note (what/why) before touching code.
+
+2. **Scope of work**
+   - Focus changes around the pricing engine only:
+     - `RoutePricing::Services::QuoteEngine`
+     - `RoutePricing::Services::PriceCalculator`
+     - `RoutePricing::Services::ZonePricingResolver`
+     - Pricing-related models (PricingConfig, Zone, ZoneVehiclePricing, ZonePairVehiclePricing, ZoneVehicleTimePricing, etc.)
+     - Seeds, test scripts (test_time_pricing.rb, test_all_vehicles.rb) and related configs.
+   - **Do not modify:**
+     - Escrow/payment settlement logic
+     - Swap engine, wallet, or SwapCoins logic
+     - Authentication, user models, or non-pricing domains
+   - Unless the user explicitly asks.
+
+## 🚫 Safety & DB / Git Rules
+
+3. **Never commit or push code**
+   - Do not run: `git commit`, `git push`, `git rebase`, `git merge`
+   - You may suggest git commands in comments, but do not execute them.
+
+4. **Never drop or reset databases**
+   - Do not run or generate:
+     - `rails db:drop`, `rails db:reset`, `rails db:setup` (if it implies drop)
+     - `bundle exec rake db:drop`, or any variant that destroys data
+   - Migrations must not:
+     - `drop_table`, `remove_column` on important tables
+     - Perform destructive bulk operations on data without explicit instruction
+
+5. **Migrations must be CockroachDB-safe**
+   - Prefer bigint or uuid IDs and avoid DB-specific features not supported by Cockroach.
+   - Avoid raw SQL that is Postgres-only if Cockroach isn't guaranteed to support it.
+   - Always write reversible migrations.
+   - If partitioning is mentioned, keep it Cockroach-friendly (e.g., `ALTER TABLE zones PARTITION BY LIST (city_code)` - only as schema notes, not auto-executed unless asked).
+
+## 🎯 Pricing Objectives & Constraints
+
+6. **Porter alignment constraints (hard rule)**
+   - For final SwapZen price vs Porter price:
+     - Negative variance (cheaper than Porter): allowed up to -3% only (SwapZen >= 97% of Porter)
+     - Positive variance (more expensive than Porter): allowed up to +15% (SwapZen <= 115% of Porter)
+   - When tuning slabs, zone pricing, or time-based pricing, aim to keep most scenarios inside [-3%, +10%], and never intentionally set anything beyond +15%.
+
+7. **Porter benchmarks are the source of truth**
+   - All calibration logic should be driven by the existing Porter benchmark data (10 routes × time bands × vehicles).
+   - For any pricing change, prefer adjusting base rates/zone rates instead of random multipliers that break the above variance constraints.
+
+## 🗺️ Zone-Aware Architecture (v4.5 Spec)
+
+8. **Schema to respect**
+
+   **`zones` table:**
+   - Has: `zone_code`, `zone_type`, `city_code`, and `lat/lng` bounds (rectangle or polygon).
+   - Indexed by `[:city_code, :zone_code]` (Unique) for efficient city-scoped lookups.
+   - `city_code` is the main axis for sharding/partitioning in CockroachDB.
+
+   **`zone_vehicle_pricings` table:**
+   - Per `(city_code, zone_id, vehicle_type)` override.
+   - Stores: `base_fare_paise`, `min_fare_paise`, `base_distance_m`, `per_km_rate_paise` and possibly time-band columns or a linked `zone_vehicle_time_pricing`.
+   - Indexed by `[:city_code, :zone_id, :vehicle_type]` (Unique) for O(1) lookup during price calculation.
+
+   **`zone_pair_vehicle_pricings` table:**
+   - Corridor-specific overrides for `(from_zone_id -> to_zone_id, vehicle_type)` in a city.
+   - Example: Gachibowli -> Ameerpet corridor pricing.
+   - Indexed by `[:city_code, :from_zone_id, :to_zone_id, :vehicle_type]` (Unique) - critical for route resolution.
+
+9. **ZonePricingResolver is the single source of truth for base pricing**
+
+   When determining base rates, **ZonePricingResolver** must follow this exact priority order:
+
+   1. **Corridor Override**
+      - Lookup `zone_pair_vehicle_pricings` for `(city_code, from_zone_id, to_zone_id, vehicle_type, active: true)`.
+      - Highest priority: specific corridor pricing (e.g., Tech Corridor → Financial District).
+
+   2. **Intra-Zone Override**
+      - If `pickup_zone_id == drop_zone_id`, use `zone_vehicle_pricings` for that `(city_code, zone_id, vehicle_type)`.
+      - Handles same-zone deliveries.
+
+   3. **Origin-Zone Override**
+      - If different zones and no pair override, use `zone_vehicle_pricings` for `pickup_zone` if present.
+      - Uses origin zone rates as base.
+
+   4. **(Future) Zone-type Structural Multipliers**
+      - If no explicit `zone_vehicle_pricing`, may apply `zone_type` behavior (e.g., `tech_corridor` +10% for trucks).
+      - Only if clearly documented and not double-counting time.
+
+   5. **City Default**
+      - Fallback to `pricing_configs` + `pricing_distance_slabs` for `(city_code, vehicle_type)`.
+      - Lowest priority: city-wide defaults.
+
+   The resolver must return a struct-like object:
+   ```ruby
+   OpenStruct.new(
+     base_fare_paise: ...,
+     min_fare_paise: ...,
+     base_distance_m: ...,
+     per_km_rate_paise: ...,
+     pricing_mode: :linear,   # or :slab
+     source: :corridor_override # or :zone_override, :zone_type, :city_default
+   )
+   ```
+
+10. **Pricing modes to respect**
+
+    **`:linear` mode** (default for zone/corridor overrides):
+    - Formula: `price = base_fare + (per_km_rate * distance_km)`, then clamp by `min_fare`.
+    - Used when zone-specific or corridor-specific rates are defined.
+
+    **`:slab` mode** (default for city-level):
+    - Use existing `pricing_distance_slabs` logic (v2.9/v3.0 behavior).
+    - Used when falling back to city defaults.
+
+    **Critical**: Do not silently mix modes for the same route without clearly documenting why.
+
+11. **Time bands are first-class citizens**
+    - Use clear time bands in IST:
+      - `morning`: 06:00–12:00
+      - `afternoon`: 12:00–18:00
+      - `evening/night`: 18:00–06:00
+    - (If night is added separately later, follow the project's convention strictly.)
+    - Time influence should normally be baked into:
+      - `ZoneVehicleTimePricing`, or
+      - Time-specific columns in `zone_vehicle_pricings`.
+    - Do not reintroduce heavy global time multipliers on top of time-aware zone rates unless explicitly asked.
+    - If time-aware zone pricing is active, keep global time multipliers in `PricingConfig` at 1.0 (or minimal) to avoid double-counting.
+
+12. **Per-zone, per-vehicle, per-time pricing**
+    - Assume:
+      - Each zone can have different `base_fare`, `min_fare`, `base_distance`, and `per_km_rate`.
+      - Each vehicle type can have different rates within the same zone.
+      - Each time band can further modify these zone-vehicle rates.
+    - When setting/tuning rates:
+      - Keep tech/prime zones competitive but profitable.
+      - Allow residential/outer zones to be slightly cheaper to encourage adoption.
+
+## 📈 Dynamic Layers & Multipliers
+
+13. **Dynamic layers come after zone-aware base price**
+
+    Final price pipeline (in order):
+    1. Compute base price from `ZonePricingResolver` using:
+       - `city_code`
+       - `vehicle_type`
+       - `pickup_lat/lng`, `drop_lat/lng`
+       - `distance_m`
+       - `time_band` (for time-aware zone pricing)
+    2. Apply traffic multiplier (from Google `duration_in_traffic_s`), **once**.
+    3. Apply zone demand multiplier (hotspot/demand-based), if configured.
+
+    **Important**: If using time-aware zone base prices, keep global time-of-day multipliers neutral (1.0) or very minimal to avoid double-counting time.
+
+14. **No uncontrolled multiplier stacking**
+    - Avoid situations where the same factor (e.g., time-of-day) is applied both:
+      - in base pricing (via zone-time pricing) and
+      - again via a global multiplier.
+    - Traffic multiplier: Applied once, cap at 1.2x (20% max), use exponential curve (exponent 0.8).
+    - Zone demand multiplier: Uses config/metadata, not magic numbers.
+
+15. **Calibration mode behavior**
+    - When `calibration_mode` or `ENV['PRICING_MODE'] == 'calibration'`:
+      - Force all dynamic multipliers (traffic, time, zone demand) to `1.0`.
+      - Only zone/city structural base differences should affect price.
+      - This isolates zone vs city pricing differences for Porter comparison.
+
+## 🧪 Testing & Calibration Rules
+
+16. **Tests are mandatory when changing pricing**
+    - After any pricing-related change, always run:
+      - `ROUTE_PROVIDER_STRATEGY=google bundle exec rails runner test_time_pricing.rb`
+    - Use test output to guide further tuning:
+      - Prioritize bringing outliers back inside [-3%, +15%] vs Porter.
+      - Do targeted fixes (zone-pair, zone-specific, specific vehicle/time) instead of global "random" adjustments.
+
+17. **Do not silently weaken tests**
+    - Don't relax thresholds just to "make them green" unless user explicitly asks.
+    - If a test must be loosened, add a clear comment explaining:
+      - Why the threshold changed
+      - What trade-off it introduces to unit economics
+
+## 📊 Logging & Unit Economics
+
+18. **Mandatory logging for each quote**
+    - For every quote, log at minimum:
+      - `city_code`, `vehicle_type`
+      - `pickup_zone_code`, `drop_zone_code`
+      - `pricing_source` (`:corridor_override`, `:zone_override`, `:zone_type`, `:city_default`)
+      - `time_band` (`morning`, `afternoon`, `evening/night`)
+      - `final_multipliers` (traffic, zone demand, and time if still used)
+      - `pricing_mode` (`:linear` or `:slab`)
+    - Use `Rails.logger.info` for pricing decisions and zone resolution details.
+
+19. **Cost floor hook (unit economics)**
+    - After `price_after_margin` is computed, keep a clear hook (method or comment area) where:
+      - `CostModel.cost_floor(...)` can be applied to ensure:
+      - Price never goes below cost (fuel + driver + maintenance + platform overhead).
+    - Do not implement heavy cost logic unless asked, but keep structure ready for future integration.
+
+## 💻 Code Quality & Style
+
+20. **Respect existing public interfaces**
+    - Don't change method signatures for:
+      - `QuoteEngine#create_quote`
+      - `ZonePricingResolver#resolve`
+      - Any public service object API
+    - Unless absolutely necessary and clearly explained.
+    - If you must add parameters (like `quote_time` or `time_band`), make them optional with safe defaults.
+
+21. **Explain non-trivial pricing logic**
+    - For any new or non-obvious logic, add short comments describing:
+      - "What business rule is being encoded"
+      - "Which Porter behavior this is matching (e.g., micro-route night premium)"
+      - "Corridor override for tech_corridor → fin_district office commute"
+    - Examples:
+      ```ruby
+      # Matches Porter micro-route behavior: trucks get stronger evening premium
+      # Corridor override for tech_corridor → fin_district office commute
+      ```
+
+22. **No secrets or hard-coded credentials**
+    - Do not add or modify API keys, secrets, or credentials.
+    - Always assume environment variables / Rails credentials are used.
+
+## 🔧 Technical Standards
+
+23. **Language & Version**
+    - Always use Ruby **3.3.6**. Ensure `.ruby-version` = `3.3.6` and Gemfile has `ruby "~> 3.3.6"`.
+    - Rails **8.0+** API-only application.
+    - Use CockroachDB adapter (`activerecord-cockroachdb-adapter`).
+
+24. **Code Quality**
+    - **RuboCop**: Use `rubocop-rails-omakase` style. Run `bin/rubocop` before committing.
+    - **Frozen String Literals**: Always include `# frozen_string_literal: true` at the top of Ruby files.
+    - **Service Objects**: Keep services focused, testable, and stateless where possible.
+    - **Error Handling**: Return structured error responses: `{ error: { code, message, details } }`.
+
+25. **Architecture**
+    - **Microservice**: This is a standalone pricing microservice. Keep it focused on route pricing calculations only.
+    - **Service-Oriented**: Follow the existing pattern: `app/services/route_pricing/services/` for core logic.
+    - **API-Only**: No views, no ActionView. JSON responses only.
+    - **Shared Database**: Database is shared with `swapzen-api`. Be careful with migrations and schema changes.
+
+26. **Pricing Algorithm Rules**
+    - **11-Step Pricing Flow**: Follow the documented algorithm (base fare → distance → surge → buffers → margin → rounding).
+    - **Zone-Based Pricing**: Use `ZonePricingResolver` for time-aware, zone-specific pricing (v4.5 structure).
+    - **Fallback Strategy**: 
+      - Primary: Google Maps Distance Matrix API (traffic-aware)
+      - Fallback: Haversine formula × 1.4 tortuosity factor
+      - Dev Mode: Local calculation (no API calls)
+    - **Caching**: Route data cached for 6 hours in Redis. Use `CoordinateNormalizer` for cache keys.
+    - **Margin Guardrails**: Minimum 5% margin required. Always ensure profitability.
+    - **Rounding**: Round up to nearest ₹10 (1000 paise).
+
+27. **Future Multi-Zone Path Considerations**
+    - `RouteZoneSegmenter` interface exists for future implementation.
+    - Future: Decode Google Polyline, use PostGIS/CockroachDB `ST_Intersection` to split route into weighted segments.
+    - Future: Sum cost as `Σ(seg.distance * seg.rate)` per zone segment.
+    - Do not implement this unless explicitly asked, but keep architecture ready.
+
+## 📚 Documentation
+
+28. **Keep documentation updated**
+    - Update `README.md` when adding new endpoints or features.
+    - Document pricing algorithm changes in code comments.
+    - Keep `docs/openapi.json` updated for API contract.
+    - Reference `zone_pricing_design.md` (v4.5) for architecture decisions.
+
+## 🚀 Commit Policy
+
+29. **Pre-commit checks**
+    - Run `bin/rubocop` before committing.
+    - Run tests before committing: `ROUTE_PROVIDER_STRATEGY=google bundle exec rails runner test_time_pricing.rb`
+    - Use Conventional Commits format.
+    - Include test plan in PR descriptions for pricing algorithm changes.

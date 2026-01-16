@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_14_081833) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
   create_schema "crdb_internal"
 
   create_table "active_storage_attachments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -397,6 +397,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_081833) do
     t.unique_constraint ["city_code", "vehicle_type", "version"], name: "idx_on_city_code_vehicle_type_version_008f27eb85"
   end
 
+  create_table "pricing_distance_slabs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "pricing_config_id", null: false
+    t.bigint "min_distance_m", default: 0, null: false
+    t.bigint "max_distance_m"
+    t.bigint "per_km_rate_paise", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pricing_config_id"], name: "index_pricing_distance_slabs_on_pricing_config_id"
+    t.unique_constraint ["pricing_config_id", "min_distance_m"], name: "idx_slabs_config_min_distance"
+  end
+
   create_table "pricing_quotes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "request_id"
     t.string "city_code", null: false
@@ -438,6 +449,28 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_081833) do
     t.datetime "updated_at", null: false
     t.index ["pricing_config_id", "active", "priority"], name: "idx_pricing_surge_rules_active"
     t.index ["rule_type"], name: "index_pricing_surge_rules_on_rule_type"
+  end
+
+  create_table "pricing_zone_multipliers", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "zone_code", null: false
+    t.string "zone_name"
+    t.string "city_code", default: "hyd"
+    t.decimal "lat_min", precision: 10, scale: 6
+    t.decimal "lat_max", precision: 10, scale: 6
+    t.decimal "lng_min", precision: 10, scale: 6
+    t.decimal "lng_max", precision: 10, scale: 6
+    t.decimal "multiplier", precision: 4, scale: 2, default: "1.0"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.decimal "small_vehicle_mult", precision: 4, scale: 2, default: "1.0", comment: "Multiplier for 2W/Scooter/Mini3W"
+    t.decimal "mid_truck_mult", precision: 4, scale: 2, default: "1.0", comment: "Multiplier for 3W/TataAce/Pickup8ft"
+    t.decimal "heavy_truck_mult", precision: 4, scale: 2, default: "1.0", comment: "Multiplier for Eeco/Tata407/Canter"
+    t.string "zone_type", comment: "Business zone classification"
+    t.jsonb "metadata", default: {}, comment: "Extensible metadata for zone-specific features"
+    t.index ["lat_min", "lat_max", "lng_min", "lng_max"], name: "idx_zone_coords"
+    t.index ["zone_type"], name: "index_pricing_zone_multipliers_on_zone_type"
+    t.unique_constraint ["city_code", "zone_code"], name: "index_pricing_zone_multipliers_on_city_code_and_zone_code"
   end
 
   create_table "profile_settings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -681,6 +714,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_081833) do
     t.index ["zone_id"], name: "index_zone_delivery_configs_on_zone_id"
   end
 
+  create_table "zone_distance_slabs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "city_code", null: false
+    t.bigint "zone_id", null: false
+    t.string "vehicle_type", null: false
+    t.bigint "min_distance_m", default: 0, null: false
+    t.bigint "max_distance_m"
+    t.bigint "per_km_rate_paise", null: false
+    t.bigint "flat_fare_paise"
+    t.bigint "priority", default: 10
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city_code", "active"], name: "index_zone_distance_slabs_on_city_code_and_active"
+    t.index ["zone_id", "vehicle_type", "active"], name: "idx_on_zone_id_vehicle_type_active_a11cdf01f8"
+    t.index ["zone_id"], name: "index_zone_distance_slabs_on_zone_id"
+    t.unique_constraint ["city_code", "zone_id", "vehicle_type", "min_distance_m"], name: "idx_zone_slabs_unique"
+  end
+
   create_table "zone_listing_rules", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
     t.bigint "zone_id", null: false
     t.bigint "max_items_per_user"
@@ -705,6 +756,25 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_081833) do
     t.index ["zone_id"], name: "index_zone_locations_on_zone_id"
   end
 
+  create_table "zone_pair_vehicle_pricings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "city_code", null: false
+    t.bigint "from_zone_id", null: false
+    t.bigint "to_zone_id", null: false
+    t.string "vehicle_type", null: false
+    t.bigint "base_fare_paise"
+    t.bigint "min_fare_paise"
+    t.bigint "per_km_rate_paise"
+    t.string "corridor_type"
+    t.boolean "directional", default: true
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "time_band"
+    t.index ["from_zone_id"], name: "index_zone_pair_vehicle_pricings_on_from_zone_id"
+    t.index ["to_zone_id"], name: "index_zone_pair_vehicle_pricings_on_to_zone_id"
+    t.unique_constraint ["city_code", "from_zone_id", "to_zone_id", "vehicle_type", "time_band"], name: "idx_zpvp_routing_with_time_band"
+  end
+
   create_table "zone_policies", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
     t.bigint "zone_id", null: false
     t.string "feature"
@@ -717,13 +787,37 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_081833) do
     t.index ["zone_id"], name: "index_zone_policies_on_zone_id"
   end
 
-  create_table "zones", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
-    t.string "name"
-    t.string "city"
-    t.boolean "status"
+  create_table "zone_vehicle_pricings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "zone_id", null: false
+    t.string "city_code", null: false
+    t.string "vehicle_type", null: false
+    t.bigint "base_fare_paise", null: false
+    t.bigint "min_fare_paise", null: false
+    t.bigint "base_distance_m", null: false
+    t.bigint "per_km_rate_paise", null: false
+    t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["zone_id"], name: "index_zone_vehicle_pricings_on_zone_id"
+    t.unique_constraint ["city_code", "zone_id", "vehicle_type"], name: "idx_zvp_lookup"
   end
+
+  create_table "zone_vehicle_time_pricings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "zone_vehicle_pricing_id", null: false
+    t.string "time_band", null: false
+    t.bigint "base_fare_paise", null: false
+    t.bigint "min_fare_paise", null: false
+    t.bigint "per_km_rate_paise", null: false
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["zone_vehicle_pricing_id"], name: "index_zone_vehicle_time_pricings_on_zone_vehicle_pricing_id"
+    t.unique_constraint ["zone_vehicle_pricing_id", "time_band"], name: "idx_zvtp_pricing_time"
+  end
+
+# Could not dump table "zones" because of following StandardError
+#   Unknown type 'geography' for column 'boundary'
+
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
@@ -746,6 +840,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_081833) do
   add_foreign_key "preferred_exchange_categories", "categories"
   add_foreign_key "preferred_exchange_categories", "listings", on_delete: :cascade
   add_foreign_key "pricing_actuals", "pricing_quotes"
+  add_foreign_key "pricing_distance_slabs", "pricing_configs"
   add_foreign_key "pricing_surge_rules", "pricing_configs"
   add_foreign_key "profile_settings", "users"
   add_foreign_key "referral_rewards", "users"
@@ -757,7 +852,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_081833) do
   add_foreign_key "zone_category_restrictions", "zone_listing_rules"
   add_foreign_key "zone_delivery_configs", "delivery_partners"
   add_foreign_key "zone_delivery_configs", "zones"
+  add_foreign_key "zone_distance_slabs", "zones"
   add_foreign_key "zone_listing_rules", "zones"
   add_foreign_key "zone_locations", "zones"
+  add_foreign_key "zone_pair_vehicle_pricings", "zones", column: "from_zone_id"
+  add_foreign_key "zone_pair_vehicle_pricings", "zones", column: "to_zone_id"
   add_foreign_key "zone_policies", "zones"
+  add_foreign_key "zone_vehicle_pricings", "zones"
+  add_foreign_key "zone_vehicle_time_pricings", "zone_vehicle_pricings"
 end
