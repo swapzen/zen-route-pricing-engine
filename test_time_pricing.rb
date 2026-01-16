@@ -282,10 +282,10 @@ puts "Total comparisons: #{total_count}"
 puts "✅ Passed (within -3% to +15%): #{pass_count} (#{(pass_count.to_f / total_count * 100).round(1)}%)"
 puts "❌ Needs tuning (outside -3% to +15%): #{fail_count} (#{(fail_count.to_f / total_count * 100).round(1)}%)"
 puts "\n"
-if pass_count.to_f / total_count >= 0.90
-  puts "🎯 SUCCESS: #{(pass_count.to_f / total_count * 100).round(1)}% within -3% to +15% (goal: 90%+ for unit economics)"
+if pass_count.to_f / total_count >= 1.0
+  puts "🎯 SUCCESS: #{(pass_count.to_f / total_count * 100).round(1)}% within -3% to +15% (goal: 100% - MANDATORY)"
 else
-  puts "⚠️  NEEDS WORK: Only #{(pass_count.to_f / total_count * 100).round(1)}% within -3% to +15% (goal: 90%+ for unit economics)"
+  puts "⚠️  NEEDS WORK: Only #{(pass_count.to_f / total_count * 100).round(1)}% within -3% to +15% (goal: 100% - MANDATORY)"
   puts "Consider tuning multipliers or scaling factors"
 end
 puts "="*90

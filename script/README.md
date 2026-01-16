@@ -23,7 +23,7 @@ bundle exec rails runner script/test_pricing_engine.rb --quick
 - **10 routes** × **3 time bands** × **7 vehicle types** = **210 scenarios**
 - Compares SwapZen prices vs Porter benchmarks
 - Variance threshold: **-3% to +15%** (unit economics constraint)
-- Target: **90%+ pass rate**
+- Target: **100% pass rate (MANDATORY)**
 
 #### Output:
 - ✅ Pass: Within -3% to +15% variance
