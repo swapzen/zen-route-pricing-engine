@@ -1,0 +1,51 @@
+# =============================================================================
+# Zone Pricing: fin_district (Financial District Tech Core)
+# =============================================================================
+# Routes: 1, 2 (intra-zone), Route 10 drop zone
+# Porter Benchmark: Route 1 (7.3km), Route 2 (6.8km)
+# =============================================================================
+
+zone_code: fin_district
+zone_type: tech_corridor
+
+# Porter benchmark targets for reference
+_benchmarks:
+  route_1:
+    description: "Gowlidoddi → Storable (7.3km Short)"
+    morning: { two_wheeler: 100, scooter: 136, mini_3w: 205, three_wheeler: 454, tata_ace: 496, pickup_8ft: 594, canter_14ft: 1848 }
+    afternoon: { two_wheeler: 105, scooter: 140, mini_3w: 267, three_wheeler: 468, tata_ace: 512, pickup_8ft: 646, canter_14ft: 1826 }
+    evening: { two_wheeler: 100, scooter: 136, mini_3w: 205, three_wheeler: 654, tata_ace: 696, pickup_8ft: 834, canter_14ft: 2148 }
+  route_2:
+    description: "Gowlidoddi → DispatchTrack (6.8km Short)"
+    morning: { two_wheeler: 111, scooter: 148, mini_3w: 216, three_wheeler: 482, tata_ace: 524, pickup_8ft: 619, canter_14ft: 1899 }
+    afternoon: { two_wheeler: 121, scooter: 158, mini_3w: 287, three_wheeler: 516, tata_ace: 560, pickup_8ft: 692, canter_14ft: 1906 }
+    evening: { two_wheeler: 111, scooter: 148, mini_3w: 216, three_wheeler: 682, tata_ace: 724, pickup_8ft: 859, canter_14ft: 2199 }
+
+# Time-band pricing (base in paise, rate in paise/km)
+pricing:
+  morning:
+    two_wheeler:   { base: 5000, rate: 2000 }
+    scooter:       { base: 7000, rate: 2600 }
+    mini_3w:       { base: 10000, rate: 3500 }
+    three_wheeler: { base: 25000, rate: 8000 }
+    tata_ace:      { base: 27000, rate: 8700 }
+    pickup_8ft:    { base: 28000, rate: 10000 }
+    canter_14ft:   { base: 94000, rate: 26000 }
+
+  afternoon:
+    two_wheeler:   { base: 4800, rate: 2350 }
+    scooter:       { base: 6800, rate: 2950 }
+    mini_3w:       { base: 12000, rate: 4600 }
+    three_wheeler: { base: 25000, rate: 8100 }
+    tata_ace:      { base: 27000, rate: 8800 }
+    pickup_8ft:    { base: 32000, rate: 11000 }
+    canter_14ft:   { base: 97000, rate: 25500 }
+
+  evening:
+    two_wheeler:   { base: 4300, rate: 2150 }
+    scooter:       { base: 6200, rate: 2700 }
+    mini_3w:       { base: 8500, rate: 3500 }
+    three_wheeler: { base: 37000, rate: 9200 }
+    tata_ace:      { base: 40000, rate: 9700 }
+    pickup_8ft:    { base: 50000, rate: 10500 }
+    canter_14ft:   { base: 115000, rate: 28000 }

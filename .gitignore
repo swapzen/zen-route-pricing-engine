@@ -38,3 +38,4 @@ Thumbs.db
 # Kamal deployment secrets
 .kamal/secrets
 config/deploy.yml.backup
+cockroach-data/

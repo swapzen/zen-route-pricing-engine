@@ -1,0 +1,44 @@
+# =============================================================================
+# Zone Pricing: ayyappa_society (Ayyappa Society Premium Residential)
+# =============================================================================
+# Routes: Route 10 origin (ayyappa_society → fin_district corridor)
+# Zone Type: Business CBD (premium pricing)
+# =============================================================================
+
+zone_code: ayyappa_society
+zone_type: business_cbd
+
+_benchmarks:
+  route_10:
+    description: "KVR Mens PG → PR Green View (8.1km Short)"
+    morning: { two_wheeler: 140, scooter: 179, mini_3w: 245, three_wheeler: 569, tata_ace: 611, pickup_8ft: 699, canter_14ft: 2042 }
+    afternoon: { two_wheeler: 152, scooter: 191, mini_3w: 321, three_wheeler: 601, tata_ace: 645, pickup_8ft: 773, canter_14ft: 2051 }
+    evening: { two_wheeler: 140, scooter: 179, mini_3w: 245, three_wheeler: 769, tata_ace: 811, pickup_8ft: 939, canter_14ft: 2342 }
+
+pricing:
+  morning:
+    two_wheeler:   { base: 4700, rate: 700 }
+    scooter:       { base: 5800, rate: 850 }
+    mini_3w:       { base: 10300, rate: 1035 }
+    three_wheeler: { base: 16400, rate: 3180 }
+    tata_ace:      { base: 17100, rate: 3150 }
+    pickup_8ft:    { base: 19100, rate: 3720 }
+    canter_14ft:   { base: 65000, rate: 10500 }
+
+  afternoon:
+    two_wheeler:   { base: 4800, rate: 710 }
+    scooter:       { base: 5700, rate: 810 }
+    mini_3w:       { base: 14800, rate: 2000 }
+    three_wheeler: { base: 16700, rate: 3240 }
+    tata_ace:      { base: 16200, rate: 2990 }
+    pickup_8ft:    { base: 19200, rate: 3735 }
+    canter_14ft:   { base: 65000, rate: 10500 }
+
+  evening:
+    two_wheeler:   { base: 4400, rate: 650 }
+    scooter:       { base: 5200, rate: 760 }
+    mini_3w:       { base: 9700, rate: 975 }
+    three_wheeler: { base: 21400, rate: 4150 }
+    tata_ace:      { base: 23000, rate: 4400 }
+    pickup_8ft:    { base: 28000, rate: 5200 }
+    canter_14ft:   { base: 82000, rate: 12700 }

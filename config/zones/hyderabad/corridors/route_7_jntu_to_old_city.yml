@@ -1,0 +1,46 @@
+# =============================================================================
+# Corridor: jntu_kukatpally → old_city (Route 7)
+# =============================================================================
+# Distance: ~24.6km Long (chargeable ~23.6km)
+# Route: JNTU → Charminar
+# =============================================================================
+
+corridor_id: route_7_jntu_to_old_city
+from_zone: jntu_kukatpally
+to_zone: old_city
+directional: true
+
+_benchmarks:
+  route_7:
+    description: "JNTU → Charminar (24.6km Long)"
+    morning: { two_wheeler: 219, scooter: 274, mini_3w: 347, three_wheeler: 786, tata_ace: 848, pickup_8ft: 916, canter_14ft: 2456 }
+    afternoon: { two_wheeler: 229, scooter: 284, mini_3w: 365, three_wheeler: 825, tata_ace: 891, pickup_8ft: 1007, canter_14ft: 2456 }
+    evening: { two_wheeler: 219, scooter: 274, mini_3w: 347, three_wheeler: 986, tata_ace: 1048, pickup_8ft: 1156, canter_14ft: 2756 }
+
+pricing:
+  morning:
+    two_wheeler:   { base: 4000, rate: 750 }
+    scooter:       { base: 5300, rate: 950 }
+    mini_3w:       { base: 7400, rate: 1200 }
+    three_wheeler: { base: 20100, rate: 2600 }
+    tata_ace:      { base: 21400, rate: 2800 }
+    pickup_8ft:    { base: 24700, rate: 3000 }
+    canter_14ft:   { base: 83000, rate: 7000 }
+
+  afternoon:
+    two_wheeler:   { base: 4300, rate: 800 }
+    scooter:       { base: 5500, rate: 1000 }
+    mini_3w:       { base: 7650, rate: 1275 }
+    three_wheeler: { base: 20800, rate: 2780 }
+    tata_ace:      { base: 22300, rate: 3000 }
+    pickup_8ft:    { base: 26300, rate: 3330 }
+    canter_14ft:   { base: 83000, rate: 7000 }
+
+  evening:
+    two_wheeler:   { base: 4000, rate: 750 }
+    scooter:       { base: 5300, rate: 950 }
+    mini_3w:       { base: 7400, rate: 1200 }
+    three_wheeler: { base: 26700, rate: 3225 }
+    tata_ace:      { base: 28000, rate: 3430 }
+    pickup_8ft:    { base: 32600, rate: 3700 }
+    canter_14ft:   { base: 87000, rate: 7100 }

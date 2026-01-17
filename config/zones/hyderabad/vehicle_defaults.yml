@@ -1,0 +1,181 @@
+# =============================================================================
+# VEHICLE DEFAULTS - Global baseline rates for Hyderabad
+# =============================================================================
+# These are fallback rates when zone-specific pricing is not defined.
+# Based on Porter benchmark calibration (v3.1)
+# =============================================================================
+
+city_code: hyd
+version: "1.0"
+base_distance_m: 1000
+
+# Global vehicle configurations
+vehicles:
+  two_wheeler:
+    display_name: "2 Wheeler"
+    vendor_code: "2W"
+    capacity_kg: 20
+    base_fare_paise: 4500
+    slabs:
+      - [0, 3000, 350]
+      - [3000, 10000, 860]
+      - [10000, 25000, 1150]
+      - [25000, null, 750]
+
+  scooter:
+    display_name: "Scooter"
+    vendor_code: "SCOOTER"
+    capacity_kg: 20
+    base_fare_paise: 6000
+    slabs:
+      - [0, 3000, 450]
+      - [3000, 10000, 1100]
+      - [10000, 25000, 1400]
+      - [25000, null, 900]
+
+  mini_3w:
+    display_name: "Mini 3W"
+    vendor_code: "MINI_3W"
+    capacity_kg: 500
+    base_fare_paise: 10000
+    slabs:
+      - [0, 3000, 900]
+      - [3000, 10000, 1265]
+      - [10000, 25000, 1000]
+      - [25000, null, 750]
+
+  three_wheeler:
+    display_name: "3 Wheeler"
+    vendor_code: "3W"
+    capacity_kg: 500
+    base_fare_paise: 20000
+    slabs:
+      - [0, 3000, 2400]
+      - [3000, 10000, 3000]
+      - [10000, 25000, 2970]
+      - [25000, null, 1900]
+
+  tata_ace:
+    display_name: "Tata Ace"
+    vendor_code: "TATA_ACE"
+    capacity_kg: 750
+    base_fare_paise: 25000
+    slabs:
+      - [0, 3000, 2600]
+      - [3000, 10000, 3200]
+      - [10000, 25000, 3080]
+      - [25000, null, 2000]
+
+  pickup_8ft:
+    display_name: "Pickup 8ft"
+    vendor_code: "PICKUP_8FT"
+    capacity_kg: 1250
+    base_fare_paise: 30000
+    slabs:
+      - [0, 3000, 3000]
+      - [3000, 10000, 3500]
+      - [10000, 25000, 3300]
+      - [25000, null, 2150]
+
+  canter_14ft:
+    display_name: "Canter 14ft"
+    vendor_code: "CANTER_14FT"
+    capacity_kg: 3500
+    base_fare_paise: 145000
+    slabs:
+      - [0, 3000, 5000]
+      - [3000, 10000, 4600]
+      - [10000, 25000, 5200]
+      - [25000, null, 3500]
+
+# =============================================================================
+# GLOBAL TIME-BAND RATES (Fallback for zones without specific rates)
+# =============================================================================
+global_time_rates:
+  morning:
+    two_wheeler:   { base: 4000, rate: 800 }
+    scooter:       { base: 7700, rate: 900 }
+    mini_3w:       { base: 14600, rate: 900 }
+    three_wheeler: { base: 31800, rate: 2100 }
+    tata_ace:      { base: 35500, rate: 2200 }
+    pickup_8ft:    { base: 47300, rate: 2000 }
+    canter_14ft:   { base: 163400, rate: 3900 }
+
+  afternoon:
+    two_wheeler:   { base: 6700, rate: 800 }
+    scooter:       { base: 8600, rate: 1000 }
+    mini_3w:       { base: 21400, rate: 800 }
+    three_wheeler: { base: 34200, rate: 2300 }
+    tata_ace:      { base: 38600, rate: 2400 }
+    pickup_8ft:    { base: 52700, rate: 2300 }
+    canter_14ft:   { base: 164400, rate: 4100 }
+
+  evening:
+    two_wheeler:   { base: 4700, rate: 800 }
+    scooter:       { base: 7400, rate: 1000 }
+    mini_3w:       { base: 14100, rate: 1000 }
+    three_wheeler: { base: 53100, rate: 2200 }
+    tata_ace:      { base: 56700, rate: 2300 }
+    pickup_8ft:    { base: 72600, rate: 2100 }
+    canter_14ft:   { base: 195000, rate: 4100 }
+
+# =============================================================================
+# INTER-ZONE FORMULA CONFIGURATION
+# =============================================================================
+# Used when calculating prices between zones without explicit corridors
+inter_zone_formula:
+  # Weight for origin zone vs destination zone rates
+  origin_weight: 0.6
+  destination_weight: 0.4
+  
+  # Zone type adjustments (multipliers)
+  type_adjustments:
+    # Morning rush: residential → tech/business
+    residential_dense_to_tech_corridor:
+      morning: 1.08
+      afternoon: 1.00
+      evening: 0.95
+    
+    residential_mixed_to_tech_corridor:
+      morning: 1.05
+      afternoon: 1.00
+      evening: 0.95
+    
+    # Evening rush: tech → residential
+    tech_corridor_to_residential_dense:
+      morning: 0.95
+      afternoon: 1.00
+      evening: 1.08
+    
+    tech_corridor_to_residential_mixed:
+      morning: 0.95
+      afternoon: 1.00
+      evening: 1.05
+    
+    # Old city congestion premium
+    any_to_traditional_commercial:
+      morning: 1.05
+      afternoon: 1.08
+      evening: 1.05
+    
+    traditional_commercial_to_any:
+      morning: 1.05
+      afternoon: 1.08
+      evening: 1.05
+    
+    # Airport premium
+    any_to_airport_logistics:
+      morning: 1.15
+      afternoon: 1.10
+      evening: 1.15
+    
+    airport_logistics_to_any:
+      morning: 1.10
+      afternoon: 1.05
+      evening: 1.10
+    
+    # Default (no adjustment)
+    default:
+      morning: 1.0
+      afternoon: 1.0
+      evening: 1.0

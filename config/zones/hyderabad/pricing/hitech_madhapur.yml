@@ -1,0 +1,44 @@
+# =============================================================================
+# Zone Pricing: hitech_madhapur (HITEC City & Madhapur Hub)
+# =============================================================================
+# Routes: 9 (intra-zone), Route 10 pickup zone
+# Porter Benchmark: Route 9 (4.9km Micro)
+# =============================================================================
+
+zone_code: hitech_madhapur
+zone_type: tech_corridor
+
+_benchmarks:
+  route_9:
+    description: "AMB Cinemas → Ayyappa Society (4.9km Micro)"
+    morning: { two_wheeler: 64, scooter: 91, mini_3w: 146, three_wheeler: 324, tata_ace: 361, pickup_8ft: 471, canter_14ft: 1580 }
+    afternoon: { two_wheeler: 74, scooter: 101, mini_3w: 195, three_wheeler: 340, tata_ace: 379, pickup_8ft: 518, canter_14ft: 1580 }
+    evening: { two_wheeler: 64, scooter: 91, mini_3w: 146, three_wheeler: 524, tata_ace: 561, pickup_8ft: 711, canter_14ft: 1880 }
+
+pricing:
+  morning:
+    two_wheeler:   { base: 5600, rate: 650 }
+    scooter:       { base: 8200, rate: 870 }
+    mini_3w:       { base: 12400, rate: 1300 }
+    three_wheeler: { base: 28400, rate: 2700 }
+    tata_ace:      { base: 31500, rate: 3000 }
+    pickup_8ft:    { base: 41400, rate: 3900 }
+    canter_14ft:   { base: 166316, rate: 0 }
+
+  afternoon:
+    two_wheeler:   { base: 6500, rate: 760 }
+    scooter:       { base: 9100, rate: 970 }
+    mini_3w:       { base: 16600, rate: 1730 }
+    three_wheeler: { base: 29400, rate: 2900 }
+    tata_ace:      { base: 32800, rate: 3200 }
+    pickup_8ft:    { base: 45400, rate: 4300 }
+    canter_14ft:   { base: 166316, rate: 0 }
+
+  evening:
+    two_wheeler:   { base: 5600, rate: 650 }
+    scooter:       { base: 8200, rate: 870 }
+    mini_3w:       { base: 12400, rate: 1300 }
+    three_wheeler: { base: 46000, rate: 4300 }
+    tata_ace:      { base: 49200, rate: 4600 }
+    pickup_8ft:    { base: 62100, rate: 5900 }
+    canter_14ft:   { base: 197895, rate: 0 }

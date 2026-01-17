@@ -1,0 +1,47 @@
+# =============================================================================
+# Corridor: hitech_madhapur → fin_district (Route 10)
+# =============================================================================
+# Distance: 8.1km Short
+# Route: KVR Mens PG (Ayyappa Society) → PR Green View (Gowlidoddi)
+# Note: This is the INTER-ZONE corridor for Route 10
+# =============================================================================
+
+corridor_id: route_10_hitech_to_fin
+from_zone: hitech_madhapur
+to_zone: fin_district
+directional: true
+
+_benchmarks:
+  route_10:
+    description: "KVR Mens PG → PR Green View (8.1km Short)"
+    morning: { two_wheeler: 140, scooter: 179, mini_3w: 245, three_wheeler: 569, tata_ace: 611, pickup_8ft: 699, canter_14ft: 2042 }
+    afternoon: { two_wheeler: 152, scooter: 191, mini_3w: 321, three_wheeler: 601, tata_ace: 645, pickup_8ft: 773, canter_14ft: 2051 }
+    evening: { two_wheeler: 140, scooter: 179, mini_3w: 245, three_wheeler: 769, tata_ace: 811, pickup_8ft: 939, canter_14ft: 2342 }
+
+pricing:
+  morning:
+    two_wheeler:   { base: 4600, rate: 670 }
+    scooter:       { base: 5800, rate: 870 }
+    mini_3w:       { base: 7800, rate: 1200 }
+    three_wheeler: { base: 16700, rate: 3000 }
+    tata_ace:      { base: 18000, rate: 3200 }
+    pickup_8ft:    { base: 20700, rate: 3700 }
+    canter_14ft:   { base: 65500, rate: 10000 }
+
+  afternoon:
+    two_wheeler:   { base: 4950, rate: 740 }
+    scooter:       { base: 6150, rate: 940 }
+    mini_3w:       { base: 9600, rate: 1670 }
+    three_wheeler: { base: 17350, rate: 3200 }
+    tata_ace:      { base: 18900, rate: 3400 }
+    pickup_8ft:    { base: 22250, rate: 4150 }
+    canter_14ft:   { base: 65500, rate: 10100 }
+
+  evening:
+    two_wheeler:   { base: 4600, rate: 670 }
+    scooter:       { base: 5800, rate: 870 }
+    mini_3w:       { base: 7800, rate: 1200 }
+    three_wheeler: { base: 20600, rate: 4350 }
+    tata_ace:      { base: 21900, rate: 4550 }
+    pickup_8ft:    { base: 25250, rate: 5280 }
+    canter_14ft:   { base: 73500, rate: 11700 }

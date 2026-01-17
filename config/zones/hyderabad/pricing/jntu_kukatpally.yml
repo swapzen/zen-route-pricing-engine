@@ -1,0 +1,37 @@
+# =============================================================================
+# Zone Pricing: jntu_kukatpally (JNTU Kukatpally Residential)
+# =============================================================================
+# Routes: Route 6 destination, Route 7 pickup zone
+# Zone Type: Residential Mixed
+# =============================================================================
+
+zone_code: jntu_kukatpally
+zone_type: residential_mixed
+
+pricing:
+  morning:
+    two_wheeler:   { base: 3500, rate: 1000 }
+    scooter:       { base: 5000, rate: 1400 }
+    mini_3w:       { base: 8000, rate: 2000 }
+    three_wheeler: { base: 18000, rate: 4000 }
+    tata_ace:      { base: 20000, rate: 4500 }
+    pickup_8ft:    { base: 25000, rate: 5500 }
+    canter_14ft:   { base: 80000, rate: 12000 }
+
+  afternoon:
+    two_wheeler:   { base: 4000, rate: 1100 }
+    scooter:       { base: 5500, rate: 1500 }
+    mini_3w:       { base: 9000, rate: 2200 }
+    three_wheeler: { base: 19000, rate: 4200 }
+    tata_ace:      { base: 22000, rate: 4800 }
+    pickup_8ft:    { base: 28000, rate: 6000 }
+    canter_14ft:   { base: 85000, rate: 13000 }
+
+  evening:
+    two_wheeler:   { base: 3500, rate: 1000 }
+    scooter:       { base: 5000, rate: 1400 }
+    mini_3w:       { base: 8000, rate: 2000 }
+    three_wheeler: { base: 35000, rate: 5500 }
+    tata_ace:      { base: 38000, rate: 6000 }
+    pickup_8ft:    { base: 45000, rate: 7000 }
+    canter_14ft:   { base: 110000, rate: 15000 }

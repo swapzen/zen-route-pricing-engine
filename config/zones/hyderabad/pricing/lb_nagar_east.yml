@@ -1,0 +1,44 @@
+# =============================================================================
+# Zone Pricing: lb_nagar_east (LB Nagar Eastern Suburbs)
+# =============================================================================
+# Routes: 5 (intra-zone), Route 3 & 8 pickup zone
+# Porter Benchmark: Route 5 (1.4km Micro)
+# =============================================================================
+
+zone_code: lb_nagar_east
+zone_type: residential_dense
+
+_benchmarks:
+  route_5:
+    description: "LB Nagar → Shantiniketan School (1.4km Micro)"
+    morning: { two_wheeler: 52, scooter: 77, mini_3w: 131, three_wheeler: 266, tata_ace: 308, pickup_8ft: 418, canter_14ft: 1492 }
+    afternoon: { two_wheeler: 62, scooter: 87, mini_3w: 137, three_wheeler: 279, tata_ace: 345, pickup_8ft: 460, canter_14ft: 1492 }
+    evening: { two_wheeler: 52, scooter: 77, mini_3w: 131, three_wheeler: 466, tata_ace: 508, pickup_8ft: 658, canter_14ft: 1792 }
+
+pricing:
+  morning:
+    two_wheeler:   { base: 6100, rate: 0 }
+    scooter:       { base: 7900, rate: 5000 }
+    mini_3w:       { base: 12700, rate: 8000 }
+    three_wheeler: { base: 27300, rate: 17100 }
+    tata_ace:      { base: 31300, rate: 19500 }
+    pickup_8ft:    { base: 42000, rate: 26200 }
+    canter_14ft:   { base: 157000, rate: 0 }
+
+  afternoon:
+    two_wheeler:   { base: 7200, rate: 0 }
+    scooter:       { base: 8700, rate: 5500 }
+    mini_3w:       { base: 13300, rate: 8300 }
+    three_wheeler: { base: 27900, rate: 18000 }
+    tata_ace:      { base: 34500, rate: 21500 }
+    pickup_8ft:    { base: 46000, rate: 29000 }
+    canter_14ft:   { base: 157000, rate: 0 }
+
+  evening:
+    two_wheeler:   { base: 6100, rate: 0 }
+    scooter:       { base: 7600, rate: 4800 }
+    mini_3w:       { base: 12700, rate: 8000 }
+    three_wheeler: { base: 46600, rate: 29000 }
+    tata_ace:      { base: 50800, rate: 32000 }
+    pickup_8ft:    { base: 65800, rate: 42000 }
+    canter_14ft:   { base: 189000, rate: 0 }

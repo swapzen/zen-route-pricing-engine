@@ -32,20 +32,30 @@ class Zone < ApplicationRecord
     business_cbd
     airport_logistics
     residential_growth
+    residential_dense
+    residential_mixed
+    traditional_commercial
+    premium_residential
     industrial
+    heritage_commercial
     outer_ring
     default
   ].freeze
   
   # Default multipliers by zone type (used if zone_multiplier not set)
   DEFAULT_ZONE_MULTIPLIERS = {
-    'tech_corridor'      => 1.00,  # Competitive pricing for tech hubs
-    'business_cbd'       => 1.05,  # Premium for CBD (congestion, parking)
-    'airport_logistics'  => 1.10,  # Long-haul premium
-    'residential_growth' => 0.95,  # Discount to encourage adoption
-    'industrial'         => 0.95,  # Volume discount
-    'outer_ring'         => 1.00,  # Neutral
-    'default'            => 1.00
+    'tech_corridor'          => 1.00,  # Competitive pricing for tech hubs
+    'business_cbd'           => 1.05,  # Premium for CBD (congestion, parking)
+    'airport_logistics'      => 1.10,  # Long-haul premium
+    'residential_growth'     => 0.95,  # Discount to encourage adoption
+    'residential_dense'      => 1.00,  # Dense residential, neutral
+    'residential_mixed'      => 1.00,  # Mixed use, neutral
+    'traditional_commercial' => 1.02,  # Old city, slight premium
+    'premium_residential'    => 1.15,  # High-end areas premium
+    'industrial'             => 0.95,  # Volume discount
+    'heritage_commercial'    => 1.02,  # Heritage areas, slight premium
+    'outer_ring'             => 1.00,  # Neutral
+    'default'                => 1.00
   }.freeze
   
   # Effective zone multiplier (uses configured value or default by type)

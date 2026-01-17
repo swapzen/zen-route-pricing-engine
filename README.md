@@ -31,8 +31,8 @@ nano .env  # Add your actual keys
 # 4. Run migrations (if not already run)
 rails db:migrate
 
-# 5. Seed pricing configs
-rails db:seed
+# 5. Sync zone configurations from YAML
+rails zones:sync city=hyd
 
 # 6. Start server
 rails server -p 3001
@@ -42,323 +42,120 @@ rails server -p 3001
 
 ---
 
-## 📡 API Endpoints
+## 🗺️ Zone-Based Pricing System
 
-### Public Endpoints
+### Architecture Overview
 
-#### **POST /route_pricing/create_quote**
+The pricing engine uses a **YAML-driven zone configuration** system:
 
-Generate a delivery price quote.
-
-**Request:**
-```json
-{
-  "city_code": "hyd",
-  "vehicle_type": "two_wheeler",
-  "pickup_lat": "17.4470",
-  "pickup_lng": "78.3771",
-  "drop_lat": "17.3616",
-  "drop_lng": "78.4747",
-  "item_value_paise": 50000  // optional
-}
+```
+config/zones/
+├── hyderabad.yml              # Zone boundaries (71 zones)
+└── hyderabad/
+    ├── vehicle_defaults.yml   # Global vehicle configs
+    ├── pricing/               # Zone-specific rates
+    │   ├── fin_district.yml
+    │   ├── hitech_madhapur.yml
+    │   └── ... (8 zones)
+    └── corridors/
+        └── priority_corridors.yml  # 25+ high-traffic corridors
 ```
 
-**Parameters:**
-- `city_code` (string, required): City code (e.g., `hyd`, `blr`, `del`)
-- `vehicle_type` (string, required): Vehicle type
-  - `two_wheeler` - Bike/scooter
-  - `three_wheeler` - Auto/tuk-tuk
-  - `four_wheeler` - Small truck (Tata Ace)
-- `pickup_lat` (string, required): Pickup latitude (decimal degrees)
-- `pickup_lng` (string, required): Pickup longitude (decimal degrees)
-- `drop_lat` (string, required): Drop latitude (decimal degrees)
-- `drop_lng` (string, required): Drop longitude (decimal degrees)
-- `item_value_paise` (integer, optional): Item value in paise (for high-value surcharge)
+### Pricing Resolution Hierarchy
 
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "code": 200,
-  "quote_id": "uuid-here",
-  "price_paise": 19000,
-  "price_inr": 190.0,
-  "distance_m": 19671,
-  "duration_s": 2736,
-  "duration_in_traffic_s": 3142,
-  "pricing_version": "v1",
-  "confidence": "high",
-  "provider": "google",
-  "breakdown": {
-    "base_fare": 2000,
-    "distance_component": 13600,
-    "surge_multiplier_applied": 1.0,
-    "traffic_ratio": 1.15,
-    "variance_buffer": 780,
-    "margin_guardrail": 1000,
-    "final_price": 19000
-  }
-}
-```
+1. **Corridor Override** - Explicit zone-pair pricing (highest priority)
+2. **Inter-Zone Formula** - Weighted average of origin/destination zones
+3. **Zone-Time Override** - Zone-specific time-band rates
+4. **City Default** - Fallback global rates
 
-**Response (422 Unprocessable Entity):**
-```json
-{
-  "error": "Config not found for city/vehicle combination"
-}
-```
-
-**cURL Example:**
-```bash
-curl -X POST http://localhost:3001/route_pricing/create_quote \
-  -H "Content-Type: application/json" \
-  -d '{
-    "city_code": "hyd",
-    "vehicle_type": "two_wheeler",
-    "pickup_lat": "17.4470",
-    "pickup_lng": "78.3771",
-    "drop_lat": "17.3616",
-    "drop_lng": "78.4747"
-  }'
-```
-
----
-
-#### **POST /route_pricing/record_actual**
-
-Record actual vendor price for feedback loop (used for tuning algorithm).
-
-**Request:**
-```json
-{
-  "pricing_quote_id": "uuid-from-create-quote",
-  "vendor": "porter",
-  "actual_price_paise": 19500,
-  "vendor_booking_ref": "PORTER-12345",
-  "notes": "9:05 AM IST, clear weather, moderate traffic"
-}
-```
-
-**Parameters:**
-- `pricing_quote_id` (string, required): Quote ID from create_quote
-- `actual_price_paise` (integer, required): Actual vendor price in paise
-- `vendor` (string, optional): Vendor name (default: `porter`)
-- `vendor_booking_ref` (string, optional): Vendor's booking reference
-- `notes` (string, optional): Context notes (time, weather, traffic)
-
-**Response (201 Created):**
-```json
-{
-  "success": true,
-  "actual_id": "uuid-here",
-  "variance_paise": 500,
-  "variance_percentage": 2.56
-}
-```
-
----
-
-### Admin Endpoints
-
-#### **GET /route_pricing/admin/list_configs**
-
-List all pricing configurations.
-
-**Query Parameters:**
-- `city_code` (optional): Filter by city
-- `vehicle_type` (optional): Filter by vehicle type
-- `active_only` (optional): `true` to show only active configs
-
-**Response:**
-```json
-{
-  "configs": [
-    {
-      "id": "uuid",
-      "city_code": "hyd",
-      "vehicle_type": "two_wheeler",
-      "version": 1,
-      "active": true,
-      "effective_from": "2026-01-01T00:00:00+05:30",
-      "effective_until": null,
-      "surge_rules": [...]
-    }
-  ]
-}
-```
-
-#### **PATCH /route_pricing/admin/update_config**
-
-Create new version of pricing config.
-
-#### **POST /route_pricing/admin/create_surge_rule**
-
-Add dynamic surge rule.
-
-#### **PATCH /route_pricing/admin/deactivate_surge_rule**
-
-Deactivate a surge rule.
-
----
-
-## ⚙️ Environment Variables
-
-**All secrets are managed via `.env` file (not committed to Git).**
-
-Copy `.env.example` to `.env` and fill in your values:
+### Zone Management Commands
 
 ```bash
-cp .env.example .env
-nano .env
+# Sync zones, pricing & corridors from YAML to database
+rails zones:sync city=hyd
+
+# Force overwrite existing pricing (reset to YAML values)
+rails zones:sync city=hyd force=true
+
+# List all zones
+rails zones:list city=hyd
+
+# Show pricing stats
+rails zones:pricing city=hyd
+
+# Show corridor stats
+rails zones:corridors city=hyd
+
+# Test a specific route
+rails zones:test_route city=hyd plat=17.4 plng=78.4 dlat=17.5 dlng=78.5 vehicle=two_wheeler time=morning
 ```
 
-### Required for Production
-- `GOOGLE_MAPS_API_KEY` - Google Maps Distance Matrix API key
-- `DATABASE_URL` - CockroachDB connection string
-- `REDIS_URL` - Redis connection string (for caching)
-- `SECRET_KEY_BASE` - Rails session encryption key
+### Zone Types
 
-### Optional
-- `ROUTE_PROVIDER_STRATEGY` - Provider selection: `google` (default), `local`, `haversine`
-- `RAILS_ENV` - Environment: `development`, `production`, `test`
-- `PORT` - Server port (default: 3000, suggest 3001)
-- `RAILS_MAX_THREADS` - Puma thread pool size (default: 5)
-
-**See [ENV_SETUP.md](ENV_SETUP.md) for complete documentation.**
+| Type | Description | Multiplier |
+|------|-------------|------------|
+| tech_corridor | IT parks, tech hubs | 1.00 |
+| business_cbd | Central business districts | 1.05 |
+| airport_logistics | Airport and logistics | 1.10 |
+| residential_dense | Dense residential | 1.00 |
+| residential_mixed | Mixed-use residential | 1.00 |
+| residential_growth | Growth corridors | 0.95 |
+| traditional_commercial | Old city commercial | 1.02 |
+| premium_residential | High-end areas | 1.15 |
+| industrial | Industrial zones | 0.95 |
 
 ---
 
 ## 🧪 Testing
 
-### Basic Test (Haversine Fallback)
+### Porter Benchmark Test
+
 ```bash
-export ROUTE_PROVIDER_STRATEGY=local
-rails runner test_pricing.rb
+# Run comprehensive pricing test (210 scenarios)
+PRICING_MODE=calibration bundle exec ruby script/test_pricing_engine.rb
 ```
 
-### Google Maps API Test
-```bash
-export GOOGLE_MAPS_API_KEY='your_key'
-export ROUTE_PROVIDER_STRATEGY='google'
-rails runner test_google_maps.rb
-```
-
-### Manual API Test
-```bash
-# Start server
-rails server -p 3001
-
-# In another terminal
-curl -X POST http://localhost:3001/route_pricing/create_quote \
-  -H "Content-Type: application/json" \
-  -d '{
-    "city_code": "hyd",
-    "vehicle_type": "two_wheeler",
-    "pickup_lat": "17.4470",
-    "pickup_lng": "78.3771",
-    "drop_lat": "17.3616",
-    "drop_lng": "78.4747"
-  }' | jq
-```
+**Current Status: 100% Pass Rate** ✅
 
 ---
 
 ## 🏗️ Architecture
 
-### Pricing Algorithm (11 Steps)
-1. **Base Fare** - Minimum charge
-2. **Chargeable Distance** - Distance beyond base distance
-3. **Distance Component** - Per-km charges
-4. **Raw Subtotal** - Base + distance
-5. **Dynamic Surge** - Time-of-day, traffic, events
-6. **Multipliers** - Vehicle × City × Surge
-7. **Variance Buffer** - 5-8% safety margin
-8. **High-Value Buffer** - For expensive items
-9. **Subtotal with Buffers**
-10. **Margin Guardrail** - Minimum profit (3-4%)
-11. **Rounding** - Up to nearest ₹10
+### Pricing Algorithm
 
-### Fallback Mechanism
-- **Primary:** Google Maps Distance Matrix API (traffic-aware)
-- **Fallback:** Haversine formula × 1.4 tortuosity factor
-- **Dev Mode:** Local calculation (no API calls)
+1. Resolve Zones (pickup & drop)
+2. Check Corridor Override (zone pair pricing)
+3. Or Inter-Zone Formula (weighted avg)
+4. Or Zone-Time Override (intra-zone)
+5. Calculate: base_fare + (chargeable_km × per_km_rate)
+6. Apply distance band multiplier
+7. Apply traffic/surge multipliers
+8. Add variance buffer (5-8%)
+9. Apply margin guardrail (min 3-4%)
+10. Round to nearest ₹10
 
-### Caching
-- Route data cached for 6 hours in Redis
-- Cache key: `route:v1:{city}:{vehicle}:{norm_pickup}:{norm_drop}`
-- Coordinates normalized to 4 decimals (~11m precision)
+### Inter-Zone Formula
 
----
+For zone pairs without corridors:
+- base = (pickup_zone.base × 0.6) + (drop_zone.base × 0.4)
+- rate = (pickup_zone.rate × 0.6) + (drop_zone.rate × 0.4)
 
-## 🔒 Security
-
-This microservice contains proprietary pricing algorithms. Access is restricted to:
-- SwapZen internal network only
-- Admin endpoints require authentication (TODO: JWT)
+With zone-type adjustments for commute patterns.
 
 ---
 
 ## 📊 Database Schema
 
-Shared database with `swapzen-api`:
-- `pricing_configs` - Pricing parameters by city/vehicle
-- `pricing_surge_rules` - Dynamic surge rules
-- `pricing_quotes` - Quote history
-- `pricing_actuals` - Vendor price feedback
-
----
-
-## 🚢 Deployment
-
-```bash
-# Production
-RAILS_ENV=production rails db:migrate
-RAILS_ENV=production rails server -p 3001
-
-# With Kamal (recommended)
-kamal deploy
-```
-
----
-
-## 📝 Supported Cities & Vehicles
-
-### Cities
-- `hyd` - Hyderabad
-
-### Vehicles
-- `two_wheeler` - ₹20 base + ₹8/km
-- `three_wheeler` - ₹100 base + ₹12/km
-- `four_wheeler` - ₹200 base + ₹20/km
-
----
-
-## 🐛 Troubleshooting
-
-### Config not found
-```bash
-rails db:seed  # Load pricing configs
-```
-
-### Redis connection error
-```bash
-# Check Redis is running
-redis-cli ping  # Should return "PONG"
-```
-
-### Google Maps API errors
-```bash
-# Verify API key
-echo $GOOGLE_MAPS_API_KEY
-
-# Switch to fallback
-export ROUTE_PROVIDER_STRATEGY=local
-```
+- zones - Geographic zone definitions
+- zone_vehicle_pricings - Zone-specific base rates
+- zone_vehicle_time_pricings - Time-band variations
+- zone_pair_vehicle_pricings - Corridor pricing
+- pricing_configs - Global vehicle configs
 
 ---
 
 ## 📚 Documentation
 
-- [Implementation Plan](../brain/implementation_plan.md)
-- [Architectural Review](../brain/architectural_review.md)
+- [Engine Design](docs/ENGINE_DESIGN.md)
+- [Zone Configuration](config/zones/README.md)
 - [API Spec](docs/openapi.json)

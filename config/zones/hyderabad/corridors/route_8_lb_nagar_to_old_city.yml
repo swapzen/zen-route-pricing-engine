@@ -1,0 +1,46 @@
+# =============================================================================
+# Corridor: lb_nagar_east → old_city (Route 8)
+# =============================================================================
+# Distance: 15.54km Medium (chargeable 14.54km)
+# Route: Vanasthali Puram → Charminar
+# =============================================================================
+
+corridor_id: route_8_lb_nagar_to_old_city
+from_zone: lb_nagar_east
+to_zone: old_city
+directional: true
+
+_benchmarks:
+  route_8:
+    description: "Vanasthali Puram → Charminar (13.2km Medium)"
+    morning: { two_wheeler: 129, scooter: 167, mini_3w: 234, three_wheeler: 543, tata_ace: 603, pickup_8ft: 696, canter_14ft: 1998 }
+    afternoon: { two_wheeler: 161, scooter: 200, mini_3w: 270, three_wheeler: 606, tata_ace: 693, pickup_8ft: 799, canter_14ft: 2092 }
+    evening: { two_wheeler: 129, scooter: 167, mini_3w: 234, three_wheeler: 743, tata_ace: 803, pickup_8ft: 936, canter_14ft: 2298 }
+
+pricing:
+  morning:
+    two_wheeler:   { base: 7800, rate: 650 }
+    scooter:       { base: 10000, rate: 850 }
+    mini_3w:       { base: 13700, rate: 1200 }
+    three_wheeler: { base: 32000, rate: 2700 }
+    tata_ace:      { base: 36400, rate: 3120 }
+    pickup_8ft:    { base: 42000, rate: 3600 }
+    canter_14ft:   { base: 122000, rate: 10000 }
+
+  afternoon:
+    two_wheeler:   { base: 9200, rate: 800 }
+    scooter:       { base: 11800, rate: 1000 }
+    mini_3w:       { base: 15700, rate: 1400 }
+    three_wheeler: { base: 37000, rate: 3100 }
+    tata_ace:      { base: 42000, rate: 3500 }
+    pickup_8ft:    { base: 48000, rate: 4000 }
+    canter_14ft:   { base: 127000, rate: 11000 }
+
+  evening:
+    two_wheeler:   { base: 7800, rate: 650 }
+    scooter:       { base: 10000, rate: 850 }
+    mini_3w:       { base: 13700, rate: 1200 }
+    three_wheeler: { base: 45500, rate: 3700 }
+    tata_ace:      { base: 49000, rate: 4100 }
+    pickup_8ft:    { base: 56000, rate: 4800 }
+    canter_14ft:   { base: 140600, rate: 11720 }

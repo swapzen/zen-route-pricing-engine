@@ -1,0 +1,1178 @@
+# =============================================================================
+# HYDERABAD ZONE CONFIGURATION
+# =============================================================================
+# Version: 1.0
+# Last Updated: 2026-01-16
+# 
+# This file defines all zones for Hyderabad city covering the complete GHMC
+# (Greater Hyderabad Municipal Corporation) area - 12 zones, 60 circles.
+#
+# ARCHITECTURE:
+# - This YAML is the baseline/initial config source
+# - zones:sync rake task loads this into the database
+# - Admin dashboard can edit pricing directly in DB
+# - Sync creates new zones but preserves existing pricing edits
+# =============================================================================
+
+city_code: hyd
+city_name: Hyderabad
+version: "1.0"
+last_updated: "2026-01-16"
+
+# -----------------------------------------------------------------------------
+# ZONE TYPES
+# -----------------------------------------------------------------------------
+# tech_corridor       - IT parks, tech hubs (HITEC City, Gachibowli)
+# business_cbd        - Central business districts (Ameerpet, Secunderabad)
+# residential_dense   - Dense residential (LB Nagar, Dilsukhnagar)
+# residential_mixed   - Mixed use residential (Kukatpally, Miyapur)
+# residential_growth  - Growth corridors (Uppal, Kompally)
+# traditional_commercial - Old city commercial (Charminar, Koti)
+# premium_residential - High-end areas (Banjara Hills, Jubilee Hills)
+# industrial          - Industrial zones (Patancheru, Jeedimetla)
+# airport_logistics   - Airport and logistics (Shamshabad)
+# heritage_commercial - Heritage + commercial mix (Golconda)
+# -----------------------------------------------------------------------------
+
+# =============================================================================
+# ZONE DEFINITIONS
+# Organized by GHMC's 12 administrative zones
+# =============================================================================
+zones:
+
+  # ===========================================================================
+  # 1. LB NAGAR ZONE (GHMC Zone)
+  # Circles: Nagole, Saroornagar, LB Nagar, Hayathnagar
+  # ===========================================================================
+  
+  lb_nagar_east:
+    name: "LB Nagar Eastern Suburbs"
+    zone_type: residential_dense
+    active: true
+    bounds:
+      lat_min: 17.34
+      lat_max: 17.41
+      lng_min: 78.49
+      lng_max: 78.57
+    multipliers:
+      small_vehicle: 1.05
+      mid_truck: 1.15
+      heavy_truck: 1.15
+      default: 1.10
+
+  nagole:
+    name: "Nagole Metro Area"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.39
+      lat_max: 17.42
+      lng_min: 78.54
+      lng_max: 78.58
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  saroornagar:
+    name: "Saroornagar"
+    zone_type: residential_dense
+    active: true
+    bounds:
+      lat_min: 17.35
+      lat_max: 17.39
+      lng_min: 78.52
+      lng_max: 78.56
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.05
+      heavy_truck: 1.05
+      default: 1.02
+
+  hayathnagar:
+    name: "Hayathnagar"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.31
+      lat_max: 17.36
+      lng_min: 78.57
+      lng_max: 78.62
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  # ===========================================================================
+  # 2. CHARMINAR ZONE (GHMC Zone)
+  # Circles: Santoshnagar, Yakutpura, Malakpet, Charminar, Moosarambagh
+  # ===========================================================================
+  
+  old_city:
+    name: "Charminar Old City"
+    zone_type: traditional_commercial
+    active: true
+    bounds:
+      lat_min: 17.35
+      lat_max: 17.38
+      lng_min: 78.46
+      lng_max: 78.49
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.05
+      heavy_truck: 1.10
+      default: 1.02
+
+  charminar_extended:
+    name: "Charminar Extended Area"
+    zone_type: traditional_commercial
+    active: true
+    bounds:
+      lat_min: 17.355
+      lat_max: 17.37
+      lng_min: 78.47
+      lng_max: 78.48
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.05
+      heavy_truck: 1.10
+      default: 1.02
+
+  santoshnagar:
+    name: "Santoshnagar"
+    zone_type: residential_dense
+    active: true
+    bounds:
+      lat_min: 17.35
+      lat_max: 17.38
+      lng_min: 78.50
+      lng_max: 78.54
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  yakutpura:
+    name: "Yakutpura"
+    zone_type: traditional_commercial
+    active: true
+    bounds:
+      lat_min: 17.34
+      lat_max: 17.37
+      lng_min: 78.47
+      lng_max: 78.50
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.05
+      heavy_truck: 1.10
+      default: 1.02
+
+  malakpet:
+    name: "Malakpet"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.36
+      lat_max: 17.40
+      lng_min: 78.49
+      lng_max: 78.52
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  moosarambagh:
+    name: "Moosarambagh"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.38
+      lat_max: 17.41
+      lng_min: 78.50
+      lng_max: 78.54
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  # ===========================================================================
+  # 3. SERILINGAMPALLY ZONE (GHMC Zone)
+  # Circles: Narsingi, Patancheru, Ameenpur, Miyapur, Serilingampally
+  # ===========================================================================
+  
+  fin_district:
+    name: "Financial District Tech Core"
+    zone_type: tech_corridor
+    active: true
+    bounds:
+      lat_min: 17.41
+      lat_max: 17.45
+      lng_min: 78.32
+      lng_max: 78.37
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  narsingi:
+    name: "Narsingi"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.38
+      lat_max: 17.42
+      lng_min: 78.33
+      lng_max: 78.37
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  manikonda:
+    name: "Manikonda"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.39
+      lat_max: 17.42
+      lng_min: 78.37
+      lng_max: 78.40
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  patancheru:
+    name: "Patancheru Industrial"
+    zone_type: industrial
+    active: true
+    bounds:
+      lat_min: 17.52
+      lat_max: 17.56
+      lng_min: 78.24
+      lng_max: 78.28
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 1.0
+      heavy_truck: 1.05
+      default: 1.0
+
+  ameenpur:
+    name: "Ameenpur"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.50
+      lat_max: 17.53
+      lng_min: 78.30
+      lng_max: 78.34
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  miyapur:
+    name: "Miyapur"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.49
+      lat_max: 17.52
+      lng_min: 78.33
+      lng_max: 78.37
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  # ===========================================================================
+  # 4. KHAIRATABAD ZONE (GHMC Zone)
+  # Circles: Khairatabad, Jubilee Hills, Borabanda, Yousufguda, Ameerpet
+  # ===========================================================================
+  
+  ameerpet_core:
+    name: "Ameerpet Central"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.42
+      lat_max: 17.45
+      lng_min: 78.43
+      lng_max: 78.46
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  ameerpet_extended:
+    name: "Ameerpet Extended CBD"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.43
+      lat_max: 17.45
+      lng_min: 78.44
+      lng_max: 78.46
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  khairatabad:
+    name: "Khairatabad"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.40
+      lat_max: 17.43
+      lng_min: 78.45
+      lng_max: 78.48
+    multipliers:
+      small_vehicle: 1.05
+      mid_truck: 1.05
+      heavy_truck: 1.05
+      default: 1.05
+
+  jubilee_hills:
+    name: "Jubilee Hills"
+    zone_type: premium_residential
+    active: true
+    bounds:
+      lat_min: 17.42
+      lat_max: 17.46
+      lng_min: 78.40
+      lng_max: 78.43
+    multipliers:
+      small_vehicle: 1.15
+      mid_truck: 1.15
+      heavy_truck: 1.20
+      default: 1.15
+
+  banjara_hills:
+    name: "Banjara Hills"
+    zone_type: premium_residential
+    active: true
+    bounds:
+      lat_min: 17.41
+      lat_max: 17.44
+      lng_min: 78.43
+      lng_max: 78.46
+    multipliers:
+      small_vehicle: 1.15
+      mid_truck: 1.15
+      heavy_truck: 1.20
+      default: 1.15
+
+  borabanda:
+    name: "Borabanda"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.44
+      lat_max: 17.47
+      lng_min: 78.41
+      lng_max: 78.44
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  yousufguda:
+    name: "Yousufguda"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.42
+      lat_max: 17.45
+      lng_min: 78.44
+      lng_max: 78.47
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  # ===========================================================================
+  # 5. KUKATPALLY ZONE (GHMC Zone)
+  # Circles: Madhapur, Alwyn Colony, Kukatpally, Moosapet
+  # ===========================================================================
+  
+  hitech_madhapur:
+    name: "HITEC City & Madhapur Hub"
+    zone_type: tech_corridor
+    active: true
+    bounds:
+      lat_min: 17.43
+      lat_max: 17.455
+      lng_min: 78.37
+      lng_max: 78.41
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  jntu_kukatpally:
+    name: "JNTU Kukatpally Residential"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.48
+      lat_max: 17.51
+      lng_min: 78.38
+      lng_max: 78.41
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  nexus_kukatpally:
+    name: "Nexus Mall Kukatpally"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.49
+      lat_max: 17.50
+      lng_min: 78.39
+      lng_max: 78.40
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  ayyappa_society:
+    name: "Ayyappa Society Premium Residential"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.445
+      lat_max: 17.455
+      lng_min: 78.385
+      lng_max: 78.395
+    multipliers:
+      small_vehicle: 1.20
+      mid_truck: 1.20
+      heavy_truck: 1.20
+      default: 1.20
+
+  alwyn_colony:
+    name: "Alwyn Colony"
+    zone_type: residential_dense
+    active: true
+    bounds:
+      lat_min: 17.47
+      lat_max: 17.50
+      lng_min: 78.40
+      lng_max: 78.43
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  moosapet:
+    name: "Moosapet"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.47
+      lat_max: 17.50
+      lng_min: 78.43
+      lng_max: 78.46
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  kondapur:
+    name: "Kondapur"
+    zone_type: tech_corridor
+    active: true
+    bounds:
+      lat_min: 17.45
+      lat_max: 17.48
+      lng_min: 78.35
+      lng_max: 78.38
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  # ===========================================================================
+  # 6. SECUNDERABAD ZONE (GHMC Zone)
+  # Circles: Kavadiguda, Musheerabad, Amberpet, Tarnaka, Mettuguda
+  # ===========================================================================
+  
+  secunderabad_cbd:
+    name: "Secunderabad Central"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.43
+      lat_max: 17.46
+      lng_min: 78.49
+      lng_max: 78.52
+    multipliers:
+      small_vehicle: 1.05
+      mid_truck: 1.05
+      heavy_truck: 1.05
+      default: 1.05
+
+  paradise:
+    name: "Paradise Circle"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.44
+      lat_max: 17.45
+      lng_min: 78.48
+      lng_max: 78.49
+    multipliers:
+      small_vehicle: 1.05
+      mid_truck: 1.05
+      heavy_truck: 1.05
+      default: 1.05
+
+  kavadiguda:
+    name: "Kavadiguda"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.44
+      lat_max: 17.46
+      lng_min: 78.47
+      lng_max: 78.50
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  musheerabad:
+    name: "Musheerabad"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.41
+      lat_max: 17.44
+      lng_min: 78.48
+      lng_max: 78.51
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  amberpet:
+    name: "Amberpet"
+    zone_type: residential_dense
+    active: true
+    bounds:
+      lat_min: 17.38
+      lat_max: 17.41
+      lng_min: 78.50
+      lng_max: 78.53
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  tarnaka:
+    name: "Tarnaka"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.42
+      lat_max: 17.45
+      lng_min: 78.52
+      lng_max: 78.56
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  mettuguda:
+    name: "Mettuguda"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.43
+      lat_max: 17.46
+      lng_min: 78.52
+      lng_max: 78.55
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  # ===========================================================================
+  # 7. MALKAJGIRI ZONE (GHMC Zone - NEW)
+  # Circles: Keesara, Alwal, Bowenpally, Moula Ali, Malkajgiri
+  # ===========================================================================
+  
+  malkajgiri:
+    name: "Malkajgiri"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.44
+      lat_max: 17.47
+      lng_min: 78.51
+      lng_max: 78.55
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  keesara:
+    name: "Keesara"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.51
+      lat_max: 17.54
+      lng_min: 78.58
+      lng_max: 78.62
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  alwal:
+    name: "Alwal"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.50
+      lat_max: 17.53
+      lng_min: 78.46
+      lng_max: 78.50
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  bowenpally:
+    name: "Bowenpally"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.46
+      lat_max: 17.49
+      lng_min: 78.47
+      lng_max: 78.50
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  moula_ali:
+    name: "Moula Ali"
+    zone_type: residential_dense
+    active: true
+    bounds:
+      lat_min: 17.45
+      lat_max: 17.48
+      lng_min: 78.54
+      lng_max: 78.58
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  # ===========================================================================
+  # 8. UPPAL ZONE (GHMC Zone - NEW)
+  # Circles: Ghatkesar, Kapra, Nacharam, Uppal, Boduppal
+  # ===========================================================================
+  
+  uppal_corridor:
+    name: "Uppal Growth Corridor"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.39
+      lat_max: 17.42
+      lng_min: 78.55
+      lng_max: 78.58
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  ghatkesar:
+    name: "Ghatkesar"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.43
+      lat_max: 17.47
+      lng_min: 78.66
+      lng_max: 78.70
+    multipliers:
+      small_vehicle: 0.90
+      mid_truck: 0.90
+      heavy_truck: 0.90
+      default: 0.90
+
+  kapra:
+    name: "Kapra"
+    zone_type: residential_dense
+    active: true
+    bounds:
+      lat_min: 17.47
+      lat_max: 17.51
+      lng_min: 78.55
+      lng_max: 78.59
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  nacharam:
+    name: "Nacharam Industrial"
+    zone_type: industrial
+    active: true
+    bounds:
+      lat_min: 17.42
+      lat_max: 17.45
+      lng_min: 78.54
+      lng_max: 78.58
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 1.0
+      heavy_truck: 1.05
+      default: 1.0
+
+  boduppal:
+    name: "Boduppal"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.40
+      lat_max: 17.43
+      lng_min: 78.56
+      lng_max: 78.60
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  # ===========================================================================
+  # 9. SHAMSHABAD ZONE (GHMC Zone - NEW)
+  # Circles: Adibatla, Badangpet, Jalpally, Shamshabad
+  # ===========================================================================
+  
+  outer_ring:
+    name: "Outer Ring Road Logistics"
+    zone_type: airport_logistics
+    active: true
+    bounds:
+      lat_min: 17.22
+      lat_max: 17.28
+      lng_min: 78.42
+      lng_max: 78.48
+    multipliers:
+      small_vehicle: 1.05
+      mid_truck: 1.15
+      heavy_truck: 1.20
+      default: 1.15
+
+  shamshabad:
+    name: "Shamshabad Airport"
+    zone_type: airport_logistics
+    active: true
+    bounds:
+      lat_min: 17.23
+      lat_max: 17.27
+      lng_min: 78.41
+      lng_max: 78.46
+    multipliers:
+      small_vehicle: 1.10
+      mid_truck: 1.20
+      heavy_truck: 1.25
+      default: 1.18
+
+  adibatla:
+    name: "Adibatla Aerospace"
+    zone_type: industrial
+    active: true
+    bounds:
+      lat_min: 17.21
+      lat_max: 17.25
+      lng_min: 78.52
+      lng_max: 78.56
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 1.0
+      heavy_truck: 1.05
+      default: 1.0
+
+  badangpet:
+    name: "Badangpet"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.29
+      lat_max: 17.33
+      lng_min: 78.50
+      lng_max: 78.54
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  jalpally:
+    name: "Jalpally"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.28
+      lat_max: 17.32
+      lng_min: 78.48
+      lng_max: 78.52
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  # ===========================================================================
+  # 10. RAJENDRANAGAR ZONE (GHMC Zone - NEW)
+  # Circles: Rajendranagar, Attapur, Bahadurpura, Falaknuma, Chandrayangutta
+  # ===========================================================================
+  
+  rajendranagar:
+    name: "Rajendranagar"
+    zone_type: residential_dense
+    active: true
+    bounds:
+      lat_min: 17.32
+      lat_max: 17.36
+      lng_min: 78.40
+      lng_max: 78.44
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  attapur:
+    name: "Attapur"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.36
+      lat_max: 17.39
+      lng_min: 78.42
+      lng_max: 78.45
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  bahadurpura:
+    name: "Bahadurpura"
+    zone_type: traditional_commercial
+    active: true
+    bounds:
+      lat_min: 17.35
+      lat_max: 17.38
+      lng_min: 78.45
+      lng_max: 78.48
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.05
+      heavy_truck: 1.10
+      default: 1.02
+
+  falaknuma:
+    name: "Falaknuma"
+    zone_type: traditional_commercial
+    active: true
+    bounds:
+      lat_min: 17.31
+      lat_max: 17.35
+      lng_min: 78.45
+      lng_max: 78.49
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.05
+      heavy_truck: 1.10
+      default: 1.02
+
+  chandrayangutta:
+    name: "Chandrayangutta"
+    zone_type: residential_dense
+    active: true
+    bounds:
+      lat_min: 17.29
+      lat_max: 17.33
+      lng_min: 78.46
+      lng_max: 78.50
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  # ===========================================================================
+  # 11. GOLCONDA ZONE (GHMC Zone - NEW)
+  # Circles: Goshamahal, Karwan, Golconda, Mehdipatnam, Masab Tank
+  # ===========================================================================
+  
+  golconda:
+    name: "Golconda Fort Area"
+    zone_type: heritage_commercial
+    active: true
+    bounds:
+      lat_min: 17.38
+      lat_max: 17.41
+      lng_min: 78.38
+      lng_max: 78.42
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.05
+      heavy_truck: 1.10
+      default: 1.02
+
+  goshamahal:
+    name: "Goshamahal"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.38
+      lat_max: 17.41
+      lng_min: 78.45
+      lng_max: 78.48
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  karwan:
+    name: "Karwan"
+    zone_type: traditional_commercial
+    active: true
+    bounds:
+      lat_min: 17.36
+      lat_max: 17.39
+      lng_min: 78.43
+      lng_max: 78.46
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.05
+      heavy_truck: 1.10
+      default: 1.02
+
+  mehdipatnam:
+    name: "Mehdipatnam"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.38
+      lat_max: 17.42
+      lng_min: 78.42
+      lng_max: 78.45
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  masab_tank:
+    name: "Masab Tank"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.39
+      lat_max: 17.43
+      lng_min: 78.44
+      lng_max: 78.47
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  tcs_synergy:
+    name: "TCS Synergy Park Tech Zone"
+    zone_type: tech_corridor
+    active: true
+    bounds:
+      lat_min: 17.37
+      lat_max: 17.39
+      lng_min: 78.47
+      lng_max: 78.49
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  # ===========================================================================
+  # 12. QUTHBULLAPUR ZONE (GHMC Zone - NEW)
+  # Circles: Chintal, Jeedimetla, Kompally, Gajularamaram, Nizampet, Dundigal
+  # ===========================================================================
+  
+  kompally:
+    name: "Kompally"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.52
+      lat_max: 17.56
+      lng_min: 78.46
+      lng_max: 78.50
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  chintal:
+    name: "Chintal"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.49
+      lat_max: 17.52
+      lng_min: 78.45
+      lng_max: 78.49
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  jeedimetla:
+    name: "Jeedimetla Industrial"
+    zone_type: industrial
+    active: true
+    bounds:
+      lat_min: 17.50
+      lat_max: 17.53
+      lng_min: 78.44
+      lng_max: 78.48
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 1.0
+      heavy_truck: 1.05
+      default: 1.0
+
+  gajularamaram:
+    name: "Gajularamaram"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.51
+      lat_max: 17.54
+      lng_min: 78.42
+      lng_max: 78.46
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  nizampet:
+    name: "Nizampet"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.51
+      lat_max: 17.54
+      lng_min: 78.38
+      lng_max: 78.42
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  dundigal:
+    name: "Dundigal"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.56
+      lat_max: 17.60
+      lng_min: 78.40
+      lng_max: 78.44
+    multipliers:
+      small_vehicle: 0.90
+      mid_truck: 0.90
+      heavy_truck: 0.90
+      default: 0.90
+
+  medchal:
+    name: "Medchal"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.62
+      lat_max: 17.66
+      lng_min: 78.47
+      lng_max: 78.51
+    multipliers:
+      small_vehicle: 0.90
+      mid_truck: 0.90
+      heavy_truck: 0.90
+      default: 0.90
+
+  # ===========================================================================
+  # SPECIAL ZONES (Existing operational)
+  # ===========================================================================
+  
+  vanasthali:
+    name: "Vanasthali Puram Residential"
+    zone_type: residential_dense
+    active: true
+    bounds:
+      lat_min: 17.34
+      lat_max: 17.35
+      lng_min: 78.56
+      lng_max: 78.57
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+# =============================================================================
+# END OF ZONE DEFINITIONS
+# =============================================================================
+# Total zones: 55+
+# Active zones: 14 (current operational)
+# Inactive zones: 41+ (available for expansion)
+# =============================================================================

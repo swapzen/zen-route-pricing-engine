@@ -1,0 +1,37 @@
+# =============================================================================
+# Zone Pricing: vanasthali (Vanasthali Puram Residential)
+# =============================================================================
+# Routes: Route 8 pickup zone
+# Zone Type: Residential Dense (outer suburb)
+# =============================================================================
+
+zone_code: vanasthali
+zone_type: residential_dense
+
+pricing:
+  morning:
+    two_wheeler:   { base: 3500, rate: 900 }
+    scooter:       { base: 5000, rate: 1200 }
+    mini_3w:       { base: 7500, rate: 1800 }
+    three_wheeler: { base: 16000, rate: 3500 }
+    tata_ace:      { base: 18000, rate: 4000 }
+    pickup_8ft:    { base: 22000, rate: 4800 }
+    canter_14ft:   { base: 75000, rate: 10000 }
+
+  afternoon:
+    two_wheeler:   { base: 4000, rate: 1000 }
+    scooter:       { base: 5500, rate: 1300 }
+    mini_3w:       { base: 8500, rate: 2000 }
+    three_wheeler: { base: 17000, rate: 3700 }
+    tata_ace:      { base: 19000, rate: 4200 }
+    pickup_8ft:    { base: 24000, rate: 5200 }
+    canter_14ft:   { base: 78000, rate: 11000 }
+
+  evening:
+    two_wheeler:   { base: 3500, rate: 900 }
+    scooter:       { base: 5000, rate: 1200 }
+    mini_3w:       { base: 7500, rate: 1800 }
+    three_wheeler: { base: 28000, rate: 4500 }
+    tata_ace:      { base: 30000, rate: 5000 }
+    pickup_8ft:    { base: 36000, rate: 5800 }
+    canter_14ft:   { base: 90000, rate: 12000 }

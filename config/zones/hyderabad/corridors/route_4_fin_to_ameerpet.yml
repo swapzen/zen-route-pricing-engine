@@ -1,0 +1,46 @@
+# =============================================================================
+# Corridor: fin_district → ameerpet_core (Route 4)
+# =============================================================================
+# Distance: 18.74km Medium (chargeable 17.74km)
+# Route: Gowlidoddi → Ameerpet Metro
+# =============================================================================
+
+corridor_id: route_4_fin_to_ameerpet
+from_zone: fin_district
+to_zone: ameerpet_core
+directional: true
+
+_benchmarks:
+  route_4:
+    description: "Gowlidoddi → Ameerpet Metro (15.9km Medium)"
+    morning: { two_wheeler: 188, scooter: 241, mini_3w: 317, three_wheeler: 706, tata_ace: 748, pickup_8ft: 820, canter_14ft: 2321 }
+    afternoon: { two_wheeler: 278, scooter: 334, mini_3w: 446, three_wheeler: 894, tata_ace: 936, pickup_8ft: 1045, canter_14ft: 2571 }
+    evening: { two_wheeler: 268, scooter: 324, mini_3w: 385, three_wheeler: 1050, tata_ace: 1090, pickup_8ft: 1189, canter_14ft: 2869 }
+
+pricing:
+  morning:
+    two_wheeler:   { base: 3800, rate: 750 }
+    scooter:       { base: 5000, rate: 1000 }
+    mini_3w:       { base: 7000, rate: 1300 }
+    three_wheeler: { base: 16000, rate: 3000 }
+    tata_ace:      { base: 17000, rate: 3200 }
+    pickup_8ft:    { base: 20000, rate: 3600 }
+    canter_14ft:   { base: 85000, rate: 7500 }
+
+  afternoon:
+    two_wheeler:   { base: 5500, rate: 1200 }
+    scooter:       { base: 7000, rate: 1500 }
+    mini_3w:       { base: 9000, rate: 2000 }
+    three_wheeler: { base: 22000, rate: 3700 }
+    tata_ace:      { base: 23000, rate: 4000 }
+    pickup_8ft:    { base: 27000, rate: 4500 }
+    canter_14ft:   { base: 100000, rate: 9000 }
+
+  evening:
+    two_wheeler:   { base: 5000, rate: 1100 }
+    scooter:       { base: 6500, rate: 1300 }
+    mini_3w:       { base: 8000, rate: 1700 }
+    three_wheeler: { base: 30000, rate: 4500 }
+    tata_ace:      { base: 28000, rate: 4500 }
+    pickup_8ft:    { base: 32000, rate: 5000 }
+    canter_14ft:   { base: 110000, rate: 10000 }

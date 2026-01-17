@@ -17,7 +17,12 @@ class PricingZoneMultiplier < ApplicationRecord
     residential_mixed
     residential_growth
     industrial_logistics
+    industrial
     airport_logistics
+    premium_residential
+    heritage_commercial
+    outer_ring
+    default
   ].freeze
   
   # Validations

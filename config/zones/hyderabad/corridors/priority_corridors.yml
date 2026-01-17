@@ -1,0 +1,856 @@
+# =============================================================================
+# HYDERABAD PRIORITY CORRIDORS
+# =============================================================================
+# High-traffic routes requiring precise pricing to compete with Porter
+# Organized by commute pattern type
+# =============================================================================
+
+version: "1.0"
+city_code: hyd
+
+# =============================================================================
+# MORNING RUSH: Residential → Tech Corridors
+# =============================================================================
+# Pattern: Workers commuting from residential areas to IT hubs
+# Time: 7 AM - 11 AM, higher demand, pricing premium
+
+morning_rush_corridors:
+
+  # --- TO HITEC CITY / MADHAPUR ---
+  
+  jntu_to_hitech:
+    from_zone: jntu_kukatpally
+    to_zone: hitech_madhapur
+    directional: true
+    distance_km: 6
+    description: "JNTU Kukatpally → HITEC City (Morning IT Commute)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 4500, rate: 700 }
+        scooter:       { base: 6000, rate: 900 }
+        mini_3w:       { base: 9000, rate: 1400 }
+        three_wheeler: { base: 22000, rate: 3000 }
+        tata_ace:      { base: 24000, rate: 3200 }
+        pickup_8ft:    { base: 28000, rate: 3800 }
+        canter_14ft:   { base: 85000, rate: 8000 }
+      afternoon:
+        two_wheeler:   { base: 4800, rate: 750 }
+        scooter:       { base: 6300, rate: 950 }
+        mini_3w:       { base: 10000, rate: 1500 }
+        three_wheeler: { base: 23000, rate: 3100 }
+        tata_ace:      { base: 25000, rate: 3300 }
+        pickup_8ft:    { base: 30000, rate: 4000 }
+        canter_14ft:   { base: 88000, rate: 8500 }
+      evening:
+        two_wheeler:   { base: 4500, rate: 700 }
+        scooter:       { base: 6000, rate: 900 }
+        mini_3w:       { base: 9000, rate: 1400 }
+        three_wheeler: { base: 32000, rate: 4000 }
+        tata_ace:      { base: 34000, rate: 4200 }
+        pickup_8ft:    { base: 40000, rate: 5000 }
+        canter_14ft:   { base: 100000, rate: 10000 }
+
+  kondapur_to_hitech:
+    from_zone: kondapur
+    to_zone: hitech_madhapur
+    directional: true
+    distance_km: 4
+    description: "Kondapur → HITEC City"
+    pricing:
+      morning:
+        two_wheeler:   { base: 4000, rate: 600 }
+        scooter:       { base: 5500, rate: 800 }
+        mini_3w:       { base: 8000, rate: 1200 }
+        three_wheeler: { base: 20000, rate: 2800 }
+        tata_ace:      { base: 22000, rate: 3000 }
+        pickup_8ft:    { base: 26000, rate: 3500 }
+        canter_14ft:   { base: 80000, rate: 7500 }
+      afternoon:
+        two_wheeler:   { base: 4200, rate: 650 }
+        scooter:       { base: 5800, rate: 850 }
+        mini_3w:       { base: 8500, rate: 1300 }
+        three_wheeler: { base: 21000, rate: 2900 }
+        tata_ace:      { base: 23000, rate: 3100 }
+        pickup_8ft:    { base: 27000, rate: 3700 }
+        canter_14ft:   { base: 82000, rate: 7800 }
+      evening:
+        two_wheeler:   { base: 4000, rate: 600 }
+        scooter:       { base: 5500, rate: 800 }
+        mini_3w:       { base: 8000, rate: 1200 }
+        three_wheeler: { base: 30000, rate: 3800 }
+        tata_ace:      { base: 32000, rate: 4000 }
+        pickup_8ft:    { base: 38000, rate: 4800 }
+        canter_14ft:   { base: 95000, rate: 9500 }
+
+  jubilee_to_hitech:
+    from_zone: jubilee_hills
+    to_zone: hitech_madhapur
+    directional: true
+    distance_km: 5
+    description: "Jubilee Hills → HITEC City (Premium Residential)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 5000, rate: 800 }
+        scooter:       { base: 6500, rate: 1000 }
+        mini_3w:       { base: 10000, rate: 1500 }
+        three_wheeler: { base: 25000, rate: 3500 }
+        tata_ace:      { base: 27000, rate: 3700 }
+        pickup_8ft:    { base: 32000, rate: 4200 }
+        canter_14ft:   { base: 95000, rate: 9000 }
+      afternoon:
+        two_wheeler:   { base: 5200, rate: 850 }
+        scooter:       { base: 6800, rate: 1050 }
+        mini_3w:       { base: 10500, rate: 1600 }
+        three_wheeler: { base: 26000, rate: 3600 }
+        tata_ace:      { base: 28000, rate: 3800 }
+        pickup_8ft:    { base: 33000, rate: 4400 }
+        canter_14ft:   { base: 98000, rate: 9300 }
+      evening:
+        two_wheeler:   { base: 5000, rate: 800 }
+        scooter:       { base: 6500, rate: 1000 }
+        mini_3w:       { base: 10000, rate: 1500 }
+        three_wheeler: { base: 35000, rate: 4500 }
+        tata_ace:      { base: 37000, rate: 4700 }
+        pickup_8ft:    { base: 44000, rate: 5500 }
+        canter_14ft:   { base: 110000, rate: 11000 }
+
+  banjara_to_hitech:
+    from_zone: banjara_hills
+    to_zone: hitech_madhapur
+    directional: true
+    distance_km: 7
+    description: "Banjara Hills → HITEC City (Premium Residential)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 5200, rate: 850 }
+        scooter:       { base: 6800, rate: 1050 }
+        mini_3w:       { base: 10500, rate: 1600 }
+        three_wheeler: { base: 26000, rate: 3600 }
+        tata_ace:      { base: 28000, rate: 3800 }
+        pickup_8ft:    { base: 33000, rate: 4400 }
+        canter_14ft:   { base: 98000, rate: 9300 }
+      afternoon:
+        two_wheeler:   { base: 5500, rate: 900 }
+        scooter:       { base: 7100, rate: 1100 }
+        mini_3w:       { base: 11000, rate: 1700 }
+        three_wheeler: { base: 27000, rate: 3700 }
+        tata_ace:      { base: 29000, rate: 3900 }
+        pickup_8ft:    { base: 34000, rate: 4600 }
+        canter_14ft:   { base: 100000, rate: 9500 }
+      evening:
+        two_wheeler:   { base: 5200, rate: 850 }
+        scooter:       { base: 6800, rate: 1050 }
+        mini_3w:       { base: 10500, rate: 1600 }
+        three_wheeler: { base: 36000, rate: 4600 }
+        tata_ace:      { base: 38000, rate: 4800 }
+        pickup_8ft:    { base: 45000, rate: 5700 }
+        canter_14ft:   { base: 115000, rate: 11500 }
+
+  # --- TO FINANCIAL DISTRICT ---
+
+  lb_nagar_to_fin_district:
+    from_zone: lb_nagar_east
+    to_zone: fin_district
+    directional: true
+    distance_km: 22
+    description: "LB Nagar → Financial District (Cross-City IT Commute)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 6000, rate: 900 }
+        scooter:       { base: 8000, rate: 1100 }
+        mini_3w:       { base: 12000, rate: 1700 }
+        three_wheeler: { base: 30000, rate: 4000 }
+        tata_ace:      { base: 32000, rate: 4200 }
+        pickup_8ft:    { base: 38000, rate: 5000 }
+        canter_14ft:   { base: 110000, rate: 10000 }
+      afternoon:
+        two_wheeler:   { base: 6500, rate: 950 }
+        scooter:       { base: 8500, rate: 1150 }
+        mini_3w:       { base: 13000, rate: 1800 }
+        three_wheeler: { base: 32000, rate: 4200 }
+        tata_ace:      { base: 34000, rate: 4400 }
+        pickup_8ft:    { base: 40000, rate: 5200 }
+        canter_14ft:   { base: 115000, rate: 10500 }
+      evening:
+        two_wheeler:   { base: 6000, rate: 900 }
+        scooter:       { base: 8000, rate: 1100 }
+        mini_3w:       { base: 12000, rate: 1700 }
+        three_wheeler: { base: 42000, rate: 5200 }
+        tata_ace:      { base: 44000, rate: 5400 }
+        pickup_8ft:    { base: 52000, rate: 6500 }
+        canter_14ft:   { base: 130000, rate: 12500 }
+
+  uppal_to_fin_district:
+    from_zone: uppal_corridor
+    to_zone: fin_district
+    directional: true
+    distance_km: 25
+    description: "Uppal → Financial District"
+    pricing:
+      morning:
+        two_wheeler:   { base: 6500, rate: 950 }
+        scooter:       { base: 8500, rate: 1150 }
+        mini_3w:       { base: 13000, rate: 1800 }
+        three_wheeler: { base: 32000, rate: 4200 }
+        tata_ace:      { base: 34000, rate: 4400 }
+        pickup_8ft:    { base: 40000, rate: 5200 }
+        canter_14ft:   { base: 115000, rate: 10500 }
+      afternoon:
+        two_wheeler:   { base: 7000, rate: 1000 }
+        scooter:       { base: 9000, rate: 1200 }
+        mini_3w:       { base: 14000, rate: 1900 }
+        three_wheeler: { base: 34000, rate: 4400 }
+        tata_ace:      { base: 36000, rate: 4600 }
+        pickup_8ft:    { base: 42000, rate: 5400 }
+        canter_14ft:   { base: 120000, rate: 11000 }
+      evening:
+        two_wheeler:   { base: 6500, rate: 950 }
+        scooter:       { base: 8500, rate: 1150 }
+        mini_3w:       { base: 13000, rate: 1800 }
+        three_wheeler: { base: 44000, rate: 5400 }
+        tata_ace:      { base: 46000, rate: 5600 }
+        pickup_8ft:    { base: 54000, rate: 6800 }
+        canter_14ft:   { base: 135000, rate: 13000 }
+
+  secunderabad_to_hitech:
+    from_zone: secunderabad_cbd
+    to_zone: hitech_madhapur
+    directional: true
+    distance_km: 18
+    description: "Secunderabad → HITEC City (Railway Hub to Tech)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 5500, rate: 850 }
+        scooter:       { base: 7200, rate: 1050 }
+        mini_3w:       { base: 11000, rate: 1600 }
+        three_wheeler: { base: 28000, rate: 3800 }
+        tata_ace:      { base: 30000, rate: 4000 }
+        pickup_8ft:    { base: 35000, rate: 4700 }
+        canter_14ft:   { base: 100000, rate: 9500 }
+      afternoon:
+        two_wheeler:   { base: 5800, rate: 900 }
+        scooter:       { base: 7500, rate: 1100 }
+        mini_3w:       { base: 11500, rate: 1700 }
+        three_wheeler: { base: 29000, rate: 3900 }
+        tata_ace:      { base: 31000, rate: 4100 }
+        pickup_8ft:    { base: 36000, rate: 4900 }
+        canter_14ft:   { base: 103000, rate: 9800 }
+      evening:
+        two_wheeler:   { base: 5500, rate: 850 }
+        scooter:       { base: 7200, rate: 1050 }
+        mini_3w:       { base: 11000, rate: 1600 }
+        three_wheeler: { base: 38000, rate: 4900 }
+        tata_ace:      { base: 40000, rate: 5100 }
+        pickup_8ft:    { base: 47000, rate: 6000 }
+        canter_14ft:   { base: 120000, rate: 12000 }
+
+# =============================================================================
+# BUSINESS DISTRICT CORRIDORS
+# =============================================================================
+# Inter-CBD and Tech-to-CBD routes
+
+business_corridors:
+
+  hitech_to_fin_district:
+    from_zone: hitech_madhapur
+    to_zone: fin_district
+    directional: false
+    distance_km: 8
+    description: "HITEC City ↔ Financial District (Tech Corridor Link)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 4600, rate: 670 }
+        scooter:       { base: 5800, rate: 870 }
+        mini_3w:       { base: 7800, rate: 1200 }
+        three_wheeler: { base: 16700, rate: 3000 }
+        tata_ace:      { base: 18000, rate: 3200 }
+        pickup_8ft:    { base: 20700, rate: 3700 }
+        canter_14ft:   { base: 65500, rate: 10000 }
+      afternoon:
+        two_wheeler:   { base: 4950, rate: 740 }
+        scooter:       { base: 6150, rate: 940 }
+        mini_3w:       { base: 9600, rate: 1670 }
+        three_wheeler: { base: 17350, rate: 3200 }
+        tata_ace:      { base: 18900, rate: 3400 }
+        pickup_8ft:    { base: 22250, rate: 4150 }
+        canter_14ft:   { base: 65500, rate: 10100 }
+      evening:
+        two_wheeler:   { base: 4600, rate: 670 }
+        scooter:       { base: 5800, rate: 870 }
+        mini_3w:       { base: 7800, rate: 1200 }
+        three_wheeler: { base: 20600, rate: 4350 }
+        tata_ace:      { base: 21900, rate: 4550 }
+        pickup_8ft:    { base: 25250, rate: 5280 }
+        canter_14ft:   { base: 73500, rate: 11700 }
+
+  fin_district_to_ameerpet:
+    from_zone: fin_district
+    to_zone: ameerpet_core
+    directional: true
+    distance_km: 16
+    description: "Financial District → Ameerpet CBD"
+    pricing:
+      morning:
+        two_wheeler:   { base: 3800, rate: 750 }
+        scooter:       { base: 5000, rate: 1000 }
+        mini_3w:       { base: 7000, rate: 1300 }
+        three_wheeler: { base: 16000, rate: 3000 }
+        tata_ace:      { base: 17000, rate: 3200 }
+        pickup_8ft:    { base: 20000, rate: 3600 }
+        canter_14ft:   { base: 85000, rate: 7500 }
+      afternoon:
+        two_wheeler:   { base: 5500, rate: 1200 }
+        scooter:       { base: 7000, rate: 1500 }
+        mini_3w:       { base: 9000, rate: 2000 }
+        three_wheeler: { base: 22000, rate: 3700 }
+        tata_ace:      { base: 23000, rate: 4000 }
+        pickup_8ft:    { base: 27000, rate: 4500 }
+        canter_14ft:   { base: 100000, rate: 9000 }
+      evening:
+        two_wheeler:   { base: 5000, rate: 1100 }
+        scooter:       { base: 6500, rate: 1300 }
+        mini_3w:       { base: 8000, rate: 1700 }
+        three_wheeler: { base: 30000, rate: 4500 }
+        tata_ace:      { base: 28000, rate: 4500 }
+        pickup_8ft:    { base: 32000, rate: 5000 }
+        canter_14ft:   { base: 110000, rate: 10000 }
+
+  ameerpet_to_jntu:
+    from_zone: ameerpet_core
+    to_zone: jntu_kukatpally
+    directional: true
+    distance_km: 10
+    description: "Ameerpet CBD → JNTU Kukatpally"
+    pricing:
+      morning:
+        two_wheeler:   { base: 4800, rate: 300 }
+        scooter:       { base: 6400, rate: 450 }
+        mini_3w:       { base: 9900, rate: 700 }
+        three_wheeler: { base: 22800, rate: 1600 }
+        tata_ace:      { base: 25000, rate: 1800 }
+        pickup_8ft:    { base: 29900, rate: 2100 }
+        canter_14ft:   { base: 88000, rate: 6500 }
+      afternoon:
+        two_wheeler:   { base: 5300, rate: 400 }
+        scooter:       { base: 7100, rate: 500 }
+        mini_3w:       { base: 13300, rate: 950 }
+        three_wheeler: { base: 23700, rate: 1700 }
+        tata_ace:      { base: 25800, rate: 1850 }
+        pickup_8ft:    { base: 32200, rate: 2300 }
+        canter_14ft:   { base: 90000, rate: 6500 }
+      evening:
+        two_wheeler:   { base: 4800, rate: 300 }
+        scooter:       { base: 6400, rate: 450 }
+        mini_3w:       { base: 9900, rate: 700 }
+        three_wheeler: { base: 32600, rate: 2350 }
+        tata_ace:      { base: 34700, rate: 2500 }
+        pickup_8ft:    { base: 41600, rate: 3000 }
+        canter_14ft:   { base: 105000, rate: 7600 }
+
+  hitech_to_ameerpet:
+    from_zone: hitech_madhapur
+    to_zone: ameerpet_core
+    directional: true
+    distance_km: 12
+    description: "HITEC City → Ameerpet CBD"
+    pricing:
+      morning:
+        two_wheeler:   { base: 4800, rate: 650 }
+        scooter:       { base: 6200, rate: 850 }
+        mini_3w:       { base: 9500, rate: 1300 }
+        three_wheeler: { base: 24000, rate: 3200 }
+        tata_ace:      { base: 26000, rate: 3400 }
+        pickup_8ft:    { base: 30000, rate: 4000 }
+        canter_14ft:   { base: 90000, rate: 8500 }
+      afternoon:
+        two_wheeler:   { base: 5100, rate: 700 }
+        scooter:       { base: 6500, rate: 900 }
+        mini_3w:       { base: 10000, rate: 1400 }
+        three_wheeler: { base: 25000, rate: 3300 }
+        tata_ace:      { base: 27000, rate: 3500 }
+        pickup_8ft:    { base: 31000, rate: 4200 }
+        canter_14ft:   { base: 93000, rate: 8800 }
+      evening:
+        two_wheeler:   { base: 4800, rate: 650 }
+        scooter:       { base: 6200, rate: 850 }
+        mini_3w:       { base: 9500, rate: 1300 }
+        three_wheeler: { base: 34000, rate: 4200 }
+        tata_ace:      { base: 36000, rate: 4400 }
+        pickup_8ft:    { base: 42000, rate: 5200 }
+        canter_14ft:   { base: 108000, rate: 10500 }
+
+  secunderabad_to_ameerpet:
+    from_zone: secunderabad_cbd
+    to_zone: ameerpet_core
+    directional: false
+    distance_km: 8
+    description: "Secunderabad ↔ Ameerpet (Twin City Link)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 4200, rate: 600 }
+        scooter:       { base: 5500, rate: 800 }
+        mini_3w:       { base: 8500, rate: 1200 }
+        three_wheeler: { base: 21000, rate: 2900 }
+        tata_ace:      { base: 23000, rate: 3100 }
+        pickup_8ft:    { base: 27000, rate: 3600 }
+        canter_14ft:   { base: 82000, rate: 7800 }
+      afternoon:
+        two_wheeler:   { base: 4500, rate: 650 }
+        scooter:       { base: 5800, rate: 850 }
+        mini_3w:       { base: 9000, rate: 1300 }
+        three_wheeler: { base: 22000, rate: 3000 }
+        tata_ace:      { base: 24000, rate: 3200 }
+        pickup_8ft:    { base: 28000, rate: 3800 }
+        canter_14ft:   { base: 85000, rate: 8000 }
+      evening:
+        two_wheeler:   { base: 4200, rate: 600 }
+        scooter:       { base: 5500, rate: 800 }
+        mini_3w:       { base: 8500, rate: 1200 }
+        three_wheeler: { base: 31000, rate: 3900 }
+        tata_ace:      { base: 33000, rate: 4100 }
+        pickup_8ft:    { base: 38000, rate: 4800 }
+        canter_14ft:   { base: 100000, rate: 9800 }
+
+# =============================================================================
+# OLD CITY CORRIDORS (Congestion Premium)
+# =============================================================================
+# Routes to/from Charminar area - narrow roads, congestion
+
+old_city_corridors:
+
+  lb_nagar_to_tcs_synergy:
+    from_zone: lb_nagar_east
+    to_zone: tcs_synergy
+    directional: true
+    distance_km: 10
+    description: "LB Nagar → TCS Synergy Park (Route 3, actual ~10km)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 7500, rate: 2200 }
+        scooter:       { base: 10000, rate: 2700 }
+        mini_3w:       { base: 11000, rate: 3200 }
+        three_wheeler: { base: 28000, rate: 6700 }
+        tata_ace:      { base: 30000, rate: 7100 }
+        pickup_8ft:    { base: 33000, rate: 7600 }
+        canter_14ft:   { base: 95000, rate: 18500 }
+      afternoon:
+        two_wheeler:   { base: 8000, rate: 2300 }
+        scooter:       { base: 10500, rate: 2800 }
+        mini_3w:       { base: 11500, rate: 3300 }
+        three_wheeler: { base: 30000, rate: 7000 }
+        tata_ace:      { base: 31000, rate: 7400 }
+        pickup_8ft:    { base: 38000, rate: 8200 }
+        canter_14ft:   { base: 95000, rate: 18500 }
+      evening:
+        two_wheeler:   { base: 7500, rate: 2200 }
+        scooter:       { base: 10000, rate: 2700 }
+        mini_3w:       { base: 11000, rate: 3200 }
+        three_wheeler: { base: 38000, rate: 8500 }
+        tata_ace:      { base: 40000, rate: 8900 }
+        pickup_8ft:    { base: 46000, rate: 9500 }
+        canter_14ft:   { base: 115000, rate: 20000 }
+
+  lb_nagar_to_old_city:
+    from_zone: lb_nagar_east
+    to_zone: old_city
+    directional: true
+    distance_km: 14
+    description: "LB Nagar → Charminar (Route 8)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 7800, rate: 650 }
+        scooter:       { base: 10000, rate: 850 }
+        mini_3w:       { base: 13700, rate: 1200 }
+        three_wheeler: { base: 32000, rate: 2700 }
+        tata_ace:      { base: 36400, rate: 3120 }
+        pickup_8ft:    { base: 42000, rate: 3600 }
+        canter_14ft:   { base: 122000, rate: 10000 }
+      afternoon:
+        two_wheeler:   { base: 9200, rate: 800 }
+        scooter:       { base: 11800, rate: 1000 }
+        mini_3w:       { base: 15700, rate: 1400 }
+        three_wheeler: { base: 37000, rate: 3100 }
+        tata_ace:      { base: 42000, rate: 3500 }
+        pickup_8ft:    { base: 48000, rate: 4000 }
+        canter_14ft:   { base: 127000, rate: 11000 }
+      evening:
+        two_wheeler:   { base: 7800, rate: 650 }
+        scooter:       { base: 10000, rate: 850 }
+        mini_3w:       { base: 13700, rate: 1200 }
+        three_wheeler: { base: 45500, rate: 3700 }
+        tata_ace:      { base: 49000, rate: 4100 }
+        pickup_8ft:    { base: 56000, rate: 4800 }
+        canter_14ft:   { base: 140600, rate: 11720 }
+
+  jntu_to_old_city:
+    from_zone: jntu_kukatpally
+    to_zone: old_city
+    directional: true
+    distance_km: 25
+    description: "JNTU Kukatpally → Charminar (Route 7)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 3500, rate: 650 }
+        scooter:       { base: 4600, rate: 820 }
+        mini_3w:       { base: 6500, rate: 1050 }
+        three_wheeler: { base: 17500, rate: 2250 }
+        tata_ace:      { base: 18700, rate: 2450 }
+        pickup_8ft:    { base: 21500, rate: 2600 }
+        canter_14ft:   { base: 83000, rate: 7000 }
+      afternoon:
+        two_wheeler:   { base: 3700, rate: 690 }
+        scooter:       { base: 4800, rate: 870 }
+        mini_3w:       { base: 6600, rate: 1100 }
+        three_wheeler: { base: 18000, rate: 2400 }
+        tata_ace:      { base: 19500, rate: 2600 }
+        pickup_8ft:    { base: 22800, rate: 2900 }
+        canter_14ft:   { base: 83000, rate: 7000 }
+      evening:
+        two_wheeler:   { base: 3500, rate: 650 }
+        scooter:       { base: 4600, rate: 820 }
+        mini_3w:       { base: 6500, rate: 1050 }
+        three_wheeler: { base: 23200, rate: 2800 }
+        tata_ace:      { base: 24400, rate: 3000 }
+        pickup_8ft:    { base: 28400, rate: 3200 }
+        canter_14ft:   { base: 87000, rate: 7100 }
+
+  hitech_to_old_city:
+    from_zone: hitech_madhapur
+    to_zone: old_city
+    directional: true
+    distance_km: 20
+    description: "HITEC City → Charminar"
+    pricing:
+      morning:
+        two_wheeler:   { base: 5500, rate: 800 }
+        scooter:       { base: 7200, rate: 1000 }
+        mini_3w:       { base: 11000, rate: 1500 }
+        three_wheeler: { base: 28000, rate: 3600 }
+        tata_ace:      { base: 30000, rate: 3800 }
+        pickup_8ft:    { base: 35000, rate: 4500 }
+        canter_14ft:   { base: 100000, rate: 9000 }
+      afternoon:
+        two_wheeler:   { base: 6000, rate: 850 }
+        scooter:       { base: 7700, rate: 1050 }
+        mini_3w:       { base: 12000, rate: 1600 }
+        three_wheeler: { base: 30000, rate: 3800 }
+        tata_ace:      { base: 32000, rate: 4000 }
+        pickup_8ft:    { base: 37000, rate: 4700 }
+        canter_14ft:   { base: 105000, rate: 9500 }
+      evening:
+        two_wheeler:   { base: 5500, rate: 800 }
+        scooter:       { base: 7200, rate: 1000 }
+        mini_3w:       { base: 11000, rate: 1500 }
+        three_wheeler: { base: 38000, rate: 4600 }
+        tata_ace:      { base: 40000, rate: 4800 }
+        pickup_8ft:    { base: 47000, rate: 5700 }
+        canter_14ft:   { base: 120000, rate: 11500 }
+
+  ameerpet_to_old_city:
+    from_zone: ameerpet_core
+    to_zone: old_city
+    directional: true
+    distance_km: 10
+    description: "Ameerpet → Charminar"
+    pricing:
+      morning:
+        two_wheeler:   { base: 4500, rate: 650 }
+        scooter:       { base: 6000, rate: 850 }
+        mini_3w:       { base: 9000, rate: 1300 }
+        three_wheeler: { base: 23000, rate: 3100 }
+        tata_ace:      { base: 25000, rate: 3300 }
+        pickup_8ft:    { base: 29000, rate: 3900 }
+        canter_14ft:   { base: 88000, rate: 8200 }
+      afternoon:
+        two_wheeler:   { base: 4800, rate: 700 }
+        scooter:       { base: 6300, rate: 900 }
+        mini_3w:       { base: 9500, rate: 1400 }
+        three_wheeler: { base: 24000, rate: 3200 }
+        tata_ace:      { base: 26000, rate: 3400 }
+        pickup_8ft:    { base: 30000, rate: 4100 }
+        canter_14ft:   { base: 90000, rate: 8500 }
+      evening:
+        two_wheeler:   { base: 4500, rate: 650 }
+        scooter:       { base: 6000, rate: 850 }
+        mini_3w:       { base: 9000, rate: 1300 }
+        three_wheeler: { base: 33000, rate: 4100 }
+        tata_ace:      { base: 35000, rate: 4300 }
+        pickup_8ft:    { base: 40000, rate: 5100 }
+        canter_14ft:   { base: 105000, rate: 10200 }
+
+  secunderabad_to_old_city:
+    from_zone: secunderabad_cbd
+    to_zone: old_city
+    directional: true
+    distance_km: 8
+    description: "Secunderabad → Charminar (Railway to Old City)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 4200, rate: 600 }
+        scooter:       { base: 5500, rate: 800 }
+        mini_3w:       { base: 8500, rate: 1200 }
+        three_wheeler: { base: 21000, rate: 2900 }
+        tata_ace:      { base: 23000, rate: 3100 }
+        pickup_8ft:    { base: 27000, rate: 3600 }
+        canter_14ft:   { base: 82000, rate: 7800 }
+      afternoon:
+        two_wheeler:   { base: 4500, rate: 650 }
+        scooter:       { base: 5800, rate: 850 }
+        mini_3w:       { base: 9000, rate: 1300 }
+        three_wheeler: { base: 22000, rate: 3000 }
+        tata_ace:      { base: 24000, rate: 3200 }
+        pickup_8ft:    { base: 28000, rate: 3800 }
+        canter_14ft:   { base: 85000, rate: 8000 }
+      evening:
+        two_wheeler:   { base: 4200, rate: 600 }
+        scooter:       { base: 5500, rate: 800 }
+        mini_3w:       { base: 8500, rate: 1200 }
+        three_wheeler: { base: 31000, rate: 3900 }
+        tata_ace:      { base: 33000, rate: 4100 }
+        pickup_8ft:    { base: 38000, rate: 4800 }
+        canter_14ft:   { base: 100000, rate: 9800 }
+
+# =============================================================================
+# AIRPORT CORRIDORS (Premium Routes)
+# =============================================================================
+# Routes to/from Shamshabad Airport - premium pricing
+
+airport_corridors:
+
+  airport_to_hitech:
+    from_zone: shamshabad
+    to_zone: hitech_madhapur
+    directional: false
+    distance_km: 30
+    description: "Airport ↔ HITEC City (Premium Business)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 8000, rate: 1000 }
+        scooter:       { base: 10500, rate: 1300 }
+        mini_3w:       { base: 16000, rate: 2000 }
+        three_wheeler: { base: 40000, rate: 4800 }
+        tata_ace:      { base: 42000, rate: 5000 }
+        pickup_8ft:    { base: 50000, rate: 6000 }
+        canter_14ft:   { base: 140000, rate: 12000 }
+      afternoon:
+        two_wheeler:   { base: 8500, rate: 1050 }
+        scooter:       { base: 11000, rate: 1350 }
+        mini_3w:       { base: 17000, rate: 2100 }
+        three_wheeler: { base: 42000, rate: 5000 }
+        tata_ace:      { base: 44000, rate: 5200 }
+        pickup_8ft:    { base: 52000, rate: 6200 }
+        canter_14ft:   { base: 145000, rate: 12500 }
+      evening:
+        two_wheeler:   { base: 8000, rate: 1000 }
+        scooter:       { base: 10500, rate: 1300 }
+        mini_3w:       { base: 16000, rate: 2000 }
+        three_wheeler: { base: 52000, rate: 6000 }
+        tata_ace:      { base: 54000, rate: 6200 }
+        pickup_8ft:    { base: 64000, rate: 7500 }
+        canter_14ft:   { base: 165000, rate: 15000 }
+
+  airport_to_fin_district:
+    from_zone: shamshabad
+    to_zone: fin_district
+    directional: false
+    distance_km: 25
+    description: "Airport ↔ Financial District"
+    pricing:
+      morning:
+        two_wheeler:   { base: 7500, rate: 950 }
+        scooter:       { base: 9800, rate: 1200 }
+        mini_3w:       { base: 15000, rate: 1850 }
+        three_wheeler: { base: 38000, rate: 4500 }
+        tata_ace:      { base: 40000, rate: 4700 }
+        pickup_8ft:    { base: 47000, rate: 5600 }
+        canter_14ft:   { base: 132000, rate: 11000 }
+      afternoon:
+        two_wheeler:   { base: 8000, rate: 1000 }
+        scooter:       { base: 10300, rate: 1250 }
+        mini_3w:       { base: 16000, rate: 1950 }
+        three_wheeler: { base: 40000, rate: 4700 }
+        tata_ace:      { base: 42000, rate: 4900 }
+        pickup_8ft:    { base: 49000, rate: 5800 }
+        canter_14ft:   { base: 137000, rate: 11500 }
+      evening:
+        two_wheeler:   { base: 7500, rate: 950 }
+        scooter:       { base: 9800, rate: 1200 }
+        mini_3w:       { base: 15000, rate: 1850 }
+        three_wheeler: { base: 50000, rate: 5700 }
+        tata_ace:      { base: 52000, rate: 5900 }
+        pickup_8ft:    { base: 61000, rate: 7100 }
+        canter_14ft:   { base: 158000, rate: 14000 }
+
+  airport_to_banjara:
+    from_zone: shamshabad
+    to_zone: banjara_hills
+    directional: false
+    distance_km: 28
+    description: "Airport ↔ Banjara Hills (Premium Residential)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 8500, rate: 1050 }
+        scooter:       { base: 11000, rate: 1350 }
+        mini_3w:       { base: 17000, rate: 2100 }
+        three_wheeler: { base: 42000, rate: 5000 }
+        tata_ace:      { base: 44000, rate: 5200 }
+        pickup_8ft:    { base: 52000, rate: 6200 }
+        canter_14ft:   { base: 145000, rate: 12500 }
+      afternoon:
+        two_wheeler:   { base: 9000, rate: 1100 }
+        scooter:       { base: 11500, rate: 1400 }
+        mini_3w:       { base: 18000, rate: 2200 }
+        three_wheeler: { base: 44000, rate: 5200 }
+        tata_ace:      { base: 46000, rate: 5400 }
+        pickup_8ft:    { base: 54000, rate: 6400 }
+        canter_14ft:   { base: 150000, rate: 13000 }
+      evening:
+        two_wheeler:   { base: 8500, rate: 1050 }
+        scooter:       { base: 11000, rate: 1350 }
+        mini_3w:       { base: 17000, rate: 2100 }
+        three_wheeler: { base: 54000, rate: 6200 }
+        tata_ace:      { base: 56000, rate: 6400 }
+        pickup_8ft:    { base: 66000, rate: 7700 }
+        canter_14ft:   { base: 170000, rate: 15500 }
+
+  airport_to_secunderabad:
+    from_zone: shamshabad
+    to_zone: secunderabad_cbd
+    directional: false
+    distance_km: 35
+    description: "Airport ↔ Secunderabad (Railway Hub)"
+    pricing:
+      morning:
+        two_wheeler:   { base: 9000, rate: 1100 }
+        scooter:       { base: 11700, rate: 1400 }
+        mini_3w:       { base: 18000, rate: 2200 }
+        three_wheeler: { base: 45000, rate: 5300 }
+        tata_ace:      { base: 47000, rate: 5500 }
+        pickup_8ft:    { base: 55000, rate: 6500 }
+        canter_14ft:   { base: 155000, rate: 13500 }
+      afternoon:
+        two_wheeler:   { base: 9500, rate: 1150 }
+        scooter:       { base: 12200, rate: 1450 }
+        mini_3w:       { base: 19000, rate: 2300 }
+        three_wheeler: { base: 47000, rate: 5500 }
+        tata_ace:      { base: 49000, rate: 5700 }
+        pickup_8ft:    { base: 57000, rate: 6700 }
+        canter_14ft:   { base: 160000, rate: 14000 }
+      evening:
+        two_wheeler:   { base: 9000, rate: 1100 }
+        scooter:       { base: 11700, rate: 1400 }
+        mini_3w:       { base: 18000, rate: 2200 }
+        three_wheeler: { base: 57000, rate: 6500 }
+        tata_ace:      { base: 59000, rate: 6700 }
+        pickup_8ft:    { base: 69000, rate: 8000 }
+        canter_14ft:   { base: 180000, rate: 16500 }
+
+# =============================================================================
+# INDUSTRIAL CORRIDORS
+# =============================================================================
+# Routes to/from industrial zones
+
+industrial_corridors:
+
+  patancheru_to_hitech:
+    from_zone: patancheru
+    to_zone: hitech_madhapur
+    directional: false
+    distance_km: 25
+    description: "Patancheru Industrial ↔ HITEC City"
+    pricing:
+      morning:
+        two_wheeler:   { base: 5500, rate: 800 }
+        scooter:       { base: 7200, rate: 1000 }
+        mini_3w:       { base: 11000, rate: 1500 }
+        three_wheeler: { base: 28000, rate: 3600 }
+        tata_ace:      { base: 30000, rate: 3800 }
+        pickup_8ft:    { base: 35000, rate: 4500 }
+        canter_14ft:   { base: 100000, rate: 9000 }
+      afternoon:
+        two_wheeler:   { base: 5800, rate: 850 }
+        scooter:       { base: 7500, rate: 1050 }
+        mini_3w:       { base: 11500, rate: 1600 }
+        three_wheeler: { base: 29000, rate: 3700 }
+        tata_ace:      { base: 31000, rate: 3900 }
+        pickup_8ft:    { base: 36000, rate: 4700 }
+        canter_14ft:   { base: 103000, rate: 9300 }
+      evening:
+        two_wheeler:   { base: 5500, rate: 800 }
+        scooter:       { base: 7200, rate: 1000 }
+        mini_3w:       { base: 11000, rate: 1500 }
+        three_wheeler: { base: 38000, rate: 4600 }
+        tata_ace:      { base: 40000, rate: 4800 }
+        pickup_8ft:    { base: 47000, rate: 5700 }
+        canter_14ft:   { base: 120000, rate: 11500 }
+
+  jeedimetla_to_ameerpet:
+    from_zone: jeedimetla
+    to_zone: ameerpet_core
+    directional: false
+    distance_km: 12
+    description: "Jeedimetla Industrial ↔ Ameerpet"
+    pricing:
+      morning:
+        two_wheeler:   { base: 4500, rate: 650 }
+        scooter:       { base: 6000, rate: 850 }
+        mini_3w:       { base: 9000, rate: 1300 }
+        three_wheeler: { base: 23000, rate: 3100 }
+        tata_ace:      { base: 25000, rate: 3300 }
+        pickup_8ft:    { base: 29000, rate: 3900 }
+        canter_14ft:   { base: 88000, rate: 8200 }
+      afternoon:
+        two_wheeler:   { base: 4800, rate: 700 }
+        scooter:       { base: 6300, rate: 900 }
+        mini_3w:       { base: 9500, rate: 1400 }
+        three_wheeler: { base: 24000, rate: 3200 }
+        tata_ace:      { base: 26000, rate: 3400 }
+        pickup_8ft:    { base: 30000, rate: 4100 }
+        canter_14ft:   { base: 90000, rate: 8500 }
+      evening:
+        two_wheeler:   { base: 4500, rate: 650 }
+        scooter:       { base: 6000, rate: 850 }
+        mini_3w:       { base: 9000, rate: 1300 }
+        three_wheeler: { base: 33000, rate: 4100 }
+        tata_ace:      { base: 35000, rate: 4300 }
+        pickup_8ft:    { base: 40000, rate: 5100 }
+        canter_14ft:   { base: 105000, rate: 10200 }
+
+  nacharam_to_hitech:
+    from_zone: nacharam
+    to_zone: hitech_madhapur
+    directional: false
+    distance_km: 18
+    description: "Nacharam Industrial ↔ HITEC City"
+    pricing:
+      morning:
+        two_wheeler:   { base: 5000, rate: 750 }
+        scooter:       { base: 6500, rate: 950 }
+        mini_3w:       { base: 10000, rate: 1400 }
+        three_wheeler: { base: 25000, rate: 3300 }
+        tata_ace:      { base: 27000, rate: 3500 }
+        pickup_8ft:    { base: 32000, rate: 4200 }
+        canter_14ft:   { base: 95000, rate: 8700 }
+      afternoon:
+        two_wheeler:   { base: 5300, rate: 800 }
+        scooter:       { base: 6800, rate: 1000 }
+        mini_3w:       { base: 10500, rate: 1500 }
+        three_wheeler: { base: 26000, rate: 3400 }
+        tata_ace:      { base: 28000, rate: 3600 }
+        pickup_8ft:    { base: 33000, rate: 4400 }
+        canter_14ft:   { base: 98000, rate: 9000 }
+      evening:
+        two_wheeler:   { base: 5000, rate: 750 }
+        scooter:       { base: 6500, rate: 950 }
+        mini_3w:       { base: 10000, rate: 1400 }
+        three_wheeler: { base: 35000, rate: 4300 }
+        tata_ace:      { base: 37000, rate: 4500 }
+        pickup_8ft:    { base: 44000, rate: 5400 }
+        canter_14ft:   { base: 113000, rate: 10800 }
+
+# =============================================================================
+# END OF CORRIDORS
+# =============================================================================
+# Total Priority Corridors: 25+
+# Coverage: Morning Rush (7), Business (5), Old City (5), Airport (4), Industrial (4)
+# =============================================================================
