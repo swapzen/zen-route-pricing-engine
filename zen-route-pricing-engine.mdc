@@ -273,7 +273,7 @@ alwaysApply: true
     - Update `README.md` when adding new endpoints or features.
     - Document pricing algorithm changes in code comments.
     - Keep `docs/openapi.json` updated for API contract.
-    - Reference `zone_pricing_design.md` (v4.5) for architecture decisions.
+    - Reference `docs/ENGINE_DESIGN.md` for architecture decisions.
 
 ## 🚀 Commit Policy
 
