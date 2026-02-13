@@ -3,7 +3,7 @@
 module RoutePricing
   module Services
     class RouteResolver
-      CACHE_TTL = 6.hours
+      CACHE_TTL = 2.hours  # Reduced from 6h to keep traffic data fresh (matches 2h time bucket in cache key)
 
       def initialize
         @normalizer = CoordinateNormalizer.new

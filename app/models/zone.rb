@@ -85,8 +85,10 @@ class Zone < ApplicationRecord
   # TODO: Enable spatial queries when CockroachDB spatial is properly configured
   def self.find_containing(city_code, lat, lng)
     # For now, use simple bbox lookup (works with all DBs)
+    # Secondary sort by zone_code ensures deterministic results
+    # when multiple zones share the same priority (Bug 4 fix).
     for_city(city_code).active
-      .order(priority: :desc)
+      .order(priority: :desc, zone_code: :asc)
       .find { |z| z.contains_point?(lat, lng) }
   end
   

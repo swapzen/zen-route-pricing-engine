@@ -163,7 +163,7 @@ class ZoneConfigLoader
       lat_max: data.dig('bounds', 'lat_max'),
       lng_min: data.dig('bounds', 'lng_min'),
       lng_max: data.dig('bounds', 'lng_max'),
-      priority: data['priority'] || 10
+      priority: data['priority'] || default_priority_for_zone_type(data['zone_type'])
     )
 
     if zone.changed?
@@ -181,6 +181,26 @@ class ZoneConfigLoader
   rescue StandardError => e
     stats[:errors] << { zone_code: zone_code, error: e.message }
     Rails.logger.error "[ZoneConfigLoader] Error syncing zone #{zone_code}: #{e.message}"
+  end
+
+  # Assign default priority based on zone type.
+  # Smaller/more specific zone types get higher priority so they match first
+  # when bounding boxes overlap with larger, less specific zones.
+  def default_priority_for_zone_type(zone_type)
+    case zone_type
+    when 'tech_corridor'          then 20  # Small, specific areas (HITEC City, Fin District)
+    when 'business_cbd'           then 18  # Named business districts
+    when 'heritage_commercial'    then 18  # Small heritage zones
+    when 'premium_residential'    then 16  # Distinct premium neighborhoods
+    when 'airport_logistics'      then 15  # Specific airport area
+    when 'traditional_commercial' then 14  # Old city commercial
+    when 'industrial'             then 12  # Industrial parks
+    when 'residential_dense'      then 10  # Broader residential
+    when 'residential_mixed'      then 10  # Broader residential
+    when 'residential_growth'     then 8   # Large growth corridors (biggest areas)
+    when 'outer_ring'             then 5   # Catch-all outer areas (lowest priority)
+    else                                10
+    end
   end
 
   # ---------------------------------------------------------------------------

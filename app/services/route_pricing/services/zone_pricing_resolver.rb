@@ -255,52 +255,73 @@ module RoutePricing
         )
       end
 
-      # Zone type adjustments based on commute patterns
-      ZONE_TYPE_ADJUSTMENTS = {
-        # Morning rush: residential → tech (higher demand)
-        ['residential_dense', 'tech_corridor'] => { morning: 1.08, afternoon: 1.0, evening: 0.95 },
-        ['residential_mixed', 'tech_corridor'] => { morning: 1.05, afternoon: 1.0, evening: 0.95 },
-        ['residential_growth', 'tech_corridor'] => { morning: 1.05, afternoon: 1.0, evening: 0.95 },
-        
-        # Evening rush: tech → residential (reverse commute)
-        ['tech_corridor', 'residential_dense'] => { morning: 0.95, afternoon: 1.0, evening: 1.08 },
-        ['tech_corridor', 'residential_mixed'] => { morning: 0.95, afternoon: 1.0, evening: 1.05 },
-        ['tech_corridor', 'residential_growth'] => { morning: 0.95, afternoon: 1.0, evening: 1.05 },
-        
-        # Old city congestion premium
-        ['residential_dense', 'traditional_commercial'] => { morning: 1.05, afternoon: 1.08, evening: 1.05 },
-        ['residential_mixed', 'traditional_commercial'] => { morning: 1.05, afternoon: 1.08, evening: 1.05 },
-        ['tech_corridor', 'traditional_commercial'] => { morning: 1.05, afternoon: 1.08, evening: 1.05 },
-        ['business_cbd', 'traditional_commercial'] => { morning: 1.05, afternoon: 1.08, evening: 1.05 },
-        
-        # Airport premium
-        ['airport_logistics', 'tech_corridor'] => { morning: 1.10, afternoon: 1.05, evening: 1.10 },
-        ['airport_logistics', 'business_cbd'] => { morning: 1.10, afternoon: 1.05, evening: 1.10 },
-        ['airport_logistics', 'premium_residential'] => { morning: 1.15, afternoon: 1.10, evening: 1.15 },
-        ['tech_corridor', 'airport_logistics'] => { morning: 1.10, afternoon: 1.05, evening: 1.10 },
-        ['business_cbd', 'airport_logistics'] => { morning: 1.10, afternoon: 1.05, evening: 1.10 },
-        ['premium_residential', 'airport_logistics'] => { morning: 1.15, afternoon: 1.10, evening: 1.15 },
-        
-        # Premium residential premium
-        ['premium_residential', 'tech_corridor'] => { morning: 1.10, afternoon: 1.05, evening: 1.05 },
-        ['premium_residential', 'business_cbd'] => { morning: 1.08, afternoon: 1.05, evening: 1.05 },
-        ['tech_corridor', 'premium_residential'] => { morning: 1.05, afternoon: 1.05, evening: 1.10 },
-        ['business_cbd', 'premium_residential'] => { morning: 1.05, afternoon: 1.05, evening: 1.08 },
-        
-        # Industrial routes (volume discount potential)
-        ['industrial', 'tech_corridor'] => { morning: 0.98, afternoon: 0.98, evening: 0.98 },
-        ['industrial', 'business_cbd'] => { morning: 0.98, afternoon: 0.98, evening: 0.98 },
-        ['tech_corridor', 'industrial'] => { morning: 0.98, afternoon: 0.98, evening: 0.98 },
-        ['business_cbd', 'industrial'] => { morning: 0.98, afternoon: 0.98, evening: 0.98 }
-      }.freeze
+      # Load inter-zone formula config from YAML (single source of truth)
+      # The YAML uses patterns like "any_to_airport_logistics" which match
+      # any origin zone type going to airport_logistics.
+      def self.load_inter_zone_config
+        config_path = Rails.root.join('config', 'zones', 'hyderabad', 'vehicle_defaults.yml')
+        return {} unless File.exist?(config_path)
+
+        yaml = YAML.load_file(config_path)
+        formula = yaml['inter_zone_formula'] || {}
+        type_adjustments = formula['type_adjustments'] || {}
+
+        # Convert YAML patterns to lookup hash
+        lookup = {}
+        type_adjustments.each do |pattern_key, time_values|
+          next if pattern_key == 'default'
+          symbolized = time_values.transform_keys(&:to_sym).transform_values(&:to_f)
+
+          parts = pattern_key.split('_to_')
+          next unless parts.length == 2
+
+          from_part = parts[0]
+          to_part = parts[1]
+
+          if from_part == 'any'
+            # Wildcard: applies to any origin going to this destination type
+            lookup[[:any, to_part]] = symbolized
+          elsif to_part == 'any'
+            # Wildcard: applies to this origin going to any destination type
+            lookup[[from_part, :any]] = symbolized
+          else
+            lookup[[from_part, to_part]] = symbolized
+          end
+        end
+
+        # Also store weights
+        {
+          origin_weight: (formula['origin_weight'] || 0.6).to_f,
+          destination_weight: (formula['destination_weight'] || 0.4).to_f,
+          adjustments: lookup,
+          default: (type_adjustments['default'] || {}).transform_keys(&:to_sym).transform_values(&:to_f)
+        }
+      end
+
+      # Cache the loaded config at class level (reloaded on app restart)
+      INTER_ZONE_CONFIG = load_inter_zone_config
 
       def get_zone_type_adjustment(from_type, to_type, time_band)
-        key = [from_type, to_type]
-        adjustments = ZONE_TYPE_ADJUSTMENTS[key]
-        
-        return 1.0 unless adjustments && time_band.present?
-        
-        adjustments[time_band.to_sym] || 1.0
+        return 1.0 unless time_band.present?
+
+        adjustments = INTER_ZONE_CONFIG[:adjustments] || {}
+        band = time_band.to_sym
+
+        # Try exact match first
+        exact = adjustments[[from_type, to_type]]
+        return exact[band] || 1.0 if exact
+
+        # Try wildcard: any → destination
+        any_to_dest = adjustments[[:any, to_type]]
+        return any_to_dest[band] || 1.0 if any_to_dest
+
+        # Try wildcard: origin → any
+        origin_to_any = adjustments[[from_type, :any]]
+        return origin_to_any[band] || 1.0 if origin_to_any
+
+        # Default
+        default = INTER_ZONE_CONFIG[:default] || {}
+        default[band] || 1.0
       end
       
       # Extract zone-level pricing configurations (Industry standard patterns)
@@ -368,10 +389,12 @@ module RoutePricing
       end
 
       def find_zone(city_code, lat, lng)
-        # Optimized lookup would use PostGIS/CockroachDB spatial index.
+        # Optimized lookup would use PostGIS/CockroachDB spatial index or H3 hex grid.
         # For now, looping through active zones in memory (efficient for <100 zones).
-        # Sorted by priority so higer priority zones (e.g. specific tech parks) match first.
-        Zone.for_city(city_code).active.order(priority: :desc).each do |z|
+        # Sorted by priority (desc) so higher priority zones (e.g. specific tech parks)
+        # match first. Secondary sort by zone_code (asc) ensures deterministic results
+        # when multiple zones share the same priority.
+        Zone.for_city(city_code).active.order(priority: :desc, zone_code: :asc).each do |z|
           return z if z.contains_point?(lat, lng)
         end
         nil

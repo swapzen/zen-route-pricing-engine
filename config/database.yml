@@ -9,14 +9,14 @@ development:
   database: swapzen_development  # SHARED with swapzen-api
   username: root
   password:
-  host: localhost
+  host: 127.0.0.1
 
 test:
   <<: *default
   database: swapzen_test  # SHARED with swapzen-api
   username: root
   password:
-  host: localhost
+  host: 127.0.0.1
 
 production:
   <<: *default

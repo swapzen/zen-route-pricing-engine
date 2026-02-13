@@ -33,11 +33,9 @@ class PricingConfig < ApplicationRecord
   end
 
   # ================================================================
-  # v3.0: Vehicle groupings (SINGLE SOURCE OF TRUTH)
+  # Vehicle groupings: delegated to RoutePricing::VehicleCategories
+  # (single source of truth for all vehicle classification)
   # ================================================================
-  SMALL_VEHICLES = %w[two_wheeler scooter mini_3w].freeze
-  MID_TRUCKS     = %w[three_wheeler three_wheeler_ev tata_ace pickup_8ft].freeze
-  HEAVY_TRUCKS   = %w[eeco tata_407 canter_14ft].freeze
 
   # ================================================================
   # v3.0: Enhanced surge multiplier with time-of-day + distance awareness
@@ -98,11 +96,13 @@ class PricingConfig < ApplicationRecord
   end
 
   def base_time_multiplier(vehicle_type, time_period)
-    if SMALL_VEHICLES.include?(vehicle_type)
+    category = RoutePricing::VehicleCategories.category_for(vehicle_type)
+    case category
+    when :small
       small_vehicle_multipliers[time_period] || 1.0
-    elsif MID_TRUCKS.include?(vehicle_type)
+    when :mid
       mid_truck_multipliers[time_period] || 1.0
-    else # HEAVY_TRUCKS
+    when :heavy
       heavy_truck_multipliers[time_period] || 1.0
     end
   end

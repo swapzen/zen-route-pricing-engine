@@ -40,8 +40,12 @@ module RoutePricing
       def calculate(distance_m:, pickup_lat: nil, pickup_lng: nil, drop_lat: nil, drop_lng: nil,
                     item_value_paise: nil, duration_in_traffic_s: nil, duration_s: nil, quote_time: Time.current)
         
-        # Step 0: Determine time band
-        hour = quote_time.hour
+        # Step 0: Determine time band (using city timezone for consistency)
+        # IMPORTANT: Convert to city timezone to avoid UTC vs local time mismatch.
+        # Without this, a request at 14:00 UTC (19:30 IST) would get 'afternoon'
+        # for zone pricing but 'evening' for surge — causing pricing inconsistency.
+        local_time = quote_time.in_time_zone(@config.timezone)
+        hour = local_time.hour
         time_band = case hour
                     when 6...12 then 'morning'
                     when 12...18 then 'afternoon'
@@ -85,12 +89,12 @@ module RoutePricing
         end
 
         # Step 4: Raw subtotal
-        raw_subtotal = base_fare + distance_component.to_i
-
-        # Step 4b: Distance Band Shaping (Option B)
-        # Apply multipliers to shape the curve for Micro/Short/Medium/Long trips
+        # Distance band shaping applies ONLY to the distance component, not base_fare.
+        # Base fare is a fixed cost (driver showing up, loading) and should not be
+        # scaled by distance. The distance component is the variable cost.
         band_multiplier = calculate_distance_band_multiplier(@config.vehicle_type, distance_m)
-        raw_subtotal = (raw_subtotal * band_multiplier).round
+        shaped_distance = (distance_component.to_i * band_multiplier).round
+        raw_subtotal = base_fare + shaped_distance
         
         # =====================================================================
         # INDUSTRY-STANDARD CHARGE COMPONENTS (Cogoport/ShipX patterns)
@@ -184,7 +188,15 @@ module RoutePricing
 
           # Buffers & Margins
           variance_buffer = @config.variance_buffer_pct || 0.0
-          high_value_buffer = 0.0
+
+          # High-value item buffer: applies when item_value exceeds threshold
+          # Uses existing PricingConfig columns (defaults to 0, no effect until configured)
+          threshold = @config.try(:high_value_threshold_paise).to_i
+          high_value_buffer = if item_value_paise && threshold > 0 && item_value_paise > threshold
+                                [@config.try(:high_value_buffer_pct).to_f, 0.0].max
+                              else
+                                0.0
+                              end
           
           # Margin from config (pilot: 0.0, rely on guardrail)
           margin_total = @config.min_margin_pct || 0.0
@@ -204,8 +216,9 @@ module RoutePricing
           # Precise rounding for calibration
           final_price_paise = price_after_margin.round.to_i
         else
-          # Market-friendly rounding (nearest ₹10)
-          final_price_paise = (((price_after_margin + 999) / 1000) * 1000).to_i
+          # Standard rounding to nearest Rs 10 (1000 paise)
+          # Previously used ceiling: (x+999)/1000*1000 which over-charged by up to 22%
+          final_price_paise = ((price_after_margin / 1000.0).round * 1000).to_i
         end
 
         # Price floor
@@ -240,8 +253,8 @@ module RoutePricing
           # Bump price to achieve minimum margin
           required_price_paise = (total_cost_paise * (1 + MIN_TARGET_MARGIN_PCT / 100.0)).ceil
           
-          # Round up to nearest ₹10 for clean pricing
-          guardrail_price_paise = (((required_price_paise + 999) / 1000) * 1000).to_i
+          # Round up to nearest Rs 10 for guardrail (ceiling to preserve margin)
+          guardrail_price_paise = ((required_price_paise / 1000.0).ceil * 1000).to_i
           
           # Log the adjustment
           Rails.logger.warn(
@@ -281,6 +294,8 @@ module RoutePricing
           base_fare: base_fare,
           chargeable_distance_m: chargeable_m,
           distance_component: distance_component,
+          distance_band_multiplier: band_multiplier,
+          shaped_distance_component: shaped_distance,
           slab_pricing_used: @config.pricing_distance_slabs.any?,
           # Industry-standard components (Cogoport/ShipX)
           fuel_surcharge_pct: fsc_pct,
@@ -330,8 +345,10 @@ module RoutePricing
 
         traffic_ratio = duration_in_traffic_s.to_f / duration_s
 
-        # Sanity check
-        return 1.0 if traffic_ratio < 0.9 || traffic_ratio > 3.0
+        # Sanity check: ignore impossibly low ratios
+        return 1.0 if traffic_ratio < 0.9
+        # Extreme congestion (>3x normal): apply max multiplier
+        return TRAFFIC_MAX_MULTIPLIER if traffic_ratio > 3.0
 
         # Smooth curve: y = 1 + 0.5 * (x - 1)^0.8, capped at 1.5
         return 1.0 if traffic_ratio <= 1.0
@@ -449,11 +466,6 @@ module RoutePricing
         total_paise
       end
 
-      # Distance Band Shaping Logic
-      SMALL_VEHICLES = %w[two_wheeler scooter].freeze
-      MID_TRUCKS     = %w[mini_3w three_wheeler three_wheeler_ev tata_ace pickup_8ft eeco].freeze
-      HEAVY_TRUCKS   = %w[tata_407 canter_14ft].freeze
-
       def calculate_distance_band_multiplier(vehicle_type, distance_m)
         # Distance band multipliers for shaping the price curve
         # Tuned based on Porter benchmark analysis:
@@ -471,14 +483,16 @@ module RoutePricing
                end
 
         # Tuned multipliers for Porter alignment (v6.1 calibration)
-        if SMALL_VEHICLES.include?(vehicle_type)
+        category = RoutePricing::VehicleCategories.category_for(vehicle_type)
+        case category
+        when :small
           # Small vehicles: Aggressive micro discount (high competition segment)
           { micro: 0.85, short: 1.00, medium: 1.05, long: 1.00 }[band]
-        elsif MID_TRUCKS.include?(vehicle_type)
-          # Mid trucks: Moderate micro discount (operational efficiency at short range)
+        when :mid
+          # Mid vehicles: Moderate micro discount (operational efficiency at short range)
           { micro: 0.90, short: 1.00, medium: 1.05, long: 1.00 }[band]
-        else # HEAVY_TRUCKS
-          # Heavy trucks: Minimal micro discount (fixed costs dominate)
+        when :heavy
+          # Heavy vehicles: Minimal micro discount (fixed costs dominate)
           { micro: 0.95, short: 1.00, medium: 1.05, long: 1.00 }[band]
         end || 1.0
       end

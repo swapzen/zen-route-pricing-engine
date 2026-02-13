@@ -3,10 +3,8 @@
 # PricingZoneMultiplier represents geographic zones with demand-based pricing adjustments.
 # v4.0: Enhanced with vehicle-category-specific multipliers and multi-zone route support
 class PricingZoneMultiplier < ApplicationRecord
-  # Vehicle categories (align with PricingConfig)
-  SMALL_VEHICLES = %w[two_wheeler scooter mini_3w].freeze
-  MID_TRUCKS = %w[three_wheeler three_wheeler_ev tata_ace pickup_8ft].freeze
-  HEAVY_TRUCKS = %w[eeco tata_407 canter_14ft].freeze
+  # Vehicle categories: delegated to RoutePricing::VehicleCategories
+  # (single source of truth for all vehicle classification)
   
   # Zone types for business logic
   ZONE_TYPES = %w[
@@ -39,12 +37,13 @@ class PricingZoneMultiplier < ApplicationRecord
 
   # Get multiplier for specific vehicle type
   def multiplier_for_vehicle(vehicle_type)
-    case
-    when SMALL_VEHICLES.include?(vehicle_type)
+    category = RoutePricing::VehicleCategories.category_for(vehicle_type)
+    case category
+    when :small
       small_vehicle_mult || 1.0
-    when MID_TRUCKS.include?(vehicle_type)
+    when :mid
       mid_truck_mult || 1.0
-    when HEAVY_TRUCKS.include?(vehicle_type)
+    when :heavy
       heavy_truck_mult || 1.0
     else
       1.0
