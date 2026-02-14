@@ -17,4 +17,18 @@ class PricingQuote < ApplicationRecord
   def price_inr
     (price_paise / 100.0).round(2)
   end
+
+  # Check if quote has expired
+  def expired?
+    return false unless valid_until
+
+    Time.current > valid_until
+  end
+
+  # Seconds remaining before quote expires (0 if expired or no validity set)
+  def remaining_seconds
+    return 0 unless valid_until
+
+    [(valid_until - Time.current).to_i, 0].max
+  end
 end

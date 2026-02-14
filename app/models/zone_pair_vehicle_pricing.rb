@@ -14,7 +14,7 @@ class ZonePairVehiclePricing < ApplicationRecord
     # time_band can be nil (for backward compatibility) or one of: 'morning', 'afternoon', 'evening'
     
     # Try exact match with time_band first
-    override = where('LOWER(city_code) = LOWER(?)', city_code)
+    override = where(city_code: city_code.to_s.downcase)
       .where(
         from_zone_id: from_zone_id,
         to_zone_id: to_zone_id,
@@ -27,7 +27,7 @@ class ZonePairVehiclePricing < ApplicationRecord
 
     # If no time-band specific match, try without time_band (backward compatibility)
     if time_band.present?
-      override = where('LOWER(city_code) = LOWER(?)', city_code)
+      override = where(city_code: city_code.to_s.downcase)
         .where(
           from_zone_id: from_zone_id,
           to_zone_id: to_zone_id,
@@ -41,7 +41,7 @@ class ZonePairVehiclePricing < ApplicationRecord
 
     # Check non-directional match (A -> B might be stored as B -> A with directional=false)
     # Try with time_band first
-    override = where('LOWER(city_code) = LOWER(?)', city_code)
+    override = where(city_code: city_code.to_s.downcase)
       .where(
         from_zone_id: to_zone_id, # Swapped
         to_zone_id: from_zone_id, # Swapped
@@ -55,7 +55,7 @@ class ZonePairVehiclePricing < ApplicationRecord
 
     # If no time-band specific match, try without time_band
     if time_band.present?
-      where('LOWER(city_code) = LOWER(?)', city_code)
+      where(city_code: city_code.to_s.downcase)
         .where(
           from_zone_id: to_zone_id, # Swapped
           to_zone_id: from_zone_id, # Swapped

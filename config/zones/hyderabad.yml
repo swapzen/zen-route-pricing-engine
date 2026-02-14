@@ -113,6 +113,7 @@ zones:
   old_city:
     name: "Charminar Old City"
     zone_type: traditional_commercial
+    priority: 30
     active: true
     bounds:
       lat_min: 17.35

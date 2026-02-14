@@ -53,6 +53,19 @@ namespace :zones do
       result[:pricing_files].each { |f| puts "   - #{f}" }
       puts "\n📁 Corridor files: #{result[:corridor_files].count}"
       result[:corridor_files].each { |f| puts "   - #{f}" }
+      puts "\n🧪 Validation:"
+      puts "   Errors: #{result.dig(:validation, :errors)&.count || 0}"
+      puts "   Warnings: #{result.dig(:validation, :warnings)&.count || 0}"
+
+      if result.dig(:validation, :errors)&.any?
+        puts "\n❌ Validation errors:"
+        result[:validation][:errors].each { |e| puts "   - #{e}" }
+      end
+
+      if result.dig(:validation, :warnings)&.any?
+        puts "\n⚠️  Validation warnings:"
+        result[:validation][:warnings].each { |w| puts "   - #{w}" }
+      end
     else
       puts "\n🔄 Syncing zones, pricing & corridors...\n"
       result = loader.sync!(force_pricing: force)
@@ -71,7 +84,17 @@ namespace :zones do
         puts "\n🛤️  CORRIDORS:"
         puts "   Created: #{s[:corridors_created]}"
         puts "   Updated: #{s[:corridors_updated]}"
+        puts "   Deactivated (stale): #{s[:corridors_deactivated]}"
+        puts "   Conflicts skipped: #{s[:corridor_conflicts]}"
+        puts "\n🧪 VALIDATION:"
+        puts "   Errors: #{s[:validation_errors]&.count || 0}"
+        puts "   Warnings: #{s[:validation_warnings]&.count || 0}"
         puts "\n❗ ERRORS: #{s[:errors].count}"
+
+        if s[:validation_warnings]&.any?
+          puts "\n⚠️  Validation warnings:"
+          s[:validation_warnings].each { |w| puts "   - #{w}" }
+        end
         
         if s[:errors].any?
           puts "\n⚠️  Errors:"
@@ -79,6 +102,14 @@ namespace :zones do
         end
       else
         puts "❌ Sync failed: #{result[:error]}"
+        if result[:validation]
+          errs = result.dig(:validation, :errors) || []
+          warns = result.dig(:validation, :warnings) || []
+          puts "Validation errors: #{errs.count}"
+          errs.each { |e| puts "   - #{e}" }
+          puts "Validation warnings: #{warns.count}"
+          warns.each { |w| puts "   - #{w}" }
+        end
         puts result[:backtrace].join("\n") if result[:backtrace]
         exit 1
       end
@@ -122,9 +153,9 @@ namespace :zones do
     puts "💰 ZONE PRICING STATS: #{city.upcase}"
     puts "=" * 80
     
-    zones_with_pricing = ZoneVehiclePricing.where('LOWER(city_code) = LOWER(?)', city)
+    zones_with_pricing = ZoneVehiclePricing.where(city_code: city.to_s.downcase)
                                            .distinct.pluck(:zone_id).count
-    total_zone_pricings = ZoneVehiclePricing.where('LOWER(city_code) = LOWER(?)', city).count
+    total_zone_pricings = ZoneVehiclePricing.where(city_code: city.to_s.downcase).count
     total_time_pricings = ZoneVehicleTimePricing.joins(:zone_vehicle_pricing)
                                                  .where('LOWER(zone_vehicle_pricings.city_code) = LOWER(?)', city)
                                                  .count
@@ -135,7 +166,7 @@ namespace :zones do
     puts "   Total time-band pricings: #{total_time_pricings}"
     
     puts "\n📍 Zones with pricing by type:"
-    ZoneVehiclePricing.where('LOWER(city_code) = LOWER(?)', city)
+    ZoneVehiclePricing.where(city_code: city.to_s.downcase)
                       .joins(:zone)
                       .group('zones.zone_type')
                       .count
@@ -144,7 +175,7 @@ namespace :zones do
     end
     
     puts "\n🚗 Pricing by vehicle type:"
-    ZoneVehiclePricing.where('LOWER(city_code) = LOWER(?)', city)
+    ZoneVehiclePricing.where(city_code: city.to_s.downcase)
                       .group(:vehicle_type)
                       .count
                       .each do |vtype, count|
@@ -162,8 +193,8 @@ namespace :zones do
     puts "🛤️  CORRIDOR STATS: #{city.upcase}"
     puts "=" * 80
     
-    total_corridors = ZonePairVehiclePricing.where('LOWER(city_code) = LOWER(?)', city).count
-    unique_pairs = ZonePairVehiclePricing.where('LOWER(city_code) = LOWER(?)', city)
+    total_corridors = ZonePairVehiclePricing.where(city_code: city.to_s.downcase).count
+    unique_pairs = ZonePairVehiclePricing.where(city_code: city.to_s.downcase)
                                           .distinct
                                           .pluck(:from_zone_id, :to_zone_id)
                                           .count
@@ -173,7 +204,7 @@ namespace :zones do
     puts "   Unique zone pairs: #{unique_pairs}"
     
     puts "\n🚗 Corridors by vehicle type:"
-    ZonePairVehiclePricing.where('LOWER(city_code) = LOWER(?)', city)
+    ZonePairVehiclePricing.where(city_code: city.to_s.downcase)
                           .group(:vehicle_type)
                           .count
                           .each do |vtype, count|
@@ -181,7 +212,7 @@ namespace :zones do
     end
     
     puts "\n⏰ Corridors by time band:"
-    ZonePairVehiclePricing.where('LOWER(city_code) = LOWER(?)', city)
+    ZonePairVehiclePricing.where(city_code: city.to_s.downcase)
                           .group(:time_band)
                           .count
                           .each do |band, count|
@@ -189,7 +220,7 @@ namespace :zones do
     end
     
     puts "\n🛤️  Corridor pairs:"
-    pairs = ZonePairVehiclePricing.where('LOWER(city_code) = LOWER(?)', city)
+    pairs = ZonePairVehiclePricing.where(city_code: city.to_s.downcase)
                                    .joins("LEFT JOIN zones from_z ON from_z.id = zone_pair_vehicle_pricings.from_zone_id")
                                    .joins("LEFT JOIN zones to_z ON to_z.id = zone_pair_vehicle_pricings.to_zone_id")
                                    .select("from_z.zone_code as from_code, to_z.zone_code as to_code")
@@ -224,8 +255,8 @@ namespace :zones do
       yaml_count = (config['zones'] || {}).count
       db_count = Zone.for_city(city_code).count
       active_count = Zone.for_city(city_code).active.count
-      pricing_count = ZoneVehiclePricing.where('LOWER(city_code) = LOWER(?)', city_code).count
-      corridor_count = ZonePairVehiclePricing.where('LOWER(city_code) = LOWER(?)', city_code).count
+      pricing_count = ZoneVehiclePricing.where(city_code: city_code.to_s.downcase).count
+      corridor_count = ZonePairVehiclePricing.where(city_code: city_code.to_s.downcase).count
       
       puts "\n#{city.upcase} (#{city_code}):"
       puts "  YAML zones: #{yaml_count}"

@@ -40,7 +40,7 @@ pricing:
     two_wheeler:   { base: 5000, rate: 1100 }
     scooter:       { base: 6500, rate: 1300 }
     mini_3w:       { base: 8000, rate: 1700 }
-    three_wheeler: { base: 30000, rate: 4500 }
+    three_wheeler: { base: 28700, rate: 4500 }
     tata_ace:      { base: 28000, rate: 4500 }
     pickup_8ft:    { base: 32000, rate: 5000 }
     canter_14ft:   { base: 110000, rate: 10000 }

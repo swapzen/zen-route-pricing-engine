@@ -19,7 +19,7 @@ _benchmarks:
 
 pricing:
   morning:
-    two_wheeler:   { base: 4000, rate: 750 }
+    two_wheeler:   { base: 4320, rate: 750 }
     scooter:       { base: 5300, rate: 950 }
     mini_3w:       { base: 7400, rate: 1200 }
     three_wheeler: { base: 20100, rate: 2600 }
@@ -37,10 +37,10 @@ pricing:
     canter_14ft:   { base: 83000, rate: 7000 }
 
   evening:
-    two_wheeler:   { base: 4000, rate: 750 }
+    two_wheeler:   { base: 4320, rate: 750 }
     scooter:       { base: 5300, rate: 950 }
     mini_3w:       { base: 7400, rate: 1200 }
     three_wheeler: { base: 26700, rate: 3225 }
     tata_ace:      { base: 28000, rate: 3430 }
     pickup_8ft:    { base: 32600, rate: 3700 }
-    canter_14ft:   { base: 87000, rate: 7100 }
+    canter_14ft:   { base: 106500, rate: 7100 }

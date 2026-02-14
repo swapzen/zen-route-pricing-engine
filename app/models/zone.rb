@@ -21,7 +21,7 @@ class Zone < ApplicationRecord
   validates :zone_type, presence: true
 
   scope :active, -> { where(status: true) }
-  scope :for_city, ->(city_code) { where('LOWER(city) = LOWER(?)', city_code) }
+  scope :for_city, ->(city_code) { where(city: city_code.to_s.downcase) }
   scope :oda, -> { where(is_oda: true) }
   
   # =========================================================================

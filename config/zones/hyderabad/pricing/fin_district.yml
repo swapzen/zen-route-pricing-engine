@@ -24,17 +24,17 @@ _benchmarks:
 # Time-band pricing (base in paise, rate in paise/km)
 pricing:
   morning:
-    two_wheeler:   { base: 5000, rate: 2000 }
-    scooter:       { base: 7000, rate: 2600 }
+    two_wheeler:   { base: 4250, rate: 2000 }
+    scooter:       { base: 6260, rate: 2600 }
     mini_3w:       { base: 10000, rate: 3500 }
-    three_wheeler: { base: 25000, rate: 8000 }
-    tata_ace:      { base: 27000, rate: 8700 }
+    three_wheeler: { base: 23800, rate: 8000 }
+    tata_ace:      { base: 26300, rate: 8700 }
     pickup_8ft:    { base: 28000, rate: 10000 }
     canter_14ft:   { base: 94000, rate: 26000 }
 
   afternoon:
-    two_wheeler:   { base: 4800, rate: 2350 }
-    scooter:       { base: 6800, rate: 2950 }
+    two_wheeler:   { base: 4180, rate: 2350 }
+    scooter:       { base: 6180, rate: 2950 }
     mini_3w:       { base: 12000, rate: 4600 }
     three_wheeler: { base: 25000, rate: 8100 }
     tata_ace:      { base: 27000, rate: 8800 }
@@ -42,8 +42,8 @@ pricing:
     canter_14ft:   { base: 97000, rate: 25500 }
 
   evening:
-    two_wheeler:   { base: 4300, rate: 2150 }
-    scooter:       { base: 6200, rate: 2700 }
+    two_wheeler:   { base: 3800, rate: 2150 }
+    scooter:       { base: 5970, rate: 2700 }
     mini_3w:       { base: 8500, rate: 3500 }
     three_wheeler: { base: 37000, rate: 9200 }
     tata_ace:      { base: 40000, rate: 9700 }

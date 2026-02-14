@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
   create_schema "crdb_internal"
 
   create_table "active_storage_attachments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -154,6 +154,99 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
     t.index ["user_id"], name: "index_coin_expiry_settings_on_user_id"
   end
 
+  create_table "delivery_addresses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "address_line", null: false
+    t.string "address_line_2"
+    t.string "landmark"
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.string "city", null: false
+    t.string "state", null: false
+    t.string "country", default: "India", null: false
+    t.string "pin_code", null: false
+    t.string "contact_name"
+    t.string "contact_phone"
+    t.string "address_type", default: "home"
+    t.boolean "is_default", default: false
+    t.boolean "is_active", default: true
+    t.string "label"
+    t.jsonb "delivery_instructions", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pin_code"], name: "index_delivery_addresses_on_pin_code"
+    t.index ["user_id", "is_active"], name: "index_delivery_addresses_on_user_id_and_is_active"
+    t.index ["user_id", "is_default"], name: "index_delivery_addresses_on_user_id_and_is_default"
+  end
+
+  create_table "delivery_orders", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "swap_request_id"
+    t.string "giveaway_claim_id"
+    t.bigint "sender_id", null: false
+    t.bigint "receiver_id", null: false
+    t.uuid "pickup_address_id", null: false
+    t.uuid "drop_address_id", null: false
+    t.string "delivery_partner"
+    t.string "tracking_id"
+    t.string "delivery_status", default: "pending", null: false
+    t.decimal "quoted_price", precision: 12, scale: 2
+    t.decimal "final_price", precision: 12, scale: 2
+    t.decimal "discount_applied", precision: 12, scale: 2, default: "0.0"
+    t.datetime "pickup_scheduled_at"
+    t.datetime "picked_up_at"
+    t.datetime "in_transit_at"
+    t.datetime "out_for_delivery_at"
+    t.datetime "delivered_at"
+    t.datetime "failed_at"
+    t.datetime "cancelled_at"
+    t.jsonb "delivery_person_details", default: {}
+    t.string "delivery_otp"
+    t.boolean "otp_verified", default: false
+    t.string "delivery_signature_url"
+    t.string "delivery_photo_url"
+    t.jsonb "partner_response", default: {}
+    t.text "delivery_notes"
+    t.text "cancellation_reason"
+    t.string "package_type"
+    t.decimal "package_weight", precision: 6, scale: 2
+    t.jsonb "package_dimensions", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "delivery_partner_id"
+    t.string "vehicle_type"
+    t.string "partner_order_id"
+    t.string "partner_tracking_url"
+    t.datetime "estimated_delivery_at"
+    t.string "booking_type", default: "auto"
+    t.text "admin_notes"
+    t.index ["delivery_partner_id"], name: "index_delivery_orders_on_delivery_partner_id"
+    t.index ["delivery_status", "created_at"], name: "index_delivery_orders_on_delivery_status_and_created_at"
+    t.index ["delivery_status"], name: "index_delivery_orders_on_delivery_status"
+    t.index ["giveaway_claim_id"], name: "index_delivery_orders_on_giveaway_claim_id"
+    t.index ["partner_order_id"], name: "index_delivery_orders_on_partner_order_id"
+    t.index ["receiver_id"], name: "index_delivery_orders_on_receiver_id"
+    t.index ["sender_id"], name: "index_delivery_orders_on_sender_id"
+    t.index ["swap_request_id"], name: "index_delivery_orders_on_swap_request_id"
+    t.index ["tracking_id"], name: "index_delivery_orders_on_tracking_id"
+  end
+
+  create_table "delivery_partner_callbacks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "delivery_order_id", null: false
+    t.string "event_type"
+    t.jsonb "status_update_payload", null: false
+    t.boolean "processed", default: false
+    t.datetime "processed_at"
+    t.text "processing_error"
+    t.string "partner_event_id"
+    t.string "delivery_partner"
+    t.datetime "received_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["delivery_order_id", "received_at"], name: "idx_on_delivery_order_id_received_at_a48d4e8180", order: { received_at: :desc }
+    t.index ["processed", "created_at"], name: "index_delivery_partner_callbacks_on_processed_and_created_at"
+    t.unique_constraint ["partner_event_id"], name: "index_delivery_partner_callbacks_on_partner_event_id"
+  end
+
   create_table "delivery_partners", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
     t.string "name"
     t.string "contact_info"
@@ -165,6 +258,40 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "code"
+    t.string "integration_type"
+    t.string "api_base_url"
+    t.jsonb "api_credentials", default: {}
+    t.string "webhook_secret"
+    t.string "callback_url"
+    t.jsonb "vehicle_types", default: []
+    t.boolean "is_active", default: false
+
+    t.unique_constraint ["code"], name: "index_delivery_partners_on_code"
+  end
+
+  create_table "escrow_holds", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.uuid "wallet_id", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.string "hold_type", null: false
+    t.string "linked_reference_type"
+    t.string "linked_reference_id"
+    t.string "status", default: "active", null: false
+    t.datetime "held_at", null: false
+    t.datetime "expires_at"
+    t.datetime "released_at"
+    t.text "release_reason"
+    t.bigint "released_by_id"
+    t.string "released_by_role"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["hold_type", "status"], name: "index_escrow_holds_on_hold_type_and_status"
+    t.index ["linked_reference_type", "linked_reference_id"], name: "idx_on_linked_reference_type_linked_reference_id_b2c06009a9"
+    t.index ["status", "expires_at"], name: "index_escrow_holds_on_status_and_expires_at"
+    t.index ["user_id", "status"], name: "index_escrow_holds_on_user_id_and_status"
+    t.index ["wallet_id", "status"], name: "index_escrow_holds_on_wallet_id_and_status"
   end
 
   create_table "feature_flags", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
@@ -207,6 +334,52 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
     t.check_constraint "(pickup_type IN ('self_pickup'::STRING, 'swapzen_delivery'::STRING))", name: "chk_pickup_type_valid"
     t.check_constraint "(status IN ('pending'::STRING, 'approved'::STRING, 'rejected'::STRING, 'cancelled'::STRING, 'completed'::STRING))", name: "chk_status_valid"
     t.unique_constraint ["listing_id", "claimer_id"], name: "idx_give_away_unique_active_claim"
+  end
+
+  create_table "invoices", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "swap_request_id"
+    t.string "delivery_order_id"
+    t.uuid "payment_intent_id"
+    t.string "invoice_number", null: false
+    t.string "invoice_series", default: "INV"
+    t.jsonb "customer_details", default: {}
+    t.string "gstin"
+    t.jsonb "line_items", default: []
+    t.decimal "swap_amount", precision: 12, scale: 2, default: "0.0"
+    t.decimal "platform_fee", precision: 12, scale: 2, default: "0.0"
+    t.decimal "delivery_fee", precision: 12, scale: 2, default: "0.0"
+    t.decimal "insurance_fee", precision: 12, scale: 2, default: "0.0"
+    t.decimal "discount_amount", precision: 12, scale: 2, default: "0.0"
+    t.decimal "taxable_amount", precision: 12, scale: 2, default: "0.0"
+    t.decimal "cgst_rate", precision: 5, scale: 2, default: "9.0"
+    t.decimal "sgst_rate", precision: 5, scale: 2, default: "9.0"
+    t.decimal "igst_rate", precision: 5, scale: 2, default: "18.0"
+    t.decimal "cgst_amount", precision: 12, scale: 2, default: "0.0"
+    t.decimal "sgst_amount", precision: 12, scale: 2, default: "0.0"
+    t.decimal "igst_amount", precision: 12, scale: 2, default: "0.0"
+    t.decimal "total_tax_amount", precision: 12, scale: 2, default: "0.0"
+    t.decimal "subtotal", precision: 12, scale: 2, null: false
+    t.decimal "total_amount", precision: 12, scale: 2, null: false
+    t.string "status", default: "draft"
+    t.string "payment_terms", default: "Due on receipt"
+    t.string "payment_method"
+    t.boolean "is_export", default: false
+    t.boolean "is_inter_state", default: false
+    t.datetime "issued_at"
+    t.datetime "due_date"
+    t.datetime "paid_at"
+    t.datetime "refunded_at"
+    t.text "notes"
+    t.text "terms_and_conditions"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gstin"], name: "index_invoices_on_gstin"
+    t.index ["payment_intent_id"], name: "index_invoices_on_payment_intent_id"
+    t.index ["status", "issued_at"], name: "index_invoices_on_status_and_issued_at"
+    t.index ["swap_request_id"], name: "index_invoices_on_swap_request_id"
+    t.index ["user_id", "created_at"], name: "index_invoices_on_user_id_and_created_at", order: { created_at: :desc }
+    t.unique_constraint ["invoice_number"], name: "index_invoices_on_invoice_number"
   end
 
   create_table "listing_approval_settings", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
@@ -307,6 +480,221 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
     t.index ["user_id"], name: "index_otp_codes_on_user_id"
   end
 
+  create_table "payment_charges", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "intent_id", null: false
+    t.uuid "payment_method_id"
+    t.string "gateway_charge_id", null: false
+    t.string "gateway", default: "razorpay"
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.decimal "gateway_fee", precision: 12, scale: 2, default: "0.0"
+    t.decimal "gateway_tax", precision: 12, scale: 2, default: "0.0"
+    t.decimal "refunded_amount", precision: 12, scale: 2, default: "0.0"
+    t.string "status", default: "pending", null: false
+    t.string "payment_method_type"
+    t.jsonb "payment_method_details", default: {}
+    t.string "failure_code"
+    t.string "failure_reason"
+    t.text "failure_message"
+    t.string "settlement_id"
+    t.datetime "settled_at"
+    t.string "bank_reference"
+    t.datetime "authorized_at"
+    t.datetime "captured_at"
+    t.string "dispute_id"
+    t.string "dispute_status"
+    t.datetime "dispute_opened_at"
+    t.datetime "dispute_closed_at"
+    t.jsonb "gateway_response", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dispute_id"], name: "index_payment_charges_on_dispute_id"
+    t.index ["intent_id"], name: "index_payment_charges_on_intent_id"
+    t.index ["payment_method_id"], name: "index_payment_charges_on_payment_method_id"
+    t.index ["settlement_id"], name: "index_payment_charges_on_settlement_id"
+    t.index ["status", "created_at"], name: "index_payment_charges_on_status_and_created_at"
+    t.unique_constraint ["gateway_charge_id"], name: "index_payment_charges_on_gateway_charge_id"
+  end
+
+  create_table "payment_intents", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.decimal "swap_amount", precision: 12, scale: 2, default: "0.0"
+    t.decimal "platform_fee", precision: 12, scale: 2, default: "0.0"
+    t.decimal "delivery_charges", precision: 12, scale: 2, default: "0.0"
+    t.decimal "subtotal", precision: 12, scale: 2, null: false
+    t.decimal "gst_amount", precision: 12, scale: 2, default: "0.0"
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.decimal "amount_received", precision: 12, scale: 2
+    t.string "currency", default: "INR", null: false
+    t.string "status", default: "requires_payment_method", null: false
+    t.jsonb "metadata", default: {}
+    t.string "gateway", default: "razorpay"
+    t.string "gateway_intent_id"
+    t.string "client_secret"
+    t.jsonb "last_payment_error"
+    t.string "cancellation_reason"
+    t.string "setup_future_usage"
+    t.string "receipt_email"
+    t.text "payment_method_types", default: [], array: true
+    t.datetime "confirmed_at"
+    t.datetime "succeeded_at"
+    t.datetime "cancelled_at"
+    t.datetime "failed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status", "created_at"], name: "index_payment_intents_on_status_and_created_at", order: { created_at: :desc }
+    t.index ["user_id", "status"], name: "index_payment_intents_on_user_id_and_status"
+    t.unique_constraint ["gateway_intent_id"], name: "index_payment_intents_on_gateway_intent_id"
+  end
+
+  create_table "payment_methods", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "method_type", null: false
+    t.jsonb "details", default: {}, null: false
+    t.jsonb "billing_details", default: {}
+    t.string "gateway_token"
+    t.string "gateway_customer_id"
+    t.string "gateway", default: "razorpay"
+    t.string "fingerprint"
+    t.string "network"
+    t.string "issuer_country", default: "IN"
+    t.string "card_type"
+    t.bigint "usage_count", default: 0
+    t.datetime "last_used_at"
+    t.boolean "is_default", default: false
+    t.boolean "is_verified", default: false
+    t.boolean "is_active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fingerprint"], name: "index_payment_methods_on_fingerprint"
+    t.index ["user_id", "is_active"], name: "index_payment_methods_on_user_id_and_is_active"
+    t.index ["user_id", "is_default"], name: "index_payment_methods_on_user_id_and_is_default"
+    t.unique_constraint ["gateway_token"], name: "index_payment_methods_on_gateway_token"
+  end
+
+  create_table "payment_refunds", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "charge_id", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.decimal "gateway_refund_fee", precision: 12, scale: 2, default: "0.0"
+    t.string "reason"
+    t.string "refund_type", default: "full"
+    t.string "speed", default: "normal"
+    t.string "status", default: "pending", null: false
+    t.bigint "initiated_by_id"
+    t.string "initiated_by_role"
+    t.datetime "initiated_at"
+    t.string "gateway", default: "razorpay"
+    t.string "gateway_refund_id"
+    t.jsonb "gateway_response", default: {}
+    t.datetime "succeeded_at"
+    t.datetime "failed_at"
+    t.text "failure_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["charge_id"], name: "index_payment_refunds_on_charge_id"
+    t.index ["initiated_by_id"], name: "index_payment_refunds_on_initiated_by_id"
+    t.index ["status", "created_at"], name: "index_payment_refunds_on_status_and_created_at"
+    t.unique_constraint ["gateway_refund_id"], name: "index_payment_refunds_on_gateway_refund_id"
+  end
+
+  create_table "payment_settlements", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "gateway_settlement_id", null: false
+    t.string "gateway", default: "razorpay"
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.decimal "fee", precision: 12, scale: 2, default: "0.0"
+    t.decimal "tax", precision: 12, scale: 2, default: "0.0"
+    t.decimal "net_amount", precision: 12, scale: 2, null: false
+    t.string "utr_number"
+    t.datetime "settled_at"
+    t.string "status", default: "pending"
+    t.bigint "charge_count", default: 0
+    t.jsonb "charge_ids", default: []
+    t.jsonb "gateway_response", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["settled_at"], name: "index_payment_settlements_on_settled_at"
+    t.index ["status", "created_at"], name: "index_payment_settlements_on_status_and_created_at"
+    t.index ["utr_number"], name: "index_payment_settlements_on_utr_number"
+    t.unique_constraint ["gateway_settlement_id"], name: "index_payment_settlements_on_gateway_settlement_id"
+  end
+
+  create_table "payment_webhook_events", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "intent_id"
+    t.string "event_type", null: false
+    t.jsonb "payload", null: false
+    t.string "gateway_event_id"
+    t.string "gateway", default: "razorpay"
+    t.string "signature"
+    t.string "ip_address"
+    t.boolean "signature_verified", default: false
+    t.boolean "processed", default: false
+    t.datetime "processed_at"
+    t.text "processing_error"
+    t.bigint "retry_count", default: 0
+    t.datetime "next_retry_at"
+    t.datetime "received_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_type"], name: "index_payment_webhook_events_on_event_type"
+    t.index ["intent_id"], name: "index_payment_webhook_events_on_intent_id"
+    t.index ["processed", "created_at"], name: "index_payment_webhook_events_on_processed_and_created_at"
+    t.unique_constraint ["gateway_event_id"], name: "index_payment_webhook_events_on_gateway_event_id"
+  end
+
+  create_table "payout_accounts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "account_type", null: false
+    t.jsonb "details", default: {}, null: false
+    t.boolean "is_verified", default: false
+    t.datetime "verified_at"
+    t.string "verification_method"
+    t.jsonb "verification_details", default: {}
+    t.boolean "is_default", default: false
+    t.boolean "is_active", default: true
+    t.string "gateway_beneficiary_id"
+    t.string "gateway", default: "decentro"
+    t.bigint "payout_count", default: 0
+    t.datetime "last_payout_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gateway_beneficiary_id"], name: "index_payout_accounts_on_gateway_beneficiary_id"
+    t.index ["user_id", "is_active"], name: "index_payout_accounts_on_user_id_and_is_active"
+    t.index ["user_id", "is_default"], name: "index_payout_accounts_on_user_id_and_is_default"
+  end
+
+  create_table "payouts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.uuid "account_id", null: false
+    t.uuid "wallet_id", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.decimal "fee", precision: 12, scale: 2, default: "0.0"
+    t.decimal "tax", precision: 12, scale: 2, default: "0.0"
+    t.decimal "net_amount", precision: 12, scale: 2, null: false
+    t.string "status", default: "pending", null: false
+    t.string "gateway", default: "decentro"
+    t.string "gateway_payout_id"
+    t.string "gateway_utr"
+    t.string "transfer_mode"
+    t.string "source_type"
+    t.string "source_id"
+    t.string "failure_code"
+    t.text "failure_message"
+    t.jsonb "gateway_response", default: {}
+    t.datetime "initiated_at"
+    t.datetime "processing_at"
+    t.datetime "completed_at"
+    t.datetime "failed_at"
+    t.text "notes"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_payouts_on_account_id"
+    t.index ["gateway_payout_id"], name: "index_payouts_on_gateway_payout_id"
+    t.index ["source_type", "source_id"], name: "index_payouts_on_source_type_and_source_id"
+    t.index ["status", "initiated_at"], name: "index_payouts_on_status_and_initiated_at", order: { initiated_at: :desc }
+    t.index ["user_id", "status"], name: "index_payouts_on_user_id_and_status"
+    t.index ["wallet_id"], name: "index_payouts_on_wallet_id"
+  end
+
   create_table "pickup_slots", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
     t.bigint "zone_delivery_config_id", null: false
     t.bigint "delivery_partner_id", null: false
@@ -330,6 +718,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
     t.string "locale"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "platform_fee_percentage", precision: 5, scale: 2, default: "3.0"
+    t.decimal "min_platform_fee", precision: 10, scale: 2, default: "10.0"
+    t.decimal "payout_fee_imps", precision: 10, scale: 2, default: "5.0"
+    t.decimal "payout_fee_upi", precision: 10, scale: 2, default: "0.0"
+    t.decimal "payout_fee_neft", precision: 10, scale: 2, default: "2.5"
+    t.decimal "payout_fee_rtgs", precision: 10, scale: 2, default: "20.0"
+    t.string "default_payment_gateway", default: "razorpay"
+    t.string "enabled_payment_gateways", default: "razorpay"
   end
 
   create_table "preferred_exchange_categories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -392,6 +788,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
     t.bigint "weight_capacity_kg"
     t.string "display_name"
     t.text "description"
+    t.bigint "quote_validity_minutes", default: 10
+    t.decimal "scheduled_discount_pct", precision: 5, scale: 2, default: "0.0"
+    t.bigint "scheduled_threshold_hours", default: 2
+    t.decimal "return_trip_discount_pct", precision: 5, scale: 2, default: "10.0"
+    t.jsonb "weight_multiplier_tiers", default: [{"max_kg"=>15, "mult"=>1.0}, {"max_kg"=>50, "mult"=>1.1}, {"max_kg"=>200, "mult"=>1.2}, {"max_kg"=>nil, "mult"=>1.4}]
     t.index ["city_code", "vehicle_type", "active", "effective_from"], name: "idx_pricing_configs_current"
     t.index ["vendor_vehicle_code", "city_code"], name: "index_pricing_configs_on_vendor_code_and_city"
     t.unique_constraint ["city_code", "vehicle_type", "version"], name: "idx_on_city_code_vehicle_type_version_008f27eb85"
@@ -430,9 +831,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
     t.jsonb "breakdown_json", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "valid_until"
+    t.datetime "scheduled_for"
+    t.boolean "is_scheduled", default: false
+    t.uuid "linked_quote_id"
+    t.string "trip_leg"
+    t.decimal "weight_kg", precision: 8, scale: 2
     t.index ["city_code"], name: "index_pricing_quotes_on_city_code"
     t.index ["created_at"], name: "index_pricing_quotes_on_created_at"
+    t.index ["linked_quote_id"], name: "index_pricing_quotes_on_linked_quote_id"
     t.index ["request_id"], name: "index_pricing_quotes_on_request_id"
+    t.index ["valid_until"], name: "index_pricing_quotes_on_valid_until"
     t.index ["vehicle_type"], name: "index_pricing_quotes_on_vehicle_type"
   end
 
@@ -677,6 +1086,54 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
     t.unique_constraint ["referral_code"], name: "index_users_on_referral_code"
   end
 
+  create_table "wallet_ledger_entries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "wallet_id", null: false
+    t.uuid "wallet_transaction_id", null: false
+    t.decimal "debit", precision: 12, scale: 2, default: "0.0"
+    t.decimal "credit", precision: 12, scale: 2, default: "0.0"
+    t.decimal "balance_after", precision: 12, scale: 2, null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["wallet_id", "created_at"], name: "index_wallet_ledger_entries_on_wallet_id_and_created_at", order: { created_at: :desc }
+    t.index ["wallet_transaction_id"], name: "index_wallet_ledger_entries_on_wallet_transaction_id"
+    t.check_constraint "((debit >= 0) AND (credit >= 0))", name: "ledger_amounts_non_negative"
+    t.check_constraint "(NOT ((debit > 0) AND (credit > 0)))", name: "ledger_debit_or_credit_only"
+  end
+
+  create_table "wallet_transactions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "wallet_id", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.string "transaction_type", null: false
+    t.string "reference_type"
+    t.string "reference_id"
+    t.string "status", default: "pending", null: false
+    t.text "description"
+    t.jsonb "metadata", default: {}
+    t.decimal "balance_before", precision: 12, scale: 2
+    t.decimal "balance_after", precision: 12, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reference_type", "reference_id"], name: "index_wallet_transactions_on_reference_type_and_reference_id"
+    t.index ["status", "created_at"], name: "index_wallet_transactions_on_status_and_created_at"
+    t.index ["transaction_type", "status"], name: "index_wallet_transactions_on_transaction_type_and_status"
+    t.index ["wallet_id", "created_at"], name: "index_wallet_transactions_on_wallet_id_and_created_at", order: { created_at: :desc }
+  end
+
+  create_table "wallets", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.decimal "balance", precision: 12, scale: 2, default: "0.0", null: false
+    t.decimal "locked_balance", precision: 12, scale: 2, default: "0.0", null: false
+    t.string "currency", default: "INR", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+
+    t.check_constraint "(balance >= 0)", name: "wallets_balance_non_negative"
+    t.check_constraint "(locked_balance <= balance)", name: "wallets_locked_within_balance"
+    t.check_constraint "(locked_balance >= 0)", name: "wallets_locked_balance_non_negative"
+    t.unique_constraint ["user_id"], name: "index_wallets_on_user_id"
+  end
+
   create_table "zone_announcements", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
     t.string "announcement_type"
     t.string "status", default: "active"
@@ -828,6 +1285,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
   add_foreign_key "blocked_users", "users", column: "blocker_id"
   add_foreign_key "coin_earning_rules", "users"
   add_foreign_key "coin_expiry_settings", "users"
+  add_foreign_key "delivery_addresses", "users", on_delete: :cascade
+  add_foreign_key "delivery_orders", "delivery_addresses", column: "drop_address_id", on_delete: :restrict
+  add_foreign_key "delivery_orders", "delivery_addresses", column: "pickup_address_id", on_delete: :restrict
+  add_foreign_key "delivery_orders", "delivery_partners"
+  add_foreign_key "delivery_orders", "users", column: "receiver_id", on_delete: :restrict
+  add_foreign_key "delivery_orders", "users", column: "sender_id", on_delete: :restrict
+  add_foreign_key "delivery_partner_callbacks", "delivery_orders", on_delete: :cascade
+  add_foreign_key "escrow_holds", "users", on_delete: :restrict
+  add_foreign_key "escrow_holds", "wallets", on_delete: :restrict
+  add_foreign_key "invoices", "payment_intents", on_delete: :nullify
+  add_foreign_key "invoices", "users", on_delete: :restrict
   add_foreign_key "listing_approval_settings", "zones"
   add_foreign_key "listing_items", "categories"
   add_foreign_key "listing_items", "listings", on_delete: :cascade
@@ -835,6 +1303,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
   add_foreign_key "listings", "zone_locations"
   add_foreign_key "locations", "users", validate: false
   add_foreign_key "otp_codes", "users"
+  add_foreign_key "payment_charges", "payment_intents", column: "intent_id", on_delete: :restrict
+  add_foreign_key "payment_charges", "payment_methods", on_delete: :nullify
+  add_foreign_key "payment_intents", "users", on_delete: :restrict
+  add_foreign_key "payment_methods", "users", on_delete: :cascade
+  add_foreign_key "payment_refunds", "payment_charges", column: "charge_id", on_delete: :restrict
+  add_foreign_key "payment_refunds", "users", column: "initiated_by_id", on_delete: :nullify
+  add_foreign_key "payment_webhook_events", "payment_intents", column: "intent_id", on_delete: :nullify
+  add_foreign_key "payout_accounts", "users", on_delete: :cascade
+  add_foreign_key "payouts", "payout_accounts", column: "account_id", on_delete: :restrict
+  add_foreign_key "payouts", "users", on_delete: :restrict
+  add_foreign_key "payouts", "wallets", on_delete: :restrict
   add_foreign_key "pickup_slots", "delivery_partners"
   add_foreign_key "pickup_slots", "zone_delivery_configs"
   add_foreign_key "preferred_exchange_categories", "categories"
@@ -849,6 +1328,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_034216) do
   add_foreign_key "user_devices", "users"
   add_foreign_key "user_login_logs", "users"
   add_foreign_key "users", "zones"
+  add_foreign_key "wallet_ledger_entries", "wallet_transactions", on_delete: :restrict
+  add_foreign_key "wallet_ledger_entries", "wallets", on_delete: :restrict
+  add_foreign_key "wallet_transactions", "wallets", on_delete: :restrict
+  add_foreign_key "wallets", "users", on_delete: :restrict
   add_foreign_key "zone_category_restrictions", "zone_listing_rules"
   add_foreign_key "zone_delivery_configs", "delivery_partners"
   add_foreign_key "zone_delivery_configs", "zones"

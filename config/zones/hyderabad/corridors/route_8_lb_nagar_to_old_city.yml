@@ -1,12 +1,12 @@
 # =============================================================================
-# Corridor: lb_nagar_east → old_city (Route 8)
+# Corridor: amberpet → old_city (Route 8)
 # =============================================================================
-# Distance: 15.54km Medium (chargeable 14.54km)
+# Distance: ~7.7km (Google route in benchmark)
 # Route: Vanasthali Puram → Charminar
 # =============================================================================
 
-corridor_id: route_8_lb_nagar_to_old_city
-from_zone: lb_nagar_east
+corridor_id: route_8_amberpet_to_old_city
+from_zone: amberpet
 to_zone: old_city
 directional: true
 
@@ -19,28 +19,28 @@ _benchmarks:
 
 pricing:
   morning:
-    two_wheeler:   { base: 7800, rate: 650 }
-    scooter:       { base: 10000, rate: 850 }
-    mini_3w:       { base: 13700, rate: 1200 }
-    three_wheeler: { base: 32000, rate: 2700 }
-    tata_ace:      { base: 36400, rate: 3120 }
-    pickup_8ft:    { base: 42000, rate: 3600 }
-    canter_14ft:   { base: 122000, rate: 10000 }
+    two_wheeler:   { base: 8500, rate: 650 }
+    scooter:       { base: 11100, rate: 850 }
+    mini_3w:       { base: 15400, rate: 1200 }
+    three_wheeler: { base: 36300, rate: 2700 }
+    tata_ace:      { base: 39500, rate: 3120 }
+    pickup_8ft:    { base: 45600, rate: 3600 }
+    canter_14ft:   { base: 133100, rate: 10000 }
 
   afternoon:
-    two_wheeler:   { base: 9200, rate: 800 }
-    scooter:       { base: 11800, rate: 1000 }
-    mini_3w:       { base: 15700, rate: 1400 }
-    three_wheeler: { base: 37000, rate: 3100 }
-    tata_ace:      { base: 42000, rate: 3500 }
-    pickup_8ft:    { base: 48000, rate: 4000 }
-    canter_14ft:   { base: 127000, rate: 11000 }
+    two_wheeler:   { base: 10800, rate: 800 }
+    scooter:       { base: 13400, rate: 1000 }
+    mini_3w:       { base: 17700, rate: 1400 }
+    three_wheeler: { base: 39900, rate: 3100 }
+    tata_ace:      { base: 46000, rate: 3500 }
+    pickup_8ft:    { base: 53200, rate: 4000 }
+    canter_14ft:   { base: 135900, rate: 11000 }
 
   evening:
-    two_wheeler:   { base: 7800, rate: 650 }
-    scooter:       { base: 10000, rate: 850 }
-    mini_3w:       { base: 13700, rate: 1200 }
-    three_wheeler: { base: 45500, rate: 3700 }
-    tata_ace:      { base: 49000, rate: 4100 }
-    pickup_8ft:    { base: 56000, rate: 4800 }
-    canter_14ft:   { base: 140600, rate: 11720 }
+    two_wheeler:   { base: 8500, rate: 650 }
+    scooter:       { base: 11100, rate: 850 }
+    mini_3w:       { base: 15400, rate: 1200 }
+    three_wheeler: { base: 49600, rate: 3700 }
+    tata_ace:      { base: 53000, rate: 4100 }
+    pickup_8ft:    { base: 61600, rate: 4800 }
+    canter_14ft:   { base: 151700, rate: 11720 }

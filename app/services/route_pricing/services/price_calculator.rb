@@ -38,7 +38,8 @@ module RoutePricing
       end
 
       def calculate(distance_m:, pickup_lat: nil, pickup_lng: nil, drop_lat: nil, drop_lng: nil,
-                    item_value_paise: nil, duration_in_traffic_s: nil, duration_s: nil, quote_time: Time.current)
+                    item_value_paise: nil, duration_in_traffic_s: nil, duration_s: nil, quote_time: Time.current,
+                    weight_kg: nil)
         
         # Step 0: Determine time band (using city timezone for consistency)
         # IMPORTANT: Convert to city timezone to avoid UTC vs local time mismatch.
@@ -123,6 +124,11 @@ module RoutePricing
         raw_subtotal += fuel_surcharge_paise
         raw_subtotal += special_location_surcharge
 
+        # =====================================================================
+        # WEIGHT-BASED PRICING
+        # =====================================================================
+        weight_multiplier = calculate_weight_multiplier(weight_kg)
+        raw_subtotal = (raw_subtotal * weight_multiplier).round if weight_multiplier > 1.0
 
         # =====================================================================
         # 3-LAYER DYNAMIC SURGE CALCULATION
@@ -221,6 +227,12 @@ module RoutePricing
           final_price_paise = ((price_after_margin / 1000.0).round * 1000).to_i
         end
 
+        # =====================================================================
+        # SCHEDULED BOOKING DISCOUNT
+        # =====================================================================
+        scheduled_discount_info = calculate_scheduled_discount(final_price_paise, quote_time)
+        final_price_paise = scheduled_discount_info[:discounted_price_paise]
+
         # Price floor
         final_price_paise = [final_price_paise, @config.min_fare_paise.to_i].max
 
@@ -249,6 +261,7 @@ module RoutePricing
         # =====================================================================
         # UNIT ECONOMICS GUARDRAIL (Never lose money on a trip)
         # =====================================================================
+        guardrail_applied = false
         if margin_pct < MIN_TARGET_MARGIN_PCT
           # Bump price to achieve minimum margin
           required_price_paise = (total_cost_paise * (1 + MIN_TARGET_MARGIN_PCT / 100.0)).ceil
@@ -265,6 +278,7 @@ module RoutePricing
           
           # Apply guardrail
           final_price_paise = guardrail_price_paise.to_i
+          guardrail_applied = true
           
           # Recalculate with new price
           pg_fee_paise = (final_price_paise * 0.02).round
@@ -283,14 +297,26 @@ module RoutePricing
           margin_paise: margin_paise,
           margin_pct: margin_pct,
           profitable: margin_paise >= 0,
-          guardrail_applied: margin_pct >= MIN_TARGET_MARGIN_PCT
+          guardrail_applied: guardrail_applied
         }
         
         # =====================================================================
 
         # Build detailed breakdown
+        # Build human-readable surge reasons
+        surge_reasons = build_surge_reasons(
+          traffic_multiplier: traffic_multiplier,
+          time_multiplier: time_multiplier,
+          zone_multiplier: zone_multiplier,
+          time_band: time_band,
+          calibration_mode: calibration_mode
+        )
+
         breakdown = {
           calibration_mode: calibration_mode,
+          pricing_source: zone_pricing.source,
+          pricing_mode: zone_pricing.pricing_mode,
+          zone_info: zone_pricing.zone_info,
           base_fare: base_fare,
           chargeable_distance_m: chargeable_m,
           distance_component: distance_component,
@@ -303,7 +329,12 @@ module RoutePricing
           zone_type_multiplier: zone_type_mult.round(3),
           oda_multiplier: oda_mult.round(3),
           special_location_surcharge_paise: special_location_surcharge,
+          # Weight-based pricing
+          weight_kg: weight_kg,
+          weight_multiplier: weight_multiplier.round(3),
           raw_subtotal: raw_subtotal,
+          # Surge transparency
+          surge_reasons: surge_reasons,
           # 3-layer surge breakdown
           traffic_multiplier: traffic_multiplier.round(3),
           time_multiplier: time_multiplier.round(3),
@@ -323,10 +354,11 @@ module RoutePricing
           subtotal_with_buffers: subtotal_with_buffers,
           margin_guardrail: margin_total,
           price_after_margin: price_after_margin,
-          final_price: final_price_paise,
-          # Unit economics (internal monitoring)
-          unit_economics: unit_economics
-        }.freeze
+          scheduled_discount: scheduled_discount_info[:applied] ? scheduled_discount_info : nil,
+          final_price: final_price_paise
+        }
+        breakdown[:unit_economics] = unit_economics if ENV['PRICING_EXPOSE_INTERNALS'] == 'true'
+        breakdown.freeze
 
         {
           final_price_paise: final_price_paise,
@@ -542,6 +574,76 @@ module RoutePricing
         end
       end
       
+      # Build human-readable surge reasons for API transparency
+      def build_surge_reasons(traffic_multiplier:, time_multiplier:, zone_multiplier:, time_band:, calibration_mode:)
+        return [{ code: 'calibration', label: 'Calibration mode active', multiplier: 1.0 }] if calibration_mode
+
+        reasons = []
+
+        if traffic_multiplier > 1.01
+          reasons << { code: 'traffic', label: 'High traffic detected', multiplier: traffic_multiplier.round(3) }
+        end
+
+        if time_multiplier > 1.01
+          label = case time_band
+                  when 'evening' then 'Evening peak pricing'
+                  when 'morning' then 'Morning rush pricing'
+                  else 'Time-based pricing'
+                  end
+          reasons << { code: 'time_of_day', label: label, multiplier: time_multiplier.round(3) }
+        end
+
+        if zone_multiplier > 1.01
+          reasons << { code: 'zone_demand', label: 'High demand area', multiplier: zone_multiplier.round(3) }
+        elsif zone_multiplier < 0.99
+          reasons << { code: 'zone_discount', label: 'Area discount applied', multiplier: zone_multiplier.round(3) }
+        end
+
+        reasons << { code: 'standard', label: 'Standard pricing', multiplier: 1.0 } if reasons.empty?
+
+        reasons
+      end
+
+      # Scheduled booking discount: future bookings get a configurable discount
+      def calculate_scheduled_discount(price_paise, quote_time)
+        threshold_hours = @config.try(:scheduled_threshold_hours) || 2
+        discount_pct = @config.try(:scheduled_discount_pct).to_f
+
+        if discount_pct > 0 && quote_time > Time.current + threshold_hours.hours
+          discount_paise = (price_paise * discount_pct / 100.0).round
+          {
+            applied: true,
+            discount_pct: discount_pct,
+            discount_paise: discount_paise,
+            original_price_paise: price_paise,
+            discounted_price_paise: price_paise - discount_paise,
+            threshold_hours: threshold_hours
+          }
+        else
+          { applied: false, discounted_price_paise: price_paise }
+        end
+      end
+
+      # Weight-based multiplier using configurable tiers from PricingConfig
+      def calculate_weight_multiplier(weight_kg)
+        return 1.0 unless weight_kg.present? && weight_kg > 0
+
+        tiers = @config.try(:weight_multiplier_tiers)
+        tiers = [
+          { 'max_kg' => 15, 'mult' => 1.0 },
+          { 'max_kg' => 50, 'mult' => 1.1 },
+          { 'max_kg' => 200, 'mult' => 1.2 },
+          { 'max_kg' => nil, 'mult' => 1.4 }
+        ] if tiers.blank?
+
+        tiers.each do |tier|
+          max = tier['max_kg']
+          return tier['mult'].to_f if max.nil? || weight_kg <= max
+        end
+
+        1.0
+      end
+
       # ODA Multiplier using zone-level config (preferred over hardcoded)
       # Uses is_oda flag and oda_surcharge_pct from Zone model
       def calculate_oda_multiplier_from_config(oda_config)

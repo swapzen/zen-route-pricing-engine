@@ -19,16 +19,33 @@ module RoutePricing
       )
 
       # Inter-zone formula weights (configurable)
-      ORIGIN_WEIGHT = 0.6
-      DESTINATION_WEIGHT = 0.4
+      DEFAULT_ORIGIN_WEIGHT = 0.6
+      DEFAULT_DESTINATION_WEIGHT = 0.4
+
+      CITY_FILE_MAPPING = {
+        'hyd' => 'hyderabad',
+        'blr' => 'bangalore',
+        'mum' => 'mumbai',
+        'del' => 'delhi',
+        'chn' => 'chennai',
+        'pun' => 'pune'
+      }.freeze
+
+      class << self
+        def inter_zone_config_cache
+          @inter_zone_config_cache ||= {}
+        end
+      end
 
       def resolve(city_code:, vehicle_type:, pickup_lat:, pickup_lng:, drop_lat:, drop_lng:, time_band: nil)
         # 1. Resolve Zones
         pickup_zone = find_zone(city_code, pickup_lat, pickup_lng)
         drop_zone = find_zone(city_code, drop_lat, drop_lng)
+        inter_zone_config = load_inter_zone_config(city_code)
         
         # 2. Global Default Config (Fallback)
-        global_config = PricingConfig.find_by(city_code: city_code, vehicle_type: vehicle_type, active: true)
+        global_config = PricingConfig.where(city_code: city_code.to_s.downcase)
+          .find_by(vehicle_type: vehicle_type, active: true)
         
         # 3. Extract zone-level pricing configs (Industry standard patterns)
         zone_pricing_configs = extract_zone_pricing_configs(pickup_zone, drop_zone)
@@ -90,7 +107,7 @@ module RoutePricing
         # 4. Check for Inter-Zone Formula (when both zones exist but no corridor)
         if pickup_zone && drop_zone && pickup_zone.id != drop_zone.id
           inter_zone_result = calculate_inter_zone_pricing(
-            pickup_zone, drop_zone, vehicle_type, time_band, defaults
+            pickup_zone, drop_zone, vehicle_type, time_band, defaults, inter_zone_config
           )
           return inter_zone_result if inter_zone_result
         end
@@ -99,7 +116,7 @@ module RoutePricing
         reference_zone = pickup_zone
         
         if reference_zone
-          zone_pricing = ZoneVehiclePricing.where('LOWER(city_code) = LOWER(?)', city_code)
+          zone_pricing = ZoneVehiclePricing.where(city_code: city_code.to_s.downcase)
             .where(zone: reference_zone, vehicle_type: vehicle_type, active: true)
             .first
 
@@ -165,7 +182,7 @@ module RoutePricing
       # Calculates pricing for zone pairs without explicit corridors
       # Uses weighted average of origin and destination zone rates
       # with adjustments based on zone type combinations
-      def calculate_inter_zone_pricing(pickup_zone, drop_zone, vehicle_type, time_band, defaults)
+      def calculate_inter_zone_pricing(pickup_zone, drop_zone, vehicle_type, time_band, defaults, inter_zone_config)
         # Get pricing for both zones
         pickup_pricing = get_zone_time_pricing(pickup_zone, vehicle_type, time_band)
         drop_pricing = get_zone_time_pricing(drop_zone, vehicle_type, time_band)
@@ -185,17 +202,25 @@ module RoutePricing
         end
 
         # Get zone type adjustment factor
-        adjustment = get_zone_type_adjustment(pickup_zone.zone_type, drop_zone.zone_type, time_band)
+        adjustment = get_zone_type_adjustment(
+          pickup_zone.zone_type,
+          drop_zone.zone_type,
+          time_band,
+          inter_zone_config
+        )
+
+        origin_weight = inter_zone_config[:origin_weight] || DEFAULT_ORIGIN_WEIGHT
+        destination_weight = inter_zone_config[:destination_weight] || DEFAULT_DESTINATION_WEIGHT
 
         # Build result with weighted average
-        build_inter_zone_result(pickup_pricing, drop_pricing, ORIGIN_WEIGHT, DESTINATION_WEIGHT,
+        build_inter_zone_result(pickup_pricing, drop_pricing, origin_weight, destination_weight,
                                pickup_zone, drop_zone, vehicle_type, defaults, time_band, adjustment)
       end
 
       def get_zone_time_pricing(zone, vehicle_type, time_band)
         return nil unless zone
 
-        zone_pricing = ZoneVehiclePricing.where('LOWER(city_code) = LOWER(?)', zone.city)
+        zone_pricing = ZoneVehiclePricing.where(city_code: zone.city.to_s.downcase)
           .where(zone: zone, vehicle_type: vehicle_type, active: true)
           .first
 
@@ -255,56 +280,63 @@ module RoutePricing
         )
       end
 
-      # Load inter-zone formula config from YAML (single source of truth)
+      # Load inter-zone formula config from city-specific YAML (single source of truth).
       # The YAML uses patterns like "any_to_airport_logistics" which match
       # any origin zone type going to airport_logistics.
-      def self.load_inter_zone_config
-        config_path = Rails.root.join('config', 'zones', 'hyderabad', 'vehicle_defaults.yml')
-        return {} unless File.exist?(config_path)
+      def load_inter_zone_config(city_code)
+        city_folder = city_folder_for(city_code)
+        self.class.inter_zone_config_cache[city_folder] ||= begin
+          config_path = Rails.root.join('config', 'zones', city_folder, 'vehicle_defaults.yml')
+          if File.exist?(config_path)
+            yaml = YAML.load_file(config_path)
+            formula = yaml['inter_zone_formula'] || {}
+            type_adjustments = formula['type_adjustments'] || {}
 
-        yaml = YAML.load_file(config_path)
-        formula = yaml['inter_zone_formula'] || {}
-        type_adjustments = formula['type_adjustments'] || {}
+            # Convert YAML patterns to lookup hash.
+            lookup = {}
+            type_adjustments.each do |pattern_key, time_values|
+              next if pattern_key == 'default'
+              symbolized = time_values.transform_keys(&:to_sym).transform_values(&:to_f)
 
-        # Convert YAML patterns to lookup hash
-        lookup = {}
-        type_adjustments.each do |pattern_key, time_values|
-          next if pattern_key == 'default'
-          symbolized = time_values.transform_keys(&:to_sym).transform_values(&:to_f)
+              parts = pattern_key.split('_to_')
+              next unless parts.length == 2
 
-          parts = pattern_key.split('_to_')
-          next unless parts.length == 2
+              from_part = parts[0]
+              to_part = parts[1]
 
-          from_part = parts[0]
-          to_part = parts[1]
+              if from_part == 'any'
+                lookup[[:any, to_part]] = symbolized
+              elsif to_part == 'any'
+                lookup[[from_part, :any]] = symbolized
+              else
+                lookup[[from_part, to_part]] = symbolized
+              end
+            end
 
-          if from_part == 'any'
-            # Wildcard: applies to any origin going to this destination type
-            lookup[[:any, to_part]] = symbolized
-          elsif to_part == 'any'
-            # Wildcard: applies to this origin going to any destination type
-            lookup[[from_part, :any]] = symbolized
+            {
+              origin_weight: (formula['origin_weight'] || DEFAULT_ORIGIN_WEIGHT).to_f,
+              destination_weight: (formula['destination_weight'] || DEFAULT_DESTINATION_WEIGHT).to_f,
+              adjustments: lookup,
+              default: (type_adjustments['default'] || {}).transform_keys(&:to_sym).transform_values(&:to_f)
+            }
           else
-            lookup[[from_part, to_part]] = symbolized
+            {}
           end
+        rescue StandardError => e
+          Rails.logger.warn("Inter-zone config load failed for #{city_code}: #{e.message}")
+          {}
         end
-
-        # Also store weights
-        {
-          origin_weight: (formula['origin_weight'] || 0.6).to_f,
-          destination_weight: (formula['destination_weight'] || 0.4).to_f,
-          adjustments: lookup,
-          default: (type_adjustments['default'] || {}).transform_keys(&:to_sym).transform_values(&:to_f)
-        }
       end
 
-      # Cache the loaded config at class level (reloaded on app restart)
-      INTER_ZONE_CONFIG = load_inter_zone_config
+      def city_folder_for(city_code)
+        normalized = city_code.to_s.downcase
+        CITY_FILE_MAPPING[normalized] || normalized
+      end
 
-      def get_zone_type_adjustment(from_type, to_type, time_band)
+      def get_zone_type_adjustment(from_type, to_type, time_band, inter_zone_config)
         return 1.0 unless time_band.present?
 
-        adjustments = INTER_ZONE_CONFIG[:adjustments] || {}
+        adjustments = inter_zone_config[:adjustments] || {}
         band = time_band.to_sym
 
         # Try exact match first
@@ -320,7 +352,7 @@ module RoutePricing
         return origin_to_any[band] || 1.0 if origin_to_any
 
         # Default
-        default = INTER_ZONE_CONFIG[:default] || {}
+        default = inter_zone_config[:default] || {}
         default[band] || 1.0
       end
       

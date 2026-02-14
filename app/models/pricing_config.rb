@@ -21,7 +21,7 @@ class PricingConfig < ApplicationRecord
   # Returns current active config for city × vehicle (class method, not scope)
   # Note: city_code comparison is case-insensitive
   def self.current_version(city_code, vehicle_type)
-    where('LOWER(city_code) = LOWER(?)', city_code)
+    where(city_code: city_code.to_s.downcase)
       .where(
         vehicle_type: vehicle_type,
         active: true,
@@ -70,6 +70,29 @@ class PricingConfig < ApplicationRecord
     log_pricing_decision(vehicle_type, time_period, dist_category, base_mult, scale, effective_mult) if ENV['PRICING_DETAILED_LOGS'] == 'true'
     
     effective_mult
+  end
+
+  # Create a new config version and sunset the current one.
+  # This is called from the admin controller.
+  def create_new_version(attrs, user)
+    transaction do
+      # Mark current version as ended and inactive.
+      update!(
+        effective_until: Time.current,
+        active: false
+      )
+
+      new_config = dup
+      new_config.assign_attributes(attrs.except(:id, :created_at, :updated_at))
+      new_config.version = version + 1
+      new_config.effective_from = Time.current
+      new_config.effective_until = nil
+      new_config.created_by = user
+      new_config.active = true
+      new_config.save!
+
+      new_config
+    end
   end
 
   private
@@ -136,23 +159,4 @@ class PricingConfig < ApplicationRecord
   end
 
 
-  # Create new version of this config
-  def create_new_version(attrs, user)
-    transaction do
-      # Mark current version as ended
-      self.update!(effective_until: Time.current)
-
-      # Create new version
-      new_config = self.dup
-      new_config.assign_attributes(attrs.except(:id, :created_at, :updated_at))
-      new_config.version = self.version + 1
-      new_config.effective_from = Time.current
-      new_config.effective_until = nil
-      new_config.created_by = user
-      new_config.active = true
-      new_config.save!
-
-      new_config
-    end
-  end
 end

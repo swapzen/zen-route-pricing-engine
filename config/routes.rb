@@ -6,6 +6,9 @@ Rails.application.routes.draw do
   namespace :route_pricing do
     # Public endpoints (Internal to SwapZen network)
     post 'create_quote', to: 'quotes#create'
+    post 'multi_quote', to: 'quotes#multi_quote'
+    post 'round_trip_quote', to: 'quotes#round_trip_quote'
+    post 'validate_quote', to: 'quotes#validate_quote'
     post 'record_actual', to: 'quotes#record_actual'
 
     # Admin endpoints
