@@ -22,7 +22,7 @@ module RoutePricing
         item_value_paise: params[:item_value_paise]&.to_i,
         request_id: params[:request_id],
         weight_kg: params[:weight_kg]&.to_f,
-        quote_time: params[:quote_time].present? ? Time.zone.parse(params[:quote_time]) : Time.current
+        quote_time: parse_quote_time(params[:quote_time])
       )
 
       if result[:error]
@@ -52,8 +52,8 @@ module RoutePricing
       drop_lat = BigDecimal(params[:drop_lat].to_s)
       drop_lng = BigDecimal(params[:drop_lng].to_s)
 
-      quote_time = params[:quote_time].present? ? Time.zone.parse(params[:quote_time]) : Time.current
-      return_quote_time = params[:return_quote_time].present? ? Time.zone.parse(params[:return_quote_time]) : nil
+      quote_time = parse_quote_time(params[:quote_time])
+      return_quote_time = params[:return_quote_time].present? ? parse_quote_time(params[:return_quote_time]) : nil
 
       engine = RoutePricing::Services::QuoteEngine.new
       result = engine.create_round_trip_quote(
@@ -115,7 +115,9 @@ module RoutePricing
 
     # POST /route_pricing/validate_quote
     def validate_quote
-      quote = PricingQuote.find_by(id: params[:quote_id])
+      scope = PricingQuote.where(id: params[:quote_id])
+      scope = scope.where(request_id: params[:request_id]) if params[:request_id].present?
+      quote = scope.first
 
       unless quote
         return render json: { error: "Quote not found" }, status: :not_found
@@ -162,6 +164,16 @@ module RoutePricing
     rescue StandardError => e
       Rails.logger.error("RecordActual failed: #{e.message}")
       render json: { error: e.message }, status: :unprocessable_entity
+    end
+
+    private
+
+    def parse_quote_time(value)
+      return Time.current unless value.present?
+
+      Time.zone.parse(value)
+    rescue ArgumentError
+      raise ArgumentError, "Invalid quote_time format: #{value}"
     end
   end
 end

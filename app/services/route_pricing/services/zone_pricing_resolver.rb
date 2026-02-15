@@ -31,9 +31,20 @@ module RoutePricing
         'pun' => 'pune'
       }.freeze
 
+      INTER_ZONE_CACHE_TTL = 1.hour
+
       class << self
         def inter_zone_config_cache
           @inter_zone_config_cache ||= {}
+        end
+
+        def inter_zone_cache_timestamps
+          @inter_zone_cache_timestamps ||= {}
+        end
+
+        def reset_inter_zone_config_cache!
+          @inter_zone_config_cache = {}
+          @inter_zone_cache_timestamps = {}
         end
       end
 
@@ -44,8 +55,7 @@ module RoutePricing
         inter_zone_config = load_inter_zone_config(city_code)
         
         # 2. Global Default Config (Fallback)
-        global_config = PricingConfig.where(city_code: city_code.to_s.downcase)
-          .find_by(vehicle_type: vehicle_type, active: true)
+        global_config = cached_city_config(city_code, vehicle_type)
         
         # 3. Extract zone-level pricing configs (Industry standard patterns)
         zone_pricing_configs = extract_zone_pricing_configs(pickup_zone, drop_zone)
@@ -75,17 +85,11 @@ module RoutePricing
         # 3. Check Zone Pair Override (Corridor Pricing) - Time-Band Aware
         # Allow both inter-zone and intra-zone corridors (for premium routes like Route 10)
         if pickup_zone && drop_zone
-          pair_pricing = ZonePairVehiclePricing.find_override(
-            city_code, 
-            pickup_zone.id, 
-            drop_zone.id, 
-            vehicle_type,
-            time_band: time_band
-          )
+          pair_pricing = cached_pair_pricing(city_code, pickup_zone.id, drop_zone.id, vehicle_type, time_band)
           if pair_pricing
              # Corridor pricing uses linear mode with explicit rates
              # Zone multipliers are bypassed (corridor rates are fully calibrated)
-             zone_slabs = fetch_zone_slabs(pickup_zone, vehicle_type)
+             zone_slabs = cached_zone_slabs(pickup_zone, vehicle_type)
              return Result.new(
                base_fare_paise: pair_pricing.base_fare_paise || defaults[:base_fare_paise],
                min_fare_paise: pair_pricing.min_fare_paise || defaults[:min_fare_paise],
@@ -116,17 +120,15 @@ module RoutePricing
         reference_zone = pickup_zone
         
         if reference_zone
-          zone_pricing = ZoneVehiclePricing.where(city_code: city_code.to_s.downcase)
-            .where(zone: reference_zone, vehicle_type: vehicle_type, active: true)
-            .first
+          zone_pricing = cached_zone_pricing(city_code, reference_zone, vehicle_type)
 
           if zone_pricing
             # Fetch zone-specific slabs
-            zone_slabs = fetch_zone_slabs(reference_zone, vehicle_type)
+            zone_slabs = cached_zone_slabs(reference_zone, vehicle_type)
             
             # 5a. Try time-specific pricing first
             if time_band.present?
-              time_pricing = zone_pricing.time_pricings.active.find_by(time_band: time_band)
+              time_pricing = zone_pricing.time_pricings.detect { |tp| tp.active && tp.time_band == time_band }
               if time_pricing
                 # Zone-specific time-band rates are pre-calibrated, so bypass zone multipliers
                 zone_pricing_configs = extract_zone_pricing_configs(pickup_zone, drop_zone)
@@ -170,7 +172,7 @@ module RoutePricing
         end
 
         # 6. Return Default (with zone slabs if available)
-        zone_slabs = pickup_zone ? fetch_zone_slabs(pickup_zone, vehicle_type) : nil
+        zone_slabs = pickup_zone ? cached_zone_slabs(pickup_zone, vehicle_type) : nil
         Result.new(defaults.merge(zone_slabs: zone_slabs))
       end
 
@@ -220,14 +222,11 @@ module RoutePricing
       def get_zone_time_pricing(zone, vehicle_type, time_band)
         return nil unless zone
 
-        zone_pricing = ZoneVehiclePricing.where(city_code: zone.city.to_s.downcase)
-          .where(zone: zone, vehicle_type: vehicle_type, active: true)
-          .first
-
+        zone_pricing = cached_zone_pricing(zone.city, zone, vehicle_type)
         return nil unless zone_pricing
 
         if time_band.present?
-          time_pricing = zone_pricing.time_pricings.active.find_by(time_band: time_band)
+          time_pricing = zone_pricing.time_pricings.detect { |tp| tp.active && tp.time_band == time_band }
           return time_pricing if time_pricing
         end
 
@@ -253,7 +252,7 @@ module RoutePricing
           drop_pricing.min_fare_paise * drop_weight
         ) * adjustment
 
-        zone_slabs = fetch_zone_slabs(pickup_zone, vehicle_type)
+        zone_slabs = cached_zone_slabs(pickup_zone, vehicle_type)
         zone_pricing_configs = extract_zone_pricing_configs(pickup_zone, drop_zone)
 
         Result.new(
@@ -285,6 +284,14 @@ module RoutePricing
       # any origin zone type going to airport_logistics.
       def load_inter_zone_config(city_code)
         city_folder = city_folder_for(city_code)
+
+        # Expire stale cache entry (TTL-based)
+        timestamps = self.class.inter_zone_cache_timestamps
+        if timestamps[city_folder] && (Time.current - timestamps[city_folder]) > INTER_ZONE_CACHE_TTL
+          self.class.inter_zone_config_cache.delete(city_folder)
+          timestamps.delete(city_folder)
+        end
+
         self.class.inter_zone_config_cache[city_folder] ||= begin
           config_path = Rails.root.join('config', 'zones', city_folder, 'vehicle_defaults.yml')
           if File.exist?(config_path)
@@ -325,7 +332,7 @@ module RoutePricing
         rescue StandardError => e
           Rails.logger.warn("Inter-zone config load failed for #{city_code}: #{e.message}")
           {}
-        end
+        end.tap { self.class.inter_zone_cache_timestamps[city_folder] = Time.current }
       end
 
       def city_folder_for(city_code)
@@ -421,14 +428,105 @@ module RoutePricing
       end
 
       def find_zone(city_code, lat, lng)
-        # Optimized lookup would use PostGIS/CockroachDB spatial index or H3 hex grid.
-        # For now, looping through active zones in memory (efficient for <100 zones).
-        # Sorted by priority (desc) so higher priority zones (e.g. specific tech parks)
-        # match first. Secondary sort by zone_code (asc) ensures deterministic results
-        # when multiple zones share the same priority.
-        Zone.for_city(city_code).active.order(priority: :desc, zone_code: :asc).each do |z|
+        # Load zones once per city per resolver instance (avoids N+1 in multi-quote)
+        @zones_cache ||= {}
+        @zones_cache[city_code] ||= Zone.for_city(city_code).active
+          .order(priority: :desc, zone_code: :asc).to_a
+
+        @zones_cache[city_code].each do |z|
           return z if z.contains_point?(lat, lng)
         end
+        nil
+      end
+
+      # =========================================================================
+      # INSTANCE-LEVEL CACHING (avoids N+1 in multi-quote)
+      # Each cache loads ALL records for a city/zone once, then filters in Ruby.
+      # =========================================================================
+
+      # Cache all active PricingConfigs for a city, filter by vehicle_type in Ruby
+      def cached_city_config(city_code, vehicle_type)
+        @city_configs_cache ||= {}
+        @city_configs_cache[city_code] ||= PricingConfig
+          .where(city_code: city_code.to_s.downcase, active: true)
+          .to_a
+        @city_configs_cache[city_code].find { |c| c.vehicle_type == vehicle_type }
+      end
+
+      # Cache all active ZonePairVehiclePricings for a zone pair, filter in Ruby
+      # Replicates ZonePairVehiclePricing.find_override priority logic without DB queries
+      def cached_pair_pricing(city_code, from_zone_id, to_zone_id, vehicle_type, time_band)
+        @pair_pricings_cache ||= {}
+        key = "#{city_code}:#{from_zone_id}:#{to_zone_id}"
+        @pair_pricings_cache[key] ||= ZonePairVehiclePricing
+          .where(city_code: city_code.to_s.downcase, active: true)
+          .where(
+            "(from_zone_id = :from AND to_zone_id = :to) OR " \
+            "(from_zone_id = :to AND to_zone_id = :from AND directional = false)",
+            from: from_zone_id, to: to_zone_id
+          )
+          .to_a
+
+        pairs = @pair_pricings_cache[key]
+
+        # 1. Exact match with time_band
+        result = pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band == time_band &&
+                                   p.from_zone_id == from_zone_id && p.to_zone_id == to_zone_id }
+        return result if result
+
+        # 2. Without time_band (fallback)
+        if time_band.present?
+          result = pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band.nil? &&
+                                     p.from_zone_id == from_zone_id && p.to_zone_id == to_zone_id }
+          return result if result
+        end
+
+        # 3. Non-directional swapped with time_band
+        result = pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band == time_band &&
+                                   p.from_zone_id == to_zone_id && p.to_zone_id == from_zone_id && !p.directional }
+        return result if result
+
+        # 4. Non-directional swapped without time_band
+        if time_band.present?
+          pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band.nil? &&
+                            p.from_zone_id == to_zone_id && p.to_zone_id == from_zone_id && !p.directional }
+        end
+      end
+
+      # Cache all active ZoneVehiclePricings for a zone (with eager-loaded time_pricings)
+      def cached_zone_pricing(city_code, zone, vehicle_type)
+        return nil unless zone
+        @zone_pricings_cache ||= {}
+        key = "#{city_code}:#{zone.id}"
+        @zone_pricings_cache[key] ||= ZoneVehiclePricing
+          .where(city_code: city_code.to_s.downcase, zone: zone, active: true)
+          .includes(:time_pricings)
+          .to_a
+        @zone_pricings_cache[key].find { |zp| zp.vehicle_type == vehicle_type }
+      end
+
+      # Cache all zone distance slabs for a zone, filter by vehicle_type in Ruby
+      def cached_zone_slabs(zone, vehicle_type)
+        return nil unless zone && defined?(ZoneDistanceSlab)
+        @zone_slabs_cache ||= {}
+        @zone_slabs_cache[zone.id] ||= ZoneDistanceSlab
+          .where(zone_id: zone.id, active: true)
+          .order(:min_distance_m)
+          .to_a
+
+        slabs = @zone_slabs_cache[zone.id].select { |s| s.vehicle_type == vehicle_type }
+        return nil if slabs.empty?
+
+        slabs.map do |s|
+          {
+            min_distance_m: s.min_distance_m,
+            max_distance_m: s.max_distance_m,
+            per_km_rate_paise: s.per_km_rate_paise,
+            flat_fare_paise: s.flat_fare_paise
+          }
+        end
+      rescue StandardError => e
+        Rails.logger.warn("Zone slabs lookup failed: #{e.message}")
         nil
       end
     end

@@ -20,7 +20,7 @@ require 'set'
 class ZoneConfigLoader
   attr_reader :city_code, :config, :stats
 
-  VEHICLE_TYPES = %w[two_wheeler scooter mini_3w three_wheeler tata_ace pickup_8ft canter_14ft].freeze
+  VEHICLE_TYPES = RoutePricing::VehicleCategories::ALL_VEHICLES
   TIME_BANDS = %w[morning afternoon evening].freeze
   CORRIDOR_CATEGORIES = %w[
     morning_rush_corridors

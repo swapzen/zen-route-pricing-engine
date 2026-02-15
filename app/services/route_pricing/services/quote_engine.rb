@@ -105,15 +105,30 @@ module RoutePricing
         quotes = []
         errors = []
 
-        # 2. Calculate price for each vehicle type
-        ZoneConfigLoader::VEHICLE_TYPES.each do |vehicle_type|
-          config = PricingConfig.current_version(city_code, vehicle_type)
+        # Shared zone resolver to avoid N+1 zone lookups across vehicles
+        shared_resolver = ZonePricingResolver.new
+
+        # 2. Batch preload all PricingConfigs (saves N queries)
+        vehicle_types = ZoneConfigLoader::VEHICLE_TYPES
+        configs_by_vehicle = PricingConfig
+          .where(city_code: city_code.to_s.downcase, active: true, effective_until: nil)
+          .where('effective_from <= ?', Time.current)
+          .where(vehicle_type: vehicle_types)
+          .includes(:pricing_distance_slabs)
+          .order(version: :desc)
+          .to_a
+          .group_by(&:vehicle_type)
+          .transform_values(&:first)
+
+        # 3. Calculate price for each vehicle type
+        vehicle_types.each do |vehicle_type|
+          config = configs_by_vehicle[vehicle_type]
           unless config
             errors << { vehicle_type: vehicle_type, error: 'Config not found' }
             next
           end
 
-          calculator = PriceCalculator.new(config: config)
+          calculator = PriceCalculator.new(config: config, zone_resolver: shared_resolver)
           pricing_result = calculator.calculate(
             distance_m: route_data[:distance_m],
             duration_s: route_data[:duration_s],
@@ -185,42 +200,59 @@ module RoutePricing
         { error: e.message, code: 500 }
       end
 
-      # Create linked outbound + return quotes with return trip discount
+      # Create linked outbound + return quotes with return trip discount.
+      # Both quotes are created inside a transaction to prevent orphaned records.
       def create_round_trip_quote(city_code:, vehicle_type:, pickup_lat:, pickup_lng:, drop_lat:, drop_lng:,
                                   item_value_paise: nil, request_id: nil, quote_time: Time.current,
                                   return_quote_time: nil, weight_kg: nil)
-        # 1. Outbound quote (A -> B)
-        outbound = create_quote(
-          city_code: city_code,
-          vehicle_type: vehicle_type,
-          pickup_lat: pickup_lat,
-          pickup_lng: pickup_lng,
-          drop_lat: drop_lat,
-          drop_lng: drop_lng,
-          item_value_paise: item_value_paise,
-          request_id: request_id,
-          quote_time: quote_time,
-          weight_kg: weight_kg
-        )
-        return outbound if outbound[:error]
+        outbound = nil
+        return_result = nil
 
-        # 2. Return quote (B -> A), default +2h if no return time specified
-        return_time = return_quote_time || (quote_time + 2.hours)
-        return_result = create_quote(
-          city_code: city_code,
-          vehicle_type: vehicle_type,
-          pickup_lat: drop_lat,
-          pickup_lng: drop_lng,
-          drop_lat: pickup_lat,
-          drop_lng: pickup_lng,
-          item_value_paise: item_value_paise,
-          request_id: request_id,
-          quote_time: return_time,
-          weight_kg: weight_kg
-        )
-        return return_result if return_result[:error]
+        ActiveRecord::Base.transaction do
+          # 1. Outbound quote (A -> B)
+          outbound = create_quote(
+            city_code: city_code,
+            vehicle_type: vehicle_type,
+            pickup_lat: pickup_lat,
+            pickup_lng: pickup_lng,
+            drop_lat: drop_lat,
+            drop_lng: drop_lng,
+            item_value_paise: item_value_paise,
+            request_id: request_id,
+            quote_time: quote_time,
+            weight_kg: weight_kg
+          )
+          raise ActiveRecord::Rollback, outbound[:error] if outbound[:error]
 
-        # 3. Apply return trip discount to combined total
+          # 2. Return quote (B -> A), default +2h if no return time specified
+          return_time = return_quote_time || (quote_time + 2.hours)
+          return_result = create_quote(
+            city_code: city_code,
+            vehicle_type: vehicle_type,
+            pickup_lat: drop_lat,
+            pickup_lng: drop_lng,
+            drop_lat: pickup_lat,
+            drop_lng: pickup_lng,
+            item_value_paise: item_value_paise,
+            request_id: request_id,
+            quote_time: return_time,
+            weight_kg: weight_kg
+          )
+          raise ActiveRecord::Rollback, return_result[:error] if return_result[:error]
+
+          # 3. Link quotes atomically
+          outbound_quote = PricingQuote.find(outbound[:quote_id])
+          return_quote = PricingQuote.find(return_result[:quote_id])
+          outbound_quote.update!(linked_quote_id: return_quote.id, trip_leg: 'outbound')
+          return_quote.update!(linked_quote_id: outbound_quote.id, trip_leg: 'return')
+        end
+
+        # Check if transaction rolled back
+        return outbound if outbound&.dig(:error)
+        return return_result if return_result&.dig(:error)
+        return { error: 'Round trip quote creation failed', code: 500 } unless outbound && return_result
+
+        # 4. Apply return trip discount to combined total
         config = PricingConfig.current_version(city_code, vehicle_type)
         discount_pct = config&.try(:return_trip_discount_pct).to_f
         discount_pct = 10.0 if discount_pct <= 0
@@ -228,12 +260,6 @@ module RoutePricing
         combined_paise = outbound[:price_paise] + return_result[:price_paise]
         discount_paise = (combined_paise * discount_pct / 100.0).round
         discounted_total = combined_paise - discount_paise
-
-        # 4. Link quotes
-        outbound_quote = PricingQuote.find(outbound[:quote_id])
-        return_quote = PricingQuote.find(return_result[:quote_id])
-        outbound_quote.update!(linked_quote_id: return_quote.id, trip_leg: 'outbound')
-        return_quote.update!(linked_quote_id: outbound_quote.id, trip_leg: 'return')
 
         {
           success: true,

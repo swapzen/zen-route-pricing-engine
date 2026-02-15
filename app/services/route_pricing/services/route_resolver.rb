@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
+require 'timeout'
+
 module RoutePricing
   module Services
     class RouteResolver
       CACHE_TTL = 2.hours  # Reduced from 6h to keep traffic data fresh (matches 2h time bucket in cache key)
+      PROVIDER_TIMEOUT = 15  # Defense-in-depth: max seconds for provider call (HTTP timeouts are 10s each)
 
       def initialize
         @normalizer = CoordinateNormalizer.new
@@ -37,13 +40,15 @@ module RoutePricing
           )
         end
 
-        # Cache miss - call provider
-        route_data = @provider.get_route(
-          pickup_lat: pickup_norm[:lat],
-          pickup_lng: pickup_norm[:lng],
-          drop_lat: drop_norm[:lat],
-          drop_lng: drop_norm[:lng]
-        )
+        # Cache miss - call provider with timeout guard
+        route_data = Timeout.timeout(PROVIDER_TIMEOUT) do
+          @provider.get_route(
+            pickup_lat: pickup_norm[:lat],
+            pickup_lng: pickup_norm[:lng],
+            drop_lat: drop_norm[:lat],
+            drop_lng: drop_norm[:lng]
+          )
+        end
 
         # Cache result using Rails.cache (handles connection pooling)
         Rails.cache.write(cache_key, route_data, expires_in: CACHE_TTL)

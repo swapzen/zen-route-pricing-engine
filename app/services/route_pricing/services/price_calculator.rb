@@ -33,8 +33,9 @@ module RoutePricing
       ODA_DOUBLE_ZONE_TYPES = %w[outer_ring industrial airport_logistics].freeze
       ODA_SURCHARGE_MULTIPLIER = 1.05  # 5% surcharge for both-ODA routes
 
-      def initialize(config:)
+      def initialize(config:, zone_resolver: nil)
         @config = config
+        @zone_resolver = zone_resolver || ZonePricingResolver.new
       end
 
       def calculate(distance_m:, pickup_lat: nil, pickup_lng: nil, drop_lat: nil, drop_lng: nil,
@@ -54,7 +55,7 @@ module RoutePricing
                     end
         
         # Step 1: Resolve Zone Pricing (v5.0 Time-Aware Zone-Based Structure)
-        zone_pricing = ZonePricingResolver.new.resolve(
+        zone_pricing = @zone_resolver.resolve(
           city_code: @config.city_code,
           vehicle_type: @config.vehicle_type,
           pickup_lat: pickup_lat,
@@ -94,7 +95,7 @@ module RoutePricing
         # Base fare is a fixed cost (driver showing up, loading) and should not be
         # scaled by distance. The distance component is the variable cost.
         band_multiplier = calculate_distance_band_multiplier(@config.vehicle_type, distance_m)
-        shaped_distance = (distance_component.to_i * band_multiplier).round
+        shaped_distance = distance_component.to_f * band_multiplier
         raw_subtotal = base_fare + shaped_distance
         
         # =====================================================================
@@ -105,7 +106,7 @@ module RoutePricing
         # 4c. Fuel Surcharge (FSC) - From zone config (industry: 8-12%, default 0)
         # Use zone-level FSC if configured, otherwise use global default
         fsc_pct = zone_pricing.fuel_surcharge_pct || FUEL_SURCHARGE_PCT
-        fuel_surcharge_paise = (raw_subtotal * fsc_pct).round
+        fuel_surcharge_paise = raw_subtotal * fsc_pct
         
         # 4d. Zone Type Multiplier (SLS - Special Location Surcharge)
         # From zone config (configurable per zone instead of hardcoded by type)
@@ -120,7 +121,7 @@ module RoutePricing
         special_location_surcharge = zone_pricing.special_location_surcharge || 0
         
         # Apply industry-standard components
-        raw_subtotal = (raw_subtotal * zone_type_mult * oda_mult).round
+        raw_subtotal = raw_subtotal * zone_type_mult * oda_mult
         raw_subtotal += fuel_surcharge_paise
         raw_subtotal += special_location_surcharge
 
@@ -128,7 +129,7 @@ module RoutePricing
         # WEIGHT-BASED PRICING
         # =====================================================================
         weight_multiplier = calculate_weight_multiplier(weight_kg)
-        raw_subtotal = (raw_subtotal * weight_multiplier).round if weight_multiplier > 1.0
+        raw_subtotal = raw_subtotal * weight_multiplier if weight_multiplier > 1.0
 
         # =====================================================================
         # 3-LAYER DYNAMIC SURGE CALCULATION
@@ -240,7 +241,8 @@ module RoutePricing
         # UNIT ECONOMICS (Internal - Not shown to user)
         # =====================================================================
         # Use raw_subtotal as proxy for vendor cost (calibrated to Porter)
-        estimated_vendor_cost_paise = raw_subtotal
+        # Round once here for unit economics (internal calc, not user-facing)
+        estimated_vendor_cost_paise = raw_subtotal.round
         
         # Payment gateway fee (~2% of final price)
         pg_fee_paise = (final_price_paise * 0.02).round
@@ -321,18 +323,18 @@ module RoutePricing
           chargeable_distance_m: chargeable_m,
           distance_component: distance_component,
           distance_band_multiplier: band_multiplier,
-          shaped_distance_component: shaped_distance,
+          shaped_distance_component: shaped_distance.round,
           slab_pricing_used: @config.pricing_distance_slabs.any?,
           # Industry-standard components (Cogoport/ShipX)
           fuel_surcharge_pct: fsc_pct,
-          fuel_surcharge_paise: fuel_surcharge_paise,
+          fuel_surcharge_paise: fuel_surcharge_paise.round,
           zone_type_multiplier: zone_type_mult.round(3),
           oda_multiplier: oda_mult.round(3),
           special_location_surcharge_paise: special_location_surcharge,
           # Weight-based pricing
           weight_kg: weight_kg,
           weight_multiplier: weight_multiplier.round(3),
-          raw_subtotal: raw_subtotal,
+          raw_subtotal: raw_subtotal.round,
           # Surge transparency
           surge_reasons: surge_reasons,
           # 3-layer surge breakdown
@@ -348,17 +350,17 @@ module RoutePricing
           # Other multipliers
           vehicle_multiplier: @config.vehicle_multiplier.to_f,
           city_multiplier: @config.city_multiplier.to_f,
-          after_multipliers: multiplied,
+          after_multipliers: multiplied.round,
           variance_buffer: variance_buffer,
           high_value_buffer: high_value_buffer,
-          subtotal_with_buffers: subtotal_with_buffers,
+          subtotal_with_buffers: subtotal_with_buffers.round,
           margin_guardrail: margin_total,
-          price_after_margin: price_after_margin,
+          price_after_margin: price_after_margin.round,
           scheduled_discount: scheduled_discount_info[:applied] ? scheduled_discount_info : nil,
           final_price: final_price_paise
         }
         breakdown[:unit_economics] = unit_economics if ENV['PRICING_EXPOSE_INTERNALS'] == 'true'
-        breakdown.freeze
+        deep_freeze(breakdown)
 
         {
           final_price_paise: final_price_paise,
@@ -456,7 +458,8 @@ module RoutePricing
       
       # Distance component using city slabs
       def calculate_distance_component(chargeable_m)
-        slabs = @config.pricing_distance_slabs.ordered
+        # Use sort_by to avoid additional SQL query when association is preloaded via includes
+        slabs = @config.pricing_distance_slabs.sort_by(&:min_distance_m)
         
         if slabs.any?
           calculate_slab_cost(slabs, chargeable_m)
@@ -638,7 +641,10 @@ module RoutePricing
 
         tiers.each do |tier|
           max = tier['max_kg']
-          return tier['mult'].to_f if max.nil? || weight_kg <= max
+          if max.nil? || weight_kg <= max
+            mult = tier['mult'].to_f
+            return mult > 0 ? mult : 1.0
+          end
         end
 
         1.0
@@ -648,10 +654,25 @@ module RoutePricing
       # Uses is_oda flag and oda_surcharge_pct from Zone model
       def calculate_oda_multiplier_from_config(oda_config)
         return 1.0 unless oda_config && oda_config[:both_oda]
-        
+
         # Convert percentage to multiplier (e.g., 5% → 1.05)
         surcharge_pct = oda_config[:surcharge_pct] || 5.0
         1.0 + (surcharge_pct / 100.0)
+      end
+
+      # Recursively freeze a hash and all nested values
+      def deep_freeze(obj)
+        case obj
+        when Hash
+          obj.each_value { |v| deep_freeze(v) }
+          obj.freeze
+        when Array
+          obj.each { |v| deep_freeze(v) }
+          obj.freeze
+        else
+          obj.freeze if obj.respond_to?(:freeze)
+        end
+        obj
       end
     end
   end
