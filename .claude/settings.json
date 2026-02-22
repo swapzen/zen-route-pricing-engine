@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(bundle exec ruby:*)",
+      "Bash(bundle exec rails:*)",
+      "Bash(bundle exec rails runner:*)",
+      "Bash(bundle exec rails routes:*)",
+      "Bash(RAILS_ENV=development bundle exec ruby:*)",
+      "Bash(RAILS_ENV=development bundle exec rails:*)",
+      "Bash(RAILS_ENV=development bundle exec rails runner:*)",
+      "Bash(RAILS_ENV=development bundle exec rails db:migrate:*)",
+      "Bash(RAILS_ENV=development bundle exec rails db:migrate:status:*)",
+      "Bash(RAILS_ENV=development bundle exec rails db:seed:*)",
+      "Bash(PRICING_MODE=calibration bundle exec ruby:*)",
+      "Bash(PRICING_MODE=calibration bundle exec rails runner:*)",
+      "Bash(PRICING_MODE=calibration RAILS_ENV=development bundle exec ruby:*)",
+      "Bash(PRICING_MODE=calibration RAILS_ENV=development bundle exec rails runner:*)",
+      "Bash(PRICING_MODE=calibration ROUTE_PROVIDER_STRATEGY=haversine bundle exec ruby:*)",
+      "Bash(DRY_RUN=1 RAILS_ENV=development bundle exec rails runner:*)",
+      "Bash(DRY_RUN=1 PRICING_MODE=calibration bundle exec rails runner:*)",
+      "Bash(cockroach sql:*)",
+      "Bash(ruby -c:*)",
+      "Bash(python3:*)",
+      "Bash(git stash:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git status:*)",
+      "Bash(lsof:*)",
+      "Bash(bundle exec spring stop:*)"
+    ]
+  }
+}
