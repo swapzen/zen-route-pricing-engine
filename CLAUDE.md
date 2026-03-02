@@ -74,6 +74,19 @@
 - NEVER force push, NEVER run commands with RAILS_ENV=production
 - NEVER reference or connect to production URLs from local dev
 
+## Post-Change Verification (stack-specific)
+
+In addition to the parent verification rules, check these pricing engine-specific items:
+
+- **YAML config structure**: Verify `config/zones/*.yml` files have valid YAML syntax and expected keys
+- **Vehicle categories**: All vehicle type references MUST use values from `vehicle_categories.rb` — never hardcode
+- **Pricing hierarchy**: If modifying pricing logic, trace the 5-tier fallback: Corridor > Inter-Zone > Zone-Time > Zone > City Default
+- **QuoteEngine flow**: Trace QuoteEngine → RouteResolver → PriceCalculator + ZonePricingResolver path
+- **Time band logic**: Verify time comparisons use city timezone (Asia/Kolkata), bands: morning 6-12, afternoon 12-18, evening 18-6
+- **Redis cache keys**: If changing cache logic, verify key format includes time bucket and cache invalidation still works
+- **API response format**: Verify JSON response structure matches what swapzen-api and swapzen-admin expect
+- **Ruby syntax**: Verify `end` keywords balance with `def/class/module/do/if/unless/case`
+
 ## Don'ts
 
 - Never hardcode vehicle categories — use `vehicle_categories.rb`
