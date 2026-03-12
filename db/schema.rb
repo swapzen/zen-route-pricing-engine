@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_12_100002) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_12_100005) do
   create_schema "crdb_internal"
 
   create_table "active_storage_attachments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -346,6 +346,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100002) do
     t.datetime "updated_at", null: false
 
     t.unique_constraint ["h3_index_r7", "city_code", "time_band"], name: "idx_h3_supply_density_unique"
+  end
+
+  create_table "h3_surge_buckets", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "h3_index", null: false
+    t.string "city_code", null: false
+    t.bigint "h3_resolution", default: 9, null: false
+    t.float "demand_score", default: 0.0
+    t.float "supply_score", default: 0.0
+    t.float "surge_multiplier", default: 1.0
+    t.string "time_band"
+    t.datetime "expires_at"
+    t.string "source"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city_code", "h3_resolution"], name: "index_h3_surge_buckets_on_city_code_and_h3_resolution"
+    t.index ["expires_at"], name: "index_h3_surge_buckets_on_expires_at"
+    t.unique_constraint ["city_code", "h3_index", "time_band"], name: "idx_surge_city_hex_band"
   end
 
   create_table "image_hashes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -972,6 +990,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100002) do
     t.bigint "margin_paise"
     t.decimal "margin_pct", precision: 6, scale: 2
     t.string "vendor_confidence", default: "none"
+    t.string "pickup_h3_r8"
+    t.string "drop_h3_r8"
+    t.string "pickup_h3_r7"
+    t.string "drop_h3_r7"
+    t.float "h3_surge_multiplier", default: 1.0
+    t.index ["city_code", "drop_h3_r8"], name: "idx_quotes_drop_h3"
+    t.index ["city_code", "pickup_h3_r8"], name: "idx_quotes_pickup_h3"
     t.index ["city_code"], name: "index_pricing_quotes_on_city_code"
     t.index ["created_at"], name: "index_pricing_quotes_on_created_at"
     t.index ["linked_quote_id"], name: "index_pricing_quotes_on_linked_quote_id"
@@ -1432,6 +1457,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100002) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "serviceable", default: true
+    t.string "h3_index_r8"
+    t.index ["city_code", "h3_index_r8"], name: "idx_zone_h3_mappings_r8_city"
     t.index ["h3_index_r7", "city_code"], name: "idx_zone_h3_mappings_r7_city"
     t.index ["h3_index_r9", "city_code"], name: "idx_zone_h3_mappings_r9_city"
     t.unique_constraint ["h3_index_r7", "zone_id"], name: "idx_zone_h3_mappings_r7_zone"

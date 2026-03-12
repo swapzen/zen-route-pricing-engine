@@ -30,6 +30,13 @@ Rails.application.routes.draw do
       get 'auto_zones/cells', to: 'auto_zones#cells'
       delete 'auto_zones/remove', to: 'auto_zones#remove'
       patch 'auto_zones/toggle_cell', to: 'auto_zones#toggle_cell'
+
+      # Surge buckets (per-hex H3 surge pricing)
+      get 'surge_buckets', to: 'surge_buckets#index'
+      post 'surge_buckets', to: 'surge_buckets#create'
+      post 'surge_buckets/bulk_update', to: 'surge_buckets#bulk_update'
+      get 'surge_buckets/heatmap', to: 'surge_buckets#heatmap'
+      delete 'surge_buckets/clear', to: 'surge_buckets#clear'
     end
   end
 end

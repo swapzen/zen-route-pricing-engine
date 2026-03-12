@@ -31,26 +31,20 @@ module RoutePricing
         lng_min = @boundary['lng_min'].to_f
         lng_max = @boundary['lng_max'].to_f
 
-        lat_step = 0.003 # ~330m, sufficient for R7 (~1.2km edge)
-        lng_step = 0.003
+        # Use H3.polyfill for accurate hex coverage (no point sampling gaps)
+        polygon = [[[lat_min, lng_min], [lat_min, lng_max], [lat_max, lng_max], [lat_max, lng_min]]]
+        hex_integers = H3.polyfill(polygon, @resolution)
 
         cells = {}
-        lat = lat_min
-        while lat <= lat_max
-          lng = lng_min
-          while lng <= lng_max
-            h3_int = H3.from_geo_coordinates([lat, lng], @resolution)
-            hex = h3_int.to_s(16)
-            unless cells.key?(hex)
-              center_lat, center_lng = H3.to_geo_coordinates(h3_int)
-              cells[hex] = { h3_index_r7: hex, lat: center_lat, lng: center_lng }
-            end
-            lng += lng_step
+        hex_integers.each do |h3_int|
+          hex = h3_int.to_s(16)
+          unless cells.key?(hex)
+            center_lat, center_lng = H3.to_geo_coordinates(h3_int)
+            cells[hex] = { h3_index_r7: hex, lat: center_lat, lng: center_lng }
           end
-          lat += lat_step
         end
 
-        # Ensure corners are included
+        # Ensure corner hexes are included (polyfill may miss edge cells)
         corners = [
           [lat_min, lng_min], [lat_min, lng_max],
           [lat_max, lng_min], [lat_max, lng_max]

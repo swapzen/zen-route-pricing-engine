@@ -9,6 +9,30 @@ module RoutePricing
       end
 
       def create_quote(city_code:, vehicle_type:, pickup_lat:, pickup_lng:, drop_lat:, drop_lng:, item_value_paise: nil, request_id: nil, quote_time: Time.current, weight_kg: nil)
+        # 0. Compute H3 indices for caching and logging
+        h3_indices = compute_h3_indices(pickup_lat, pickup_lng, drop_lat, drop_lng)
+        pickup_h3_r8 = h3_indices[:pickup_h3_r8]
+        drop_h3_r8 = h3_indices[:drop_h3_r8]
+        pickup_h3_r7 = h3_indices[:pickup_h3_r7]
+        drop_h3_r7 = h3_indices[:drop_h3_r7]
+
+        # 0b. H3-aware quote cache: all points within the same hex pair share a cache entry
+        time_bucket = (Time.current.to_i / 7200)
+        local_time = quote_time.in_time_zone('Asia/Kolkata')
+        hour = local_time.hour
+        time_band_for_cache = case hour
+                              when 6...12 then 'morning'
+                              when 12...18 then 'afternoon'
+                              else 'evening'
+                              end
+
+        quote_cache_key = nil
+        if pickup_h3_r8 && drop_h3_r8
+          quote_cache_key = "qp:#{city_code}:#{pickup_h3_r8}:#{drop_h3_r8}:#{vehicle_type}:#{time_band_for_cache}:#{time_bucket}"
+          cached_result = Rails.cache.read(quote_cache_key)
+          return cached_result if cached_result
+        end
+
         # 1. Fetch current config
         config = PricingConfig.current_version(city_code, vehicle_type)
         return { error: 'Config not found for city/vehicle combination', code: 404 } unless config
@@ -54,6 +78,7 @@ module RoutePricing
 
         # 4. Persist quote
         vendor_attrs = build_vendor_quote_attrs(pricing_result[:final_price_paise], vendor_prediction)
+        h3_attrs = build_h3_quote_attrs(pickup_h3_r8, drop_h3_r8, pickup_h3_r7, drop_h3_r7, pricing_result)
         quote = PricingQuote.create!(
           request_id: request_id,
           city_code: city_code,
@@ -78,11 +103,12 @@ module RoutePricing
           weight_kg: weight_kg,
           is_scheduled: pricing_result.dig(:breakdown, :scheduled_discount).present?,
           scheduled_for: quote_time > Time.current ? quote_time : nil,
-          **vendor_attrs
+          **vendor_attrs,
+          **h3_attrs
         )
 
         # 5. Return formatted response
-        {
+        result = {
           success: true,
           code: 200,
           quote_id: quote.id,
@@ -98,6 +124,22 @@ module RoutePricing
           expires_in_seconds: quote.remaining_seconds,
           breakdown: pricing_result[:breakdown]
         }
+
+        # Add H3 context to response if available
+        if pickup_h3_r8 || drop_h3_r8
+          result[:h3_context] = {
+            pickup_hex: pickup_h3_r8,
+            drop_hex: drop_h3_r8,
+            resolution: 8
+          }
+        end
+
+        # Cache the result for H3-based quote caching
+        if quote_cache_key
+          Rails.cache.write(quote_cache_key, result, expires_in: 2.hours)
+        end
+
+        result
       rescue StandardError => e
         Rails.logger.error("QuoteEngine error: #{e.message}\n#{e.backtrace.join("\n")}")
         { error: e.message, code: 500 }
@@ -105,6 +147,13 @@ module RoutePricing
 
       # Create quotes for all vehicle types with a single route resolution
       def create_multi_quote(city_code:, pickup_lat:, pickup_lng:, drop_lat:, drop_lng:, item_value_paise: nil, request_id: nil, quote_time: Time.current, weight_kg: nil)
+        # 0. Compute H3 indices for logging
+        h3_indices = compute_h3_indices(pickup_lat, pickup_lng, drop_lat, drop_lng)
+        pickup_h3_r8 = h3_indices[:pickup_h3_r8]
+        drop_h3_r8 = h3_indices[:drop_h3_r8]
+        pickup_h3_r7 = h3_indices[:pickup_h3_r7]
+        drop_h3_r7 = h3_indices[:drop_h3_r7]
+
         # 1. Resolve route ONCE (same distance/duration for all vehicles)
         route_data = @route_resolver.resolve(
           pickup_lat: pickup_lat,
@@ -170,6 +219,7 @@ module RoutePricing
             pickup_lng: pickup_lng
           )
           vendor_attrs = build_vendor_quote_attrs(pricing_result[:final_price_paise], vendor_prediction)
+          h3_attrs = build_h3_quote_attrs(pickup_h3_r8, drop_h3_r8, pickup_h3_r7, drop_h3_r7, pricing_result)
 
           quote = PricingQuote.create!(
             request_id: request_id,
@@ -193,7 +243,8 @@ module RoutePricing
             breakdown_json: pricing_result[:breakdown],
             valid_until: valid_until,
             weight_kg: weight_kg,
-            **vendor_attrs
+            **vendor_attrs,
+            **h3_attrs
           )
 
           quotes << {
@@ -211,7 +262,7 @@ module RoutePricing
           Rails.logger.error("MultiQuote error for #{vehicle_type}: #{e.message}")
         end
 
-        {
+        result = {
           success: quotes.any?,
           code: 200,
           distance_m: route_data[:distance_m],
@@ -221,6 +272,17 @@ module RoutePricing
           quotes: quotes,
           errors: errors.presence
         }
+
+        # Add H3 context to multi-quote response if available
+        if pickup_h3_r8 || drop_h3_r8
+          result[:h3_context] = {
+            pickup_hex: pickup_h3_r8,
+            drop_hex: drop_h3_r8,
+            resolution: 8
+          }
+        end
+
+        result
       rescue StandardError => e
         Rails.logger.error("MultiQuote error: #{e.message}\n#{e.backtrace.join("\n")}")
         { error: e.message, code: 500 }
@@ -326,6 +388,39 @@ module RoutePricing
       rescue StandardError => e
         Rails.logger.warn("Vendor prediction failed: #{e.message}")
         nil
+      end
+
+      # Compute H3 hex indices for pickup and drop points
+      def compute_h3_indices(pickup_lat, pickup_lng, drop_lat, drop_lng)
+        return {} unless defined?(H3)
+
+        {
+          pickup_h3_r8: (H3.from_geo_coordinates([pickup_lat.to_f, pickup_lng.to_f], 8).to_s(16) rescue nil),
+          drop_h3_r8: (H3.from_geo_coordinates([drop_lat.to_f, drop_lng.to_f], 8).to_s(16) rescue nil),
+          pickup_h3_r7: (H3.from_geo_coordinates([pickup_lat.to_f, pickup_lng.to_f], 7).to_s(16) rescue nil),
+          drop_h3_r7: (H3.from_geo_coordinates([drop_lat.to_f, drop_lng.to_f], 7).to_s(16) rescue nil)
+        }
+      rescue StandardError => e
+        Rails.logger.warn("H3 index computation failed: #{e.message}")
+        {}
+      end
+
+      # Build H3-related attributes for PricingQuote.create!
+      # Only includes columns that exist on the table (safe if migration hasn't run)
+      def build_h3_quote_attrs(pickup_h3_r8, drop_h3_r8, pickup_h3_r7, drop_h3_r7, pricing_result)
+        return {} unless PricingQuote.column_names.include?('pickup_h3_r8')
+
+        h3_surge = pricing_result.dig(:breakdown, :h3_surge_multiplier) ||
+                   pricing_result.dig(:breakdown, :combined_surge) ||
+                   1.0
+
+        {
+          pickup_h3_r8: pickup_h3_r8,
+          drop_h3_r8: drop_h3_r8,
+          pickup_h3_r7: pickup_h3_r7,
+          drop_h3_r7: drop_h3_r7,
+          h3_surge_multiplier: h3_surge
+        }
       end
 
       # Build vendor-related attributes for PricingQuote.create!

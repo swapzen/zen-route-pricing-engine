@@ -80,9 +80,13 @@ module RoutePricing
         h3_indexes = []
 
         cells.each do |cell|
+          # Compute R8 hex from the cell center point
+          h3_r8 = H3.from_geo_coordinates([cell[:lat], cell[:lng]], 8).to_s(16)
+
           ZoneH3Mapping.create!(
             zone: zone,
             h3_index_r7: cell[:h3_index_r7],
+            h3_index_r8: h3_r8,
             city_code: @city_code,
             is_boundary: false
           )

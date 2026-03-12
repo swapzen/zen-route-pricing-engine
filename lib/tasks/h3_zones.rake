@@ -4,6 +4,8 @@
 # H3 Zone Mapping Rake Tasks
 # =============================================================================
 # Populate H3 hexagonal grid mappings for zones and supply density.
+# Uses H3.polyfill for accurate zone-to-hex conversion (no point sampling).
+# Generates R7 and R8 hex mappings for dual-resolution lookup.
 #
 # USAGE:
 #   rails zones:populate_h3[hyd]
@@ -24,16 +26,35 @@ namespace :zones do
     puts "Populating H3 mappings for #{zones.count} zones in #{city_code}..."
 
     total_r7 = 0
-    total_r9 = 0
+    total_r8 = 0
 
     zones.find_each do |zone|
       next unless zone.lat_min && zone.lat_max && zone.lng_min && zone.lng_max
 
-      # Compute R7 cells covering the zone bounding box
-      r7_cells = compute_r7_cells_for_bbox(zone)
+      # Build polygon from bounding box for polyfill
+      polygon = build_bbox_polygon(zone)
 
-      # Find boundary cells (cells that map to multiple zones)
-      r7_cells.each do |r7_hex|
+      # Polyfill at R7 and R8
+      r7_hexes = H3.polyfill(polygon, 7)
+      r8_hexes = H3.polyfill(polygon, 8)
+
+      # Build R8 -> R7 parent lookup
+      r8_by_r7_parent = {}
+      r8_hexes.each do |r8_int|
+        r7_parent = H3.parent(r8_int, 7)
+        r8_by_r7_parent[r7_parent] ||= []
+        r8_by_r7_parent[r7_parent] << r8_int
+      end
+
+      # Ensure all R7 hexes from polyfill are included
+      all_r7_set = Set.new(r7_hexes)
+      r8_by_r7_parent.each_key { |r7_int| all_r7_set.add(r7_int) }
+
+      # Create/update one mapping per R7 cell, with a representative R8 index
+      all_r7_set.each do |r7_int|
+        r7_hex = r7_int.to_s(16)
+
+        # Check if this R7 cell is shared with another zone (boundary)
         existing = ZoneH3Mapping.find_zones_for_r7(r7_hex, city_code).where.not(zone_id: zone.id)
         is_boundary = existing.exists?
 
@@ -42,25 +63,17 @@ namespace :zones do
           zone_id: zone.id
         )
 
+        # Pick a representative R8 child from this zone's polyfill
+        r8_children = r8_by_r7_parent[r7_int] || []
+        representative_r8 = r8_children.first
+
         mapping.assign_attributes(
           city_code: city_code,
-          is_boundary: is_boundary
+          is_boundary: is_boundary,
+          h3_index_r8: representative_r8&.to_s(16)
         )
 
         if is_boundary
-          # Compute R9 children for boundary disambiguation
-          r9_children = H3.to_children(r7_hex.to_i(16), 9)
-          r9_children.each do |r9_int|
-            r9_hex = r9_int.to_s(16)
-            r9_lat, r9_lng = H3.to_geo(r9_int)
-
-            # Check which zone actually contains this R9 cell center
-            if zone.contains_point?(r9_lat, r9_lng)
-              mapping.h3_index_r9 = r9_hex unless mapping.h3_index_r9
-              total_r9 += 1
-            end
-          end
-
           # Also mark existing mappings for this R7 as boundary
           existing.update_all(is_boundary: true)
         end
@@ -69,15 +82,20 @@ namespace :zones do
         total_r7 += 1
       end
 
+      total_r8 += r8_hexes.size
+
       # Update zone's H3 index arrays
       zone_r7s = ZoneH3Mapping.where(zone_id: zone.id).pluck(:h3_index_r7).uniq
       zone_r9s = ZoneH3Mapping.where(zone_id: zone.id).where.not(h3_index_r9: nil).pluck(:h3_index_r9).uniq
       zone.update!(h3_indexes_r7: zone_r7s, h3_indexes_r9: zone_r9s)
 
-      puts "  #{zone.zone_code}: #{zone_r7s.count} R7 cells, #{zone_r9s.count} R9 cells"
+      puts "  #{zone.zone_code}: #{zone_r7s.count} R7 cells, #{r8_hexes.size} R8 cells"
     end
 
-    puts "\nDone! Total: #{total_r7} R7 mappings, #{total_r9} R9 mappings"
+    # Build in-memory hash map for fast lookups
+    map_stats = RoutePricing::Services::H3ZoneResolver.build_city_map(city_code)
+    puts "\nIn-memory map loaded: #{map_stats[:r8]} R8 entries, #{map_stats[:r7]} R7 entries"
+    puts "Done! Total: #{total_r7} R7 mappings, #{total_r8} R8 cells polyfilled"
   end
 
   desc "Seed H3 supply density defaults for a city"
@@ -125,35 +143,15 @@ namespace :zones do
   end
 end
 
-def compute_r7_cells_for_bbox(zone)
-  # Sample points within the bounding box and collect unique R7 cells
-  lat_step = 0.003  # ~330m at equator, good for R7 (~1.2km edge)
-  lng_step = 0.003
+def build_bbox_polygon(zone)
+  lat_min = zone.lat_min.to_f
+  lat_max = zone.lat_max.to_f
+  lng_min = zone.lng_min.to_f
+  lng_max = zone.lng_max.to_f
 
-  cells = Set.new
-  lat = zone.lat_min.to_f
-
-  while lat <= zone.lat_max.to_f
-    lng = zone.lng_min.to_f
-    while lng <= zone.lng_max.to_f
-      h3_int = H3.from_geo_input([lat, lng], 7)
-      cells.add(h3_int.to_s(16))
-      lng += lng_step
-    end
-    lat += lat_step
-  end
-
-  # Also sample the corners and edges
-  corners = [
-    [zone.lat_min, zone.lng_min], [zone.lat_min, zone.lng_max],
-    [zone.lat_max, zone.lng_min], [zone.lat_max, zone.lng_max]
-  ]
-  corners.each do |lat, lng|
-    h3_int = H3.from_geo_input([lat.to_f, lng.to_f], 7)
-    cells.add(h3_int.to_s(16))
-  end
-
-  cells.to_a
+  # H3.polyfill expects [[[lat,lng], [lat,lng], ...]] -- outer array wraps the polygon
+  # No closing point needed
+  [[[lat_min, lng_min], [lat_min, lng_max], [lat_max, lng_max], [lat_max, lng_min]]]
 end
 
 def zone_type_pickup_distance(zone_type)

@@ -168,8 +168,9 @@ module RoutePricing
           traffic_multiplier = 1.0
           time_multiplier    = 1.0
           zone_multiplier    = 1.0
+          h3_surge           = 1.0
           combined_surge     = 1.0
-          
+
           variance_buffer    = 0.0
           high_value_buffer  = 0.0
           margin_total       = 0.0
@@ -201,8 +202,14 @@ module RoutePricing
             drop_lng
           )
 
-          # 4. Combined Surge (capped at 2.0 for safety)
-          combined_surge = [traffic_multiplier * time_multiplier * zone_multiplier, 2.0].min
+          # 4. H3 per-hex surge (hyperlocal, higher priority than zone-level surge)
+          h3_surge = resolve_h3_surge(pickup_lat, pickup_lng, time_band)
+
+          # Use the higher of zone surge and H3 surge for the zone dimension
+          effective_zone_surge = h3_surge > 1.0 ? [zone_multiplier, h3_surge].max : zone_multiplier
+
+          # 5. Combined Surge (capped at 2.0 for safety)
+          combined_surge = [traffic_multiplier * time_multiplier * effective_zone_surge, 2.0].min
 
           # Buffers & Margins
           variance_buffer = @config.variance_buffer_pct || 0.0
@@ -321,6 +328,7 @@ module RoutePricing
           traffic_multiplier: traffic_multiplier,
           time_multiplier: time_multiplier,
           zone_multiplier: zone_multiplier,
+          h3_surge: h3_surge,
           time_band: time_band,
           calibration_mode: calibration_mode
         )
@@ -358,6 +366,7 @@ module RoutePricing
           traffic_multiplier: traffic_multiplier.round(3),
           time_multiplier: time_multiplier.round(3),
           zone_multiplier: zone_multiplier.round(3),
+          h3_surge: h3_surge.round(3),
           combined_surge: combined_surge.round(3),
           # Traffic details
           traffic_ratio: (duration_in_traffic_s && duration_s && duration_s > 0) ? 
@@ -426,6 +435,15 @@ module RoutePricing
         )
       rescue => e
         Rails.logger.warn("Zone multiplier lookup failed: #{e.message}")
+        1.0
+      end
+
+      # H3 per-hex surge lookup (hyperlocal granularity)
+      def resolve_h3_surge(lat, lng, time_band)
+        return 1.0 unless lat && lng
+        resolver = RoutePricing::Services::H3SurgeResolver.new(@config.city_code)
+        resolver.resolve(lat, lng, time_band: time_band)
+      rescue StandardError
         1.0
       end
 
@@ -595,7 +613,7 @@ module RoutePricing
       end
       
       # Build human-readable surge reasons for API transparency
-      def build_surge_reasons(traffic_multiplier:, time_multiplier:, zone_multiplier:, time_band:, calibration_mode:)
+      def build_surge_reasons(traffic_multiplier:, time_multiplier:, zone_multiplier:, h3_surge: 1.0, time_band:, calibration_mode:)
         return [{ code: 'calibration', label: 'Calibration mode active', multiplier: 1.0 }] if calibration_mode
 
         reasons = []
@@ -611,6 +629,10 @@ module RoutePricing
                   else 'Time-based pricing'
                   end
           reasons << { code: 'time_of_day', label: label, multiplier: time_multiplier.round(3) }
+        end
+
+        if h3_surge > 1.01
+          reasons << { code: 'h3_surge', label: 'Hyperlocal demand surge', multiplier: h3_surge.round(3) }
         end
 
         if zone_multiplier > 1.01
