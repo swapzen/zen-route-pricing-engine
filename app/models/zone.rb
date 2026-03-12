@@ -11,6 +11,7 @@ class Zone < ApplicationRecord
   
   has_many :zone_vehicle_pricings, dependent: :destroy
   has_many :zone_distance_slabs, dependent: :destroy
+  has_many :h3_mappings, class_name: 'ZoneH3Mapping', dependent: :destroy
   
   # Zone Pairs (both directions)
   has_many :outgoing_pair_pricings, class_name: 'ZonePairVehiclePricing', foreign_key: 'from_zone_id', dependent: :destroy
@@ -23,6 +24,8 @@ class Zone < ApplicationRecord
   scope :active, -> { where(status: true) }
   scope :for_city, ->(city_code) { where(city: city_code.to_s.downcase) }
   scope :oda, -> { where(is_oda: true) }
+  scope :manual, -> { where(auto_generated: false) }
+  scope :auto_generated_zones, -> { where(auto_generated: true) }
   
   # =========================================================================
   # ZONE TYPES & DEFAULTS

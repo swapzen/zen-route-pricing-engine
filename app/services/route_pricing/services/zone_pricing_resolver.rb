@@ -2,11 +2,11 @@ module RoutePricing
   module Services
     class ZonePricingResolver
       Result = Struct.new(
-        :base_fare_paise, 
-        :min_fare_paise, 
-        :per_km_rate_paise, 
-        :base_distance_m, 
-        :source, 
+        :base_fare_paise,
+        :min_fare_paise,
+        :per_km_rate_paise,
+        :base_distance_m,
+        :source,
         :pricing_mode,
         :zone_info,
         :zone_slabs,  # Zone-specific distance slabs (if available)
@@ -15,6 +15,7 @@ module RoutePricing
         :zone_multiplier,              # SLS multiplier from zone config
         :special_location_surcharge,   # Flat fee for special locations
         :oda_config,                   # ODA configuration for this route
+        :per_min_rate_paise,           # Per-minute rate (Phase A: time-based pricing)
         keyword_init: true
       )
 
@@ -79,7 +80,8 @@ module RoutePricing
           fuel_surcharge_pct: zone_pricing_configs[:fuel_surcharge_pct],
           zone_multiplier: zone_pricing_configs[:zone_multiplier],
           special_location_surcharge: zone_pricing_configs[:special_location_surcharge],
-          oda_config: zone_pricing_configs[:oda_config]
+          oda_config: zone_pricing_configs[:oda_config],
+          per_min_rate_paise: global_config&.per_min_rate_paise || 0
         }
 
         # 3. Check Zone Pair Override (Corridor Pricing) - Time-Band Aware
@@ -103,7 +105,8 @@ module RoutePricing
                fuel_surcharge_pct: 0.0,
                zone_multiplier: 1.0,
                special_location_surcharge: 0,
-               oda_config: { both_oda: false, surcharge_pct: 0 }
+               oda_config: { both_oda: false, surcharge_pct: 0 },
+               per_min_rate_paise: pair_pricing.per_min_rate_paise || 0
              )
           end
         end
@@ -145,7 +148,8 @@ module RoutePricing
                   fuel_surcharge_pct: zone_pricing_configs[:fuel_surcharge_pct],
                   zone_multiplier: 1.0,  # Explicitly set to 1.0 to prevent double-counting
                   special_location_surcharge: zone_pricing_configs[:special_location_surcharge],
-                  oda_config: zone_pricing_configs[:oda_config]
+                  oda_config: zone_pricing_configs[:oda_config],
+                  per_min_rate_paise: time_pricing.per_min_rate_paise || 0
                 )
               end
             end
@@ -166,7 +170,8 @@ module RoutePricing
               fuel_surcharge_pct: zone_pricing_configs[:fuel_surcharge_pct],
               zone_multiplier: 1.0,  # Explicitly set to 1.0 to prevent double-counting
               special_location_surcharge: zone_pricing_configs[:special_location_surcharge],
-              oda_config: zone_pricing_configs[:oda_config]
+              oda_config: zone_pricing_configs[:oda_config],
+              per_min_rate_paise: zone_pricing.per_min_rate_paise || 0
             )
           end
         end
@@ -252,6 +257,11 @@ module RoutePricing
           drop_pricing.min_fare_paise * drop_weight
         ) * adjustment
 
+        # Weighted average per_min_rate
+        pickup_min_rate = (pickup_pricing.try(:per_min_rate_paise) || 0).to_f
+        drop_min_rate = (drop_pricing.try(:per_min_rate_paise) || 0).to_f
+        per_min_rate = (pickup_min_rate * pickup_weight + drop_min_rate * drop_weight) * adjustment
+
         zone_slabs = cached_zone_slabs(pickup_zone, vehicle_type)
         zone_pricing_configs = extract_zone_pricing_configs(pickup_zone, drop_zone)
 
@@ -275,7 +285,8 @@ module RoutePricing
           fuel_surcharge_pct: zone_pricing_configs[:fuel_surcharge_pct],
           zone_multiplier: 1.0,  # Pre-calculated, no additional multiplier
           special_location_surcharge: zone_pricing_configs[:special_location_surcharge],
-          oda_config: zone_pricing_configs[:oda_config]
+          oda_config: zone_pricing_configs[:oda_config],
+          per_min_rate_paise: per_min_rate.round
         )
       end
 
@@ -428,15 +439,32 @@ module RoutePricing
       end
 
       def find_zone(city_code, lat, lng)
-        # Load zones once per city per resolver instance (avoids N+1 in multi-quote)
+        # BBox: calibrated manual zones only (priority-ordered)
         @zones_cache ||= {}
         @zones_cache[city_code] ||= Zone.for_city(city_code).active
+          .where(auto_generated: false)
           .order(priority: :desc, zone_code: :asc).to_a
 
         @zones_cache[city_code].each do |z|
           return z if z.contains_point?(lat, lng)
         end
+
+        # H3 fallback: only trust auto-generated zones (gap coverage)
+        # Manual zones use bbox as authoritative boundary
+        h3_resolver = h3_resolver_for(city_code)
+        zone = h3_resolver&.resolve(lat, lng)
+        return zone if zone&.auto_generated?
+
         nil
+      end
+
+      def h3_resolver_for(city_code)
+        @h3_resolvers ||= {}
+        @h3_resolvers[city_code] ||= begin
+          H3ZoneResolver.new(city_code)
+        rescue StandardError
+          nil
+        end
       end
 
       # =========================================================================

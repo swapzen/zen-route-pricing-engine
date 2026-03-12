@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_12_100002) do
   create_schema "crdb_internal"
 
   create_table "active_storage_attachments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -314,8 +314,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
 
   create_table "give_away_claims", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "listing_id", null: false
-    t.uuid "owner_id", null: false
-    t.uuid "claimer_id", null: false
     t.string "pickup_type", default: "self_pickup", null: false
     t.uuid "delivery_address_id"
     t.string "status", default: "pending", null: false
@@ -328,12 +326,40 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.datetime "completed_at", precision: nil
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "owner_id", null: false
+    t.bigint "claimer_id", null: false
     t.index ["claimer_id", "status", "created_at"], name: "index_give_away_claims_on_claimer_id_and_status_and_created_at", order: { created_at: :desc }
     t.index ["listing_id", "status"], name: "index_give_away_claims_on_listing_id_and_status"
     t.index ["owner_id", "status", "created_at"], name: "index_give_away_claims_on_owner_id_and_status_and_created_at", order: { created_at: :desc }
     t.check_constraint "(pickup_type IN ('self_pickup'::STRING, 'swapzen_delivery'::STRING))", name: "chk_pickup_type_valid"
-    t.check_constraint "(status IN ('pending'::STRING, 'approved'::STRING, 'rejected'::STRING, 'cancelled'::STRING, 'completed'::STRING))", name: "chk_status_valid"
-    t.unique_constraint ["listing_id", "claimer_id"], name: "idx_give_away_unique_active_claim"
+    t.check_constraint "(status IN ('pending'::STRING, 'approved'::STRING, 'rejected'::STRING, 'cancelled'::STRING, 'completed'::STRING, 'in_delivery'::STRING))", name: "chk_status_valid"
+  end
+
+  create_table "h3_supply_density", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "h3_index_r7", null: false
+    t.string "city_code", null: false
+    t.string "time_band", null: false
+    t.bigint "avg_pickup_distance_m", default: 3000
+    t.bigint "estimated_driver_count", default: 0
+    t.boolean "zone_type_default", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+
+    t.unique_constraint ["h3_index_r7", "city_code", "time_band"], name: "idx_h3_supply_density_unique"
+  end
+
+  create_table "image_hashes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "listing_id", null: false
+    t.uuid "listing_item_id", null: false
+    t.uuid "attachment_id", null: false
+    t.string "phash", null: false
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["listing_id"], name: "index_image_hashes_on_listing_id"
+    t.index ["phash", "user_id"], name: "index_image_hashes_on_phash_and_user_id"
+    t.index ["phash"], name: "index_image_hashes_on_phash"
+    t.index ["user_id"], name: "index_image_hashes_on_user_id"
   end
 
   create_table "invoices", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -418,6 +444,28 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.unique_constraint ["name"], name: "index_listing_types_on_name"
   end
 
+  create_table "listing_validations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "listing_id", null: false
+    t.string "status", default: "pending", null: false
+    t.string "decision"
+    t.float "confidence"
+    t.string "provider"
+    t.jsonb "item_results", default: [], null: false
+    t.jsonb "raw_response", default: {}, null: false
+    t.text "error_message"
+    t.bigint "attempt_count", default: 0, null: false
+    t.datetime "validated_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "admin_override", default: false
+    t.string "admin_decision"
+    t.text "admin_reason"
+    t.uuid "reviewed_by_id"
+    t.index ["listing_id", "status"], name: "index_listing_validations_on_listing_id_and_status"
+    t.index ["listing_id"], name: "index_listing_validations_on_listing_id"
+    t.index ["status", "decision"], name: "idx_lv_status_decision"
+  end
+
   create_table "listings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "listing_type_id", null: false
     t.string "title"
@@ -464,6 +512,19 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_locations_on_user_id"
     t.unique_constraint ["user_id"], name: "uniq_locations_primary_per_user"
+  end
+
+  create_table "notifications", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "title", null: false
+    t.string "body"
+    t.string "notification_type", default: "general", null: false
+    t.jsonb "data", default: {}
+    t.datetime "read_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "notification_type"], name: "idx_notifications_user_type"
+    t.index ["user_id", "read_at", "created_at"], name: "idx_notifications_user_read_created", order: { created_at: :desc }
   end
 
   create_table "otp_codes", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
@@ -726,6 +787,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.decimal "payout_fee_rtgs", precision: 10, scale: 2, default: "20.0"
     t.string "default_payment_gateway", default: "razorpay"
     t.string "enabled_payment_gateways", default: "razorpay"
+    t.string "payout_source", default: "own_capital"
+    t.float "ai_auto_approve_threshold", default: 0.85
+    t.float "ai_auto_reject_threshold", default: 0.5
+    t.boolean "ai_validation_enabled", default: true
+    t.float "ai_weight", default: 0.4
+    t.float "forensics_weight", default: 0.2
+    t.float "trust_weight", default: 0.15
+    t.float "quality_weight", default: 0.15
+    t.float "duplicate_weight", default: 0.1
   end
 
   create_table "preferred_exchange_categories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -753,6 +823,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "actual_vendor_code"
+    t.jsonb "actual_breakdown_json", default: {}
+    t.bigint "predicted_vendor_paise"
+    t.bigint "prediction_variance_paise"
+    t.decimal "prediction_variance_pct", precision: 6, scale: 2
     t.index ["pricing_quote_id"], name: "index_pricing_actuals_on_pricing_quote_id"
     t.index ["vendor"], name: "index_pricing_actuals_on_vendor"
   end
@@ -793,6 +868,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.bigint "scheduled_threshold_hours", default: 2
     t.decimal "return_trip_discount_pct", precision: 5, scale: 2, default: "10.0"
     t.jsonb "weight_multiplier_tiers", default: [{"max_kg"=>15, "mult"=>1.0}, {"max_kg"=>50, "mult"=>1.1}, {"max_kg"=>200, "mult"=>1.2}, {"max_kg"=>nil, "mult"=>1.4}]
+    t.bigint "per_min_rate_paise", default: 0
+    t.bigint "free_pickup_radius_m", default: 0
+    t.bigint "dead_km_per_km_rate_paise", default: 0
+    t.boolean "dead_km_enabled", default: false
     t.index ["city_code", "vehicle_type", "active", "effective_from"], name: "idx_pricing_configs_current"
     t.index ["vendor_vehicle_code", "city_code"], name: "index_pricing_configs_on_vendor_code_and_city"
     t.unique_constraint ["city_code", "vehicle_type", "version"], name: "idx_on_city_code_vehicle_type_version_008f27eb85"
@@ -807,6 +886,57 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.datetime "updated_at", null: false
     t.index ["pricing_config_id"], name: "index_pricing_distance_slabs_on_pricing_config_id"
     t.unique_constraint ["pricing_config_id", "min_distance_m"], name: "idx_slabs_config_min_distance"
+  end
+
+  create_table "pricing_quote_decisions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "pricing_quote_id"
+    t.uuid "pricing_config_id"
+    t.string "request_id"
+    t.string "city_code", null: false
+    t.string "vehicle_type", null: false
+    t.datetime "quote_time"
+    t.datetime "scheduled_for"
+    t.string "decision_status", default: "quoted", null: false
+    t.string "route_provider"
+    t.string "route_cache_key"
+    t.string "pricing_version"
+    t.string "pricing_source"
+    t.string "pricing_mode"
+    t.bigint "price_paise"
+    t.jsonb "request_snapshot_json", default: {}, null: false
+    t.jsonb "route_snapshot_json", default: {}, null: false
+    t.jsonb "pricing_snapshot_json", default: {}, null: false
+    t.jsonb "breakdown_json", default: {}, null: false
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city_code", "vehicle_type", "created_at"], name: "idx_quote_decisions_city_vehicle_created"
+    t.index ["decision_status"], name: "index_pricing_quote_decisions_on_decision_status"
+    t.index ["pricing_config_id"], name: "index_pricing_quote_decisions_on_pricing_config_id"
+    t.index ["pricing_quote_id"], name: "index_pricing_quote_decisions_on_pricing_quote_id"
+    t.index ["pricing_version"], name: "index_pricing_quote_decisions_on_pricing_version"
+    t.index ["request_id"], name: "index_pricing_quote_decisions_on_request_id"
+    t.unique_constraint ["pricing_quote_id"], name: "idx_quote_decisions_quote_unique"
+  end
+
+  create_table "pricing_quote_replays", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "pricing_quote_decision_id", null: false
+    t.uuid "pricing_config_id"
+    t.bigint "replayed_by_id"
+    t.string "mode", default: "current", null: false
+    t.string "replay_status", default: "succeeded", null: false
+    t.string "pricing_version"
+    t.bigint "price_paise"
+    t.jsonb "breakdown_json", default: {}, null: false
+    t.jsonb "comparison_json", default: {}, null: false
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["mode"], name: "index_pricing_quote_replays_on_mode"
+    t.index ["pricing_config_id"], name: "index_pricing_quote_replays_on_pricing_config_id"
+    t.index ["pricing_quote_decision_id", "created_at"], name: "idx_quote_replays_decision_created"
+    t.index ["pricing_quote_decision_id"], name: "index_pricing_quote_replays_on_pricing_quote_decision_id"
+    t.index ["replay_status"], name: "index_pricing_quote_replays_on_replay_status"
   end
 
   create_table "pricing_quotes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -837,6 +967,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.uuid "linked_quote_id"
     t.string "trip_leg"
     t.decimal "weight_kg", precision: 8, scale: 2
+    t.bigint "vendor_predicted_paise"
+    t.string "vendor_code"
+    t.bigint "margin_paise"
+    t.decimal "margin_pct", precision: 6, scale: 2
+    t.string "vendor_confidence", default: "none"
     t.index ["city_code"], name: "index_pricing_quotes_on_city_code"
     t.index ["created_at"], name: "index_pricing_quotes_on_created_at"
     t.index ["linked_quote_id"], name: "index_pricing_quotes_on_linked_quote_id"
@@ -926,6 +1061,33 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.index ["zone_id"], name: "index_referral_rules_on_zone_id"
   end
 
+  create_table "reviews", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "reviewer_id", null: false
+    t.bigint "reviewee_id", null: false
+    t.string "swap_request_id"
+    t.bigint "rating", null: false
+    t.text "comment"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reviewee_id", "created_at"], name: "idx_reviews_reviewee_created", order: { created_at: :desc }
+    t.index ["reviewer_id"], name: "idx_reviews_reviewer"
+    t.unique_constraint ["reviewer_id", "swap_request_id"], name: "idx_reviews_reviewer_swap_unique"
+  end
+
+  create_table "support_tickets", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "category", null: false
+    t.text "description", null: false
+    t.jsonb "photo_urls", default: []
+    t.string "status", default: "open", null: false
+    t.string "priority", default: "medium"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_support_tickets_on_status"
+    t.index ["user_id", "status"], name: "index_support_tickets_on_user_id_and_status"
+    t.index ["user_id"], name: "index_support_tickets_on_user_id"
+  end
+
   create_table "swap_counters", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "swap_request_id", null: false
     t.bigint "version", null: false
@@ -947,6 +1109,28 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.check_constraint "((jsonb_typeof(owner_item_ids) = 'array'::STRING) AND (jsonb_array_length(owner_item_ids) <= 10))", name: "chk_owner_items_size"
     t.check_constraint "((jsonb_typeof(requester_item_ids) = 'array'::STRING) AND (jsonb_array_length(requester_item_ids) <= 10))", name: "chk_requester_items_size"
     t.unique_constraint ["swap_request_id", "version"], name: "index_swap_counters_on_swap_request_id_and_version"
+  end
+
+  create_table "swap_disputes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "swap_request_id", null: false
+    t.bigint "raised_by_id", null: false
+    t.string "raised_by_role", null: false
+    t.string "issue_type", null: false
+    t.string "status", default: "open", null: false
+    t.text "description", null: false
+    t.jsonb "photo_urls", default: []
+    t.string "resolution"
+    t.text "admin_notes"
+    t.bigint "resolved_by_id"
+    t.bigint "assigned_to_id"
+    t.datetime "opened_at"
+    t.datetime "resolved_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["raised_by_id"], name: "index_swap_disputes_on_raised_by_id"
+    t.index ["status", "created_at"], name: "index_swap_disputes_on_status_and_created_at"
+    t.index ["status"], name: "index_swap_disputes_on_status"
+    t.index ["swap_request_id"], name: "index_swap_disputes_on_swap_request_id"
   end
 
   create_table "swap_requests", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -989,6 +1173,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.bigint "counters_count", default: 0, null: false
     t.bigint "owner_id", null: false
     t.bigint "requester_id", null: false
+    t.boolean "owner_receipt_confirmed", default: false
+    t.boolean "requester_receipt_confirmed", default: false
+    t.datetime "owner_receipt_confirmed_at"
+    t.datetime "requester_receipt_confirmed_at"
+    t.datetime "delivered_at"
+    t.boolean "has_dispute", default: false
     t.index ["accepted_items"], name: "idx_swap_requests_accepted_items", using: :gin
     t.index ["current_items"], name: "idx_swap_requests_current_items_inverted", using: :gin
     t.index ["initial_items"], name: "idx_swap_requests_initial_items_inverted", using: :gin
@@ -1016,6 +1206,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["swap_request_id", "created_at"], name: "index_swap_timeline_events_on_swap_request_id_and_created_at"
+  end
+
+  create_table "ticket_replies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "support_ticket_id", null: false
+    t.bigint "user_id"
+    t.string "admin_name"
+    t.text "message", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["support_ticket_id"], name: "index_ticket_replies_on_support_ticket_id"
   end
 
   create_table "user_devices", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
@@ -1080,10 +1280,34 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.boolean "agreed_tos_privacy_policy", default: false, null: false
     t.string "password", default: "", null: false
     t.string "interests", default: [], array: true
+    t.string "profile_picture_url"
     t.index ["phone"], name: "index_users_on_phone"
     t.index ["zone_id"], name: "index_users_on_zone_id"
     t.unique_constraint ["email"], name: "index_users_on_email"
     t.unique_constraint ["referral_code"], name: "index_users_on_referral_code"
+  end
+
+  create_table "vendor_rate_cards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "vendor_code", null: false
+    t.string "city_code", null: false
+    t.string "vehicle_type", null: false
+    t.string "time_band"
+    t.bigint "base_fare_paise", null: false
+    t.bigint "per_km_rate_paise", null: false
+    t.bigint "per_min_rate_paise", default: 0
+    t.bigint "dead_km_rate_paise", default: 0
+    t.bigint "free_km_m", default: 1000
+    t.decimal "surge_cap_multiplier", precision: 4, scale: 2, default: "2.0"
+    t.bigint "min_fare_paise", null: false
+    t.datetime "effective_from", null: false
+    t.datetime "effective_until"
+    t.boolean "active", default: true
+    t.bigint "version", default: 1
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["vendor_code", "city_code", "active"], name: "idx_vendor_rate_cards_lookup"
+    t.unique_constraint ["vendor_code", "city_code", "vehicle_type", "time_band", "version"], name: "idx_vendor_rate_cards_unique"
   end
 
   create_table "wallet_ledger_entries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1132,6 +1356,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.check_constraint "(locked_balance <= balance)", name: "wallets_locked_within_balance"
     t.check_constraint "(locked_balance >= 0)", name: "wallets_locked_balance_non_negative"
     t.unique_constraint ["user_id"], name: "index_wallets_on_user_id"
+  end
+
+  create_table "wishlists", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.uuid "listing_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["listing_id"], name: "idx_wishlists_listing"
+    t.index ["user_id", "created_at"], name: "idx_wishlists_user_created", order: { created_at: :desc }
+    t.unique_constraint ["user_id", "listing_id"], name: "idx_wishlists_user_listing_unique"
   end
 
   create_table "zone_announcements", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
@@ -1189,6 +1423,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.unique_constraint ["city_code", "zone_id", "vehicle_type", "min_distance_m"], name: "idx_zone_slabs_unique"
   end
 
+  create_table "zone_h3_mappings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "h3_index_r7", null: false
+    t.string "h3_index_r9"
+    t.bigint "zone_id", null: false
+    t.string "city_code", null: false
+    t.boolean "is_boundary", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "serviceable", default: true
+    t.index ["h3_index_r7", "city_code"], name: "idx_zone_h3_mappings_r7_city"
+    t.index ["h3_index_r9", "city_code"], name: "idx_zone_h3_mappings_r9_city"
+    t.unique_constraint ["h3_index_r7", "zone_id"], name: "idx_zone_h3_mappings_r7_zone"
+  end
+
   create_table "zone_listing_rules", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
     t.bigint "zone_id", null: false
     t.bigint "max_items_per_user"
@@ -1227,6 +1475,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "time_band"
+    t.bigint "per_min_rate_paise", default: 0
     t.index ["from_zone_id"], name: "index_zone_pair_vehicle_pricings_on_from_zone_id"
     t.index ["to_zone_id"], name: "index_zone_pair_vehicle_pricings_on_to_zone_id"
     t.unique_constraint ["city_code", "from_zone_id", "to_zone_id", "vehicle_type", "time_band"], name: "idx_zpvp_routing_with_time_band"
@@ -1255,6 +1504,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "per_min_rate_paise", default: 0
     t.index ["zone_id"], name: "index_zone_vehicle_pricings_on_zone_id"
     t.unique_constraint ["city_code", "zone_id", "vehicle_type"], name: "idx_zvp_lookup"
   end
@@ -1268,6 +1518,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "per_min_rate_paise", default: 0
     t.index ["zone_vehicle_pricing_id"], name: "index_zone_vehicle_time_pricings_on_zone_vehicle_pricing_id"
     t.unique_constraint ["zone_vehicle_pricing_id", "time_band"], name: "idx_zvtp_pricing_time"
   end
@@ -1294,14 +1545,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
   add_foreign_key "delivery_partner_callbacks", "delivery_orders", on_delete: :cascade
   add_foreign_key "escrow_holds", "users", on_delete: :restrict
   add_foreign_key "escrow_holds", "wallets", on_delete: :restrict
+  add_foreign_key "image_hashes", "listing_items", on_delete: :cascade
+  add_foreign_key "image_hashes", "listings", on_delete: :cascade
   add_foreign_key "invoices", "payment_intents", on_delete: :nullify
   add_foreign_key "invoices", "users", on_delete: :restrict
   add_foreign_key "listing_approval_settings", "zones"
   add_foreign_key "listing_items", "categories"
   add_foreign_key "listing_items", "listings", on_delete: :cascade
+  add_foreign_key "listing_validations", "listings", on_delete: :cascade
   add_foreign_key "listings", "users"
   add_foreign_key "listings", "zone_locations"
   add_foreign_key "locations", "users", validate: false
+  add_foreign_key "notifications", "users"
   add_foreign_key "otp_codes", "users"
   add_foreign_key "payment_charges", "payment_intents", column: "intent_id", on_delete: :restrict
   add_foreign_key "payment_charges", "payment_methods", on_delete: :nullify
@@ -1320,6 +1575,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
   add_foreign_key "preferred_exchange_categories", "listings", on_delete: :cascade
   add_foreign_key "pricing_actuals", "pricing_quotes"
   add_foreign_key "pricing_distance_slabs", "pricing_configs"
+  add_foreign_key "pricing_quote_decisions", "pricing_configs"
+  add_foreign_key "pricing_quote_decisions", "pricing_quotes"
+  add_foreign_key "pricing_quote_replays", "pricing_configs"
+  add_foreign_key "pricing_quote_replays", "pricing_quote_decisions"
+  add_foreign_key "pricing_quote_replays", "users", column: "replayed_by_id"
   add_foreign_key "pricing_surge_rules", "pricing_configs"
   add_foreign_key "profile_settings", "users"
   add_foreign_key "referral_rewards", "users"
@@ -1336,6 +1596,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_14_100001) do
   add_foreign_key "zone_delivery_configs", "delivery_partners"
   add_foreign_key "zone_delivery_configs", "zones"
   add_foreign_key "zone_distance_slabs", "zones"
+  add_foreign_key "zone_h3_mappings", "zones"
   add_foreign_key "zone_listing_rules", "zones"
   add_foreign_key "zone_locations", "zones"
   add_foreign_key "zone_pair_vehicle_pricings", "zones", column: "from_zone_id"

@@ -41,7 +41,19 @@ module RoutePricing
         validity_minutes = config.try(:quote_validity_minutes) || 10
         valid_until = Time.current + validity_minutes.minutes
 
+        # 3b. Vendor payout prediction (two-sided pricing)
+        vendor_prediction = predict_vendor_payout(
+          city_code: city_code,
+          vehicle_type: vehicle_type,
+          distance_m: route_data[:distance_m],
+          duration_in_traffic_s: route_data[:duration_in_traffic_s],
+          time_band: pricing_result.dig(:breakdown, :zone_info, :time_band),
+          pickup_lat: pickup_lat,
+          pickup_lng: pickup_lng
+        )
+
         # 4. Persist quote
+        vendor_attrs = build_vendor_quote_attrs(pricing_result[:final_price_paise], vendor_prediction)
         quote = PricingQuote.create!(
           request_id: request_id,
           city_code: city_code,
@@ -65,7 +77,8 @@ module RoutePricing
           valid_until: valid_until,
           weight_kg: weight_kg,
           is_scheduled: pricing_result.dig(:breakdown, :scheduled_discount).present?,
-          scheduled_for: quote_time > Time.current ? quote_time : nil
+          scheduled_for: quote_time > Time.current ? quote_time : nil,
+          **vendor_attrs
         )
 
         # 5. Return formatted response
@@ -146,6 +159,18 @@ module RoutePricing
           validity_minutes = config.try(:quote_validity_minutes) || 10
           valid_until = Time.current + validity_minutes.minutes
 
+          # Vendor payout prediction (two-sided pricing)
+          vendor_prediction = predict_vendor_payout(
+            city_code: city_code,
+            vehicle_type: vehicle_type,
+            distance_m: route_data[:distance_m],
+            duration_in_traffic_s: route_data[:duration_in_traffic_s],
+            time_band: pricing_result.dig(:breakdown, :zone_info, :time_band),
+            pickup_lat: pickup_lat,
+            pickup_lng: pickup_lng
+          )
+          vendor_attrs = build_vendor_quote_attrs(pricing_result[:final_price_paise], vendor_prediction)
+
           quote = PricingQuote.create!(
             request_id: request_id,
             city_code: city_code,
@@ -167,7 +192,8 @@ module RoutePricing
             pricing_version: pricing_version,
             breakdown_json: pricing_result[:breakdown],
             valid_until: valid_until,
-            weight_kg: weight_kg
+            weight_kg: weight_kg,
+            **vendor_attrs
           )
 
           quotes << {
@@ -279,6 +305,44 @@ module RoutePricing
       rescue StandardError => e
         Rails.logger.error("RoundTripQuote error: #{e.message}\n#{e.backtrace.join("\n")}")
         { error: e.message, code: 500 }
+      end
+
+      private
+
+      # Predict vendor payout using VendorPayoutCalculator
+      def predict_vendor_payout(city_code:, vehicle_type:, distance_m:, duration_in_traffic_s:, time_band:, pickup_lat:, pickup_lng:)
+        return nil unless defined?(VendorRateCard) && VendorRateCard.table_exists?
+
+        calculator = VendorPayoutCalculator.new(vendor_code: 'porter')
+        calculator.calculate(
+          city_code: city_code,
+          vehicle_type: vehicle_type,
+          distance_m: distance_m,
+          duration_in_traffic_s: duration_in_traffic_s,
+          time_band: time_band || 'morning',
+          pickup_lat: pickup_lat,
+          pickup_lng: pickup_lng
+        )
+      rescue StandardError => e
+        Rails.logger.warn("Vendor prediction failed: #{e.message}")
+        nil
+      end
+
+      # Build vendor-related attributes for PricingQuote.create!
+      def build_vendor_quote_attrs(final_price_paise, vendor_prediction)
+        return {} unless vendor_prediction && vendor_prediction[:predicted_paise]
+
+        predicted = vendor_prediction[:predicted_paise]
+        margin = final_price_paise - predicted
+        margin_pct = predicted > 0 ? ((margin.to_f / predicted) * 100).round(2) : 0
+
+        {
+          vendor_predicted_paise: predicted,
+          vendor_code: vendor_prediction[:vendor_code],
+          margin_paise: margin,
+          margin_pct: margin_pct,
+          vendor_confidence: vendor_prediction[:confidence]
+        }
       end
     end
   end

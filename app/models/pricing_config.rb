@@ -14,6 +14,9 @@ class PricingConfig < ApplicationRecord
   validates :vehicle_multiplier, :city_multiplier, :surge_multiplier,
             numericality: { greater_than: 0 }
   validates :version, numericality: { only_integer: true, greater_than: 0 }
+  validates :per_min_rate_paise, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :free_pickup_radius_m, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
+  validates :dead_km_per_km_rate_paise, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
 
   # Scopes
   scope :active, -> { where(active: true) }

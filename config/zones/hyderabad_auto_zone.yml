@@ -1,0 +1,29 @@
+city_code: hyd
+city_name: Hyderabad
+
+# City bounding box (GHMC + CMC + MMC limits + 1km buffer)
+# Covers: Adibatla (17.21) to Medchal (17.66), Patancheru (78.24) to Ghatkesar (78.70)
+boundary:
+  lat_min: 17.20
+  lat_max: 17.67
+  lng_min: 78.23
+  lng_max: 78.71
+
+# H3 resolution for zone grid
+h3_resolution: 7  # ~1.2km edge, ~5.16 km2 per cell
+
+# Classification
+classifier:
+  k: 3                          # KNN neighbors
+  max_distance_km: 5.0          # Beyond this, classify as outer_ring
+  default_type: outer_ring      # For cells too far from any known zone
+
+# Clustering
+clustering:
+  min_cells: 3                  # Minimum cells per auto-zone
+  max_cells: 50                 # Maximum cells per auto-zone (split if exceeded)
+  merge_orphans: true           # Merge <min_cells clusters into nearest neighbor
+
+# Zone naming
+naming:
+  prefix: "auto"                # e.g., auto_residential_dense_001

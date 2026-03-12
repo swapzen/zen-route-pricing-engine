@@ -90,13 +90,24 @@ module RoutePricing
           calculate_linear_cost(chargeable_m, zone_pricing.per_km_rate_paise)
         end
 
+        # Step 3b: Time component (per-minute pricing)
+        per_min_rate = zone_pricing.per_min_rate_paise || 0
+        time_component = if per_min_rate > 0 && duration_in_traffic_s.to_i > 0
+                           (duration_in_traffic_s / 60.0) * per_min_rate
+                         else
+                           0
+                         end
+
+        # Step 3c: Dead-km charge (pickup distance cost)
+        dead_km_charge = calculate_dead_km_charge(pickup_lat, pickup_lng, @config.city_code, time_band)
+
         # Step 4: Raw subtotal
         # Distance band shaping applies ONLY to the distance component, not base_fare.
         # Base fare is a fixed cost (driver showing up, loading) and should not be
         # scaled by distance. The distance component is the variable cost.
         band_multiplier = calculate_distance_band_multiplier(@config.vehicle_type, distance_m)
         shaped_distance = distance_component.to_f * band_multiplier
-        raw_subtotal = base_fare + shaped_distance
+        raw_subtotal = base_fare + shaped_distance + time_component + dead_km_charge
         
         # =====================================================================
         # INDUSTRY-STANDARD CHARGE COMPONENTS (Cogoport/ShipX patterns)
@@ -322,6 +333,12 @@ module RoutePricing
           base_fare: base_fare,
           chargeable_distance_m: chargeable_m,
           distance_component: distance_component,
+          # Per-minute pricing (Phase A)
+          time_component: time_component.round,
+          per_min_rate_paise: per_min_rate,
+          # Dead-km charge (Phase A)
+          dead_km_charge: dead_km_charge.round,
+          estimated_pickup_distance_m: @last_estimated_pickup_distance_m || 0,
           distance_band_multiplier: band_multiplier,
           shaped_distance_component: shaped_distance.round,
           slab_pricing_used: @config.pricing_distance_slabs.any?,
@@ -648,6 +665,47 @@ module RoutePricing
         end
 
         1.0
+      end
+
+      # Dead-km charge: cost for driver to reach pickup location
+      def calculate_dead_km_charge(pickup_lat, pickup_lng, city_code, time_band)
+        return 0 unless @config.dead_km_enabled
+
+        estimated_m = resolve_pickup_distance(pickup_lat, pickup_lng, city_code, time_band)
+        @last_estimated_pickup_distance_m = estimated_m
+        free_radius = @config.free_pickup_radius_m
+        return 0 if free_radius <= 0 || estimated_m <= free_radius
+
+        excess_m = estimated_m - free_radius
+        (excess_m / 1000.0) * @config.dead_km_per_km_rate_paise
+      end
+
+      # Estimate how far a driver must travel to reach pickup.
+      # Phase 1: zone-type defaults. Upgraded to H3 in Phase C.
+      def resolve_pickup_distance(pickup_lat, pickup_lng, city_code, time_band)
+        # Try H3 supply density first (Phase C upgrade)
+        if defined?(H3) && defined?(H3SupplyDensity)
+          begin
+            h3_r7 = H3.from_geo_input([pickup_lat.to_f, pickup_lng.to_f], 7).to_s(16)
+            density = H3SupplyDensity.for_cell(h3_r7, city_code, time_band).first
+            return density.avg_pickup_distance_m if density
+          rescue StandardError => e
+            Rails.logger.debug("H3 pickup distance lookup failed: #{e.message}")
+          end
+        end
+
+        # Fallback: zone-type defaults
+        zone = Zone.find_containing(city_code, pickup_lat, pickup_lng)
+        return 3000 unless zone
+
+        case zone.zone_type
+        when 'tech_corridor', 'business_cbd' then 2000
+        when 'residential_dense', 'residential_mixed' then 3000
+        when 'residential_growth' then 3500
+        when 'airport_logistics' then 5000
+        when 'industrial', 'outer_ring' then 4000
+        else 3000
+        end
       end
 
       # ODA Multiplier using zone-level config (preferred over hardcoded)

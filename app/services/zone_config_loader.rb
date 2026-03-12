@@ -413,6 +413,7 @@ class ZoneConfigLoader
       zone_pricing.assign_attributes(
         base_fare_paise: default_rates['base'] || 5000,
         per_km_rate_paise: default_rates['rate'] || 1000,
+        per_min_rate_paise: default_rates['min_rate'] || 0,
         min_fare_paise: default_rates['base'] || 5000,
         base_distance_m: 1000,
         active: true
@@ -451,6 +452,7 @@ class ZoneConfigLoader
       time_pricing.assign_attributes(
         base_fare_paise: rates['base'] || 5000,
         per_km_rate_paise: rates['rate'] || 1000,
+        per_min_rate_paise: rates['min_rate'] || 0,
         min_fare_paise: rates['base'] || 5000,
         active: true
       )
@@ -589,6 +591,7 @@ class ZoneConfigLoader
       corridor.assign_attributes(
         base_fare_paise: rates['base'] || 5000,
         per_km_rate_paise: rates['rate'] || 1000,
+        per_min_rate_paise: rates['min_rate'] || 0,
         min_fare_paise: rates['base'] || 5000,
         directional: directional,
         active: true

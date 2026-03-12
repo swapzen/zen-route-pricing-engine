@@ -152,15 +152,27 @@ module RoutePricing
         vendor: params[:vendor] || 'porter',
         vendor_booking_ref: params[:vendor_booking_ref],
         actual_price_paise: params[:actual_price_paise].to_i,
+        actual_vendor_code: params[:actual_vendor_code],
+        actual_breakdown_json: params[:actual_breakdown_json].presence || {},
         notes: params[:notes]
       )
 
-      render json: {
+      response = {
         success: true,
         actual_id: actual.id,
         variance_paise: actual.variance_paise,
         variance_percentage: actual.variance_percentage
-      }, status: :created
+      }
+
+      if actual.predicted_vendor_paise
+        response.merge!(
+          predicted_vendor_paise: actual.predicted_vendor_paise,
+          prediction_variance_paise: actual.prediction_variance_paise,
+          prediction_variance_pct: actual.prediction_variance_pct
+        )
+      end
+
+      render json: response, status: :created
     rescue StandardError => e
       Rails.logger.error("RecordActual failed: #{e.message}")
       render json: { error: e.message }, status: :unprocessable_entity
