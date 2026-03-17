@@ -1,0 +1,175 @@
+city_code: hyd
+landmarks:
+  hospitals:
+    - id: apollo_jubilee_hills
+      name: "Apollo Hospital, Jubilee Hills"
+      lat: 17.4260
+      lng: 78.4070
+    - id: kims_secunderabad
+      name: "KIMS Hospital, Secunderabad"
+      lat: 17.4500
+      lng: 78.4990
+    - id: care_hospitals_banjara
+      name: "CARE Hospitals, Banjara Hills"
+      lat: 17.4130
+      lng: 78.4380
+    - id: yashoda_somajiguda
+      name: "Yashoda Hospital, Somajiguda"
+      lat: 17.4300
+      lng: 78.4710
+    - id: continental_gachibowli
+      name: "Continental Hospital, Gachibowli"
+      lat: 17.4230
+      lng: 78.3480
+
+  malls:
+    - id: inorbit_mall
+      name: "Inorbit Mall, Madhapur"
+      lat: 17.4355
+      lng: 78.3855
+    - id: ikea_hitec_city
+      name: "IKEA, Hi-Tech City"
+      lat: 17.4335
+      lng: 78.3740
+    - id: nexus_mall_kukatpally
+      name: "Nexus Mall, Kukatpally"
+      lat: 17.4900
+      lng: 78.3900
+    - id: sarath_city_gachibowli
+      name: "Sarath City Capital Mall, Gachibowli"
+      lat: 17.4270
+      lng: 78.3680
+    - id: gvk_one_mall_banjara
+      name: "GVK One Mall, Banjara Hills"
+      lat: 17.4230
+      lng: 78.4490
+
+  tech_parks:
+    - id: cyber_towers
+      name: "Cyber Towers, HITEC City"
+      lat: 17.4504
+      lng: 78.3810
+    - id: microsoft_gachibowli
+      name: "Microsoft India, Gachibowli"
+      lat: 17.4270
+      lng: 78.3390
+    - id: tcs_synergy_park
+      name: "TCS Synergy Park, Gachibowli"
+      lat: 17.3817
+      lng: 78.4801
+    - id: infosys_pocharam
+      name: "Infosys, Pocharam"
+      lat: 17.4470
+      lng: 78.5780
+    - id: dxc_manikonda
+      name: "DXC Technology, Manikonda"
+      lat: 17.4050
+      lng: 78.3730
+    - id: raheja_mindspace
+      name: "Raheja Mindspace IT Park, Madhapur"
+      lat: 17.4410
+      lng: 78.3820
+
+  schools:
+    - id: isb_gachibowli
+      name: "ISB, Gachibowli"
+      lat: 17.4240
+      lng: 78.3320
+    - id: oakridge_bachupally
+      name: "Oakridge International, Bachupally"
+      lat: 17.5440
+      lng: 78.3870
+    - id: chirec_kondapur
+      name: "CHIREC School, Kondapur"
+      lat: 17.4570
+      lng: 78.3640
+    - id: delhi_public_school_nacharam
+      name: "DPS, Nacharam"
+      lat: 17.4320
+      lng: 78.5410
+
+  transport:
+    - id: rgia_airport
+      name: "RGIA Airport, Shamshabad"
+      lat: 17.2403
+      lng: 78.4294
+    - id: secunderabad_station
+      name: "Secunderabad Railway Station"
+      lat: 17.4340
+      lng: 78.5010
+    - id: nampally_station
+      name: "Nampally Railway Station"
+      lat: 17.3880
+      lng: 78.4730
+    - id: mgbs_bus_station
+      name: "MGBS Bus Station, Gowlipura"
+      lat: 17.3780
+      lng: 78.4760
+    - id: jubilee_bus_station
+      name: "JBS, Secunderabad"
+      lat: 17.4480
+      lng: 78.5000
+    - id: miyapur_metro
+      name: "Miyapur Metro Station"
+      lat: 17.4960
+      lng: 78.3580
+
+  landmarks:
+    - id: charminar
+      name: "Charminar"
+      lat: 17.3616
+      lng: 78.4747
+    - id: golconda_fort
+      name: "Golconda Fort"
+      lat: 17.3833
+      lng: 78.4011
+    - id: hussain_sagar
+      name: "Hussain Sagar, Tank Bund"
+      lat: 17.4239
+      lng: 78.4738
+    - id: birla_mandir
+      name: "Birla Mandir, Naubat Pahad"
+      lat: 17.4062
+      lng: 78.4691
+
+  residential:
+    - id: kukatpally_hb
+      name: "KPHB Colony, Kukatpally"
+      lat: 17.4850
+      lng: 78.4000
+    - id: lb_nagar
+      name: "LB Nagar"
+      lat: 17.3515
+      lng: 78.5530
+    - id: miyapur
+      name: "Miyapur"
+      lat: 17.4970
+      lng: 78.3560
+    - id: dilsukhnagar
+      name: "Dilsukhnagar"
+      lat: 17.3680
+      lng: 78.5250
+    - id: kompally
+      name: "Kompally"
+      lat: 17.5420
+      lng: 78.4850
+    - id: manikonda
+      name: "Manikonda"
+      lat: 17.4050
+      lng: 78.3870
+    - id: gachibowli_residential
+      name: "Gachibowli, Gopanpally"
+      lat: 17.4293
+      lng: 78.3370
+    - id: ameerpet
+      name: "Ameerpet"
+      lat: 17.4379
+      lng: 78.4482
+    - id: begumpet
+      name: "Begumpet"
+      lat: 17.4430
+      lng: 78.4700
+    - id: madhapur
+      name: "Madhapur"
+      lat: 17.4430
+      lng: 78.3930
