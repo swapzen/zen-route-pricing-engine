@@ -18,6 +18,11 @@ Rails.application.routes.draw do
       get 'list_configs', to: 'configs#index'
       patch 'deactivate_surge_rule', to: 'surge_rules#deactivate'
 
+      # Approval workflow
+      post 'submit_for_approval', to: 'configs#submit_for_approval'
+      post 'approve_config', to: 'configs#approve_config'
+      post 'reject_config', to: 'configs#reject_config'
+
       # Vendor rate card management
       post 'sync_vendor_rates', to: 'vendor_rates#sync'
       get 'vendor_rate_cards', to: 'vendor_rates#index'
@@ -37,6 +42,56 @@ Rails.application.routes.draw do
       post 'surge_buckets/bulk_update', to: 'surge_buckets#bulk_update'
       get 'surge_buckets/heatmap', to: 'surge_buckets#heatmap'
       delete 'surge_buckets/clear', to: 'surge_buckets#clear'
+
+      # Drift analysis (P0)
+      get 'drift_report', to: 'drift#drift_report'
+      get 'drift_summary', to: 'drift#drift_summary'
+
+      # Backtesting (P0)
+      post 'backtests', to: 'backtests#create'
+      get 'backtests', to: 'backtests#index'
+      get 'backtests/:id', to: 'backtests#show'
+
+      # Control plane (P1)
+      get 'change_logs', to: 'control_plane#change_logs'
+      get 'rollout_flags', to: 'control_plane#list_rollout_flags'
+      post 'rollout_flags', to: 'control_plane#set_rollout_flag'
+      post 'emergency_freeze', to: 'control_plane#emergency_freeze'
+      delete 'emergency_freeze', to: 'control_plane#unfreeze'
+      get 'freeze_status', to: 'control_plane#freeze_status'
+
+      # Market state (P1)
+      get 'market/dashboard', to: 'market_state#dashboard'
+      get 'market/zone_health', to: 'market_state#zone_health'
+      get 'market/pressure_map', to: 'market_state#pressure_map'
+
+      # Merchant policies (P1)
+      get 'merchant_policies', to: 'merchant_policies#index'
+      post 'merchant_policies', to: 'merchant_policies#create'
+      patch 'merchant_policies/:id', to: 'merchant_policies#update'
+      delete 'merchant_policies/:id', to: 'merchant_policies#destroy'
+      post 'merchant_policies/simulate', to: 'merchant_policies#simulate'
+
+      # Model optimization (P2)
+      get 'models/scores', to: 'models#scores'
+      get 'models/accuracy', to: 'models#accuracy'
+      post 'models/configure', to: 'models#configure'
+      get 'models/comparison', to: 'models#comparison'
+
+      # Competitor rate cards
+      get 'competitor_rates', to: 'competitor_rates#index'
+      get 'competitor_comparison', to: 'competitor_rates#comparison'
+
+      # Route pricing matrix (verification)
+      get 'route_matrix', to: 'route_matrix#index'
+      get 'route_matrix/landmark_routes', to: 'route_matrix#landmark_routes'
+      get 'route_matrix/calibration_routes', to: 'route_matrix#calibration_routes'
+      post 'route_matrix/generate_quote', to: 'route_matrix#generate_quote'
+
+      # Porter benchmarks
+      get 'porter_benchmarks', to: 'porter_benchmarks#index'
+      post 'porter_benchmarks/bulk_save', to: 'porter_benchmarks#bulk_save'
+      post 'porter_benchmarks/recalibrate', to: 'porter_benchmarks#recalibrate'
     end
   end
 end
