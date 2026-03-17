@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_12_100005) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_17_000001) do
   create_schema "crdb_internal"
 
   create_table "active_storage_attachments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -488,8 +488,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100005) do
     t.uuid "listing_type_id", null: false
     t.string "title"
     t.text "description"
-    t.uuid "item_location_id"
-    t.uuid "pickup_location_id"
     t.string "delivery_type"
     t.string "status", default: "draft", null: false
     t.boolean "approved", default: false
@@ -505,6 +503,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100005) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "zone_location_id"
+    t.bigint "item_location_id"
+    t.bigint "pickup_location_id"
     t.index ["listing_type_id", "status", "created_at"], name: "index_listings_on_listing_type_status"
     t.index ["user_id", "status"], name: "index_listings_on_user_id_and_status"
     t.index ["user_id"], name: "index_listings_on_user_id"
@@ -530,6 +530,25 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100005) do
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_locations_on_user_id"
     t.unique_constraint ["user_id"], name: "uniq_locations_primary_per_user"
+  end
+
+  create_table "merchant_pricing_policies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "merchant_id", null: false
+    t.string "merchant_name"
+    t.string "city_code"
+    t.string "vehicle_type"
+    t.string "policy_type", null: false
+    t.bigint "value_paise"
+    t.float "value_pct"
+    t.bigint "priority", default: 0
+    t.boolean "active", default: true
+    t.date "effective_from"
+    t.date "effective_until"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city_code", "vehicle_type"], name: "index_merchant_pricing_policies_on_city_code_and_vehicle_type"
+    t.index ["merchant_id", "active"], name: "index_merchant_pricing_policies_on_merchant_id_and_active"
   end
 
   create_table "notifications", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -816,6 +835,29 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100005) do
     t.float "duplicate_weight", default: 0.1
   end
 
+  create_table "porter_benchmarks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "city_code", default: "hyd", null: false
+    t.string "route_key", null: false
+    t.string "pickup_address", null: false
+    t.string "drop_address", null: false
+    t.decimal "pickup_lat", precision: 10, scale: 6
+    t.decimal "pickup_lng", precision: 10, scale: 6
+    t.decimal "drop_lat", precision: 10, scale: 6
+    t.decimal "drop_lng", precision: 10, scale: 6
+    t.string "vehicle_type", null: false
+    t.string "time_band", null: false
+    t.bigint "porter_price_inr"
+    t.bigint "our_price_inr"
+    t.bigint "distance_m"
+    t.float "delta_pct"
+    t.string "status", default: "entered"
+    t.string "entered_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city_code", "time_band"], name: "index_porter_benchmarks_on_city_code_and_time_band"
+    t.unique_constraint ["route_key", "vehicle_type", "time_band"], name: "idx_porter_bench_route_vt_tb"
+  end
+
   create_table "preferred_exchange_categories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "listing_id", null: false
     t.uuid "category_id", null: false
@@ -848,6 +890,38 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100005) do
     t.decimal "prediction_variance_pct", precision: 6, scale: 2
     t.index ["pricing_quote_id"], name: "index_pricing_actuals_on_pricing_quote_id"
     t.index ["vendor"], name: "index_pricing_actuals_on_vendor"
+  end
+
+  create_table "pricing_backtests", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "city_code", null: false
+    t.uuid "candidate_config_id"
+    t.uuid "baseline_config_id"
+    t.string "status", default: "pending"
+    t.bigint "sample_size"
+    t.bigint "completed_replays", default: 0
+    t.jsonb "results", default: {}
+    t.jsonb "replay_details", default: []
+    t.string "triggered_by"
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city_code", "status"], name: "index_pricing_backtests_on_city_code_and_status"
+  end
+
+  create_table "pricing_change_logs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "entity_type", null: false
+    t.uuid "entity_id", null: false
+    t.string "action", null: false
+    t.string "actor", null: false
+    t.jsonb "before_state", default: {}
+    t.jsonb "after_state", default: {}
+    t.jsonb "diff", default: {}
+    t.string "city_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city_code"], name: "index_pricing_change_logs_on_city_code"
+    t.index ["entity_type", "entity_id"], name: "index_pricing_change_logs_on_entity_type_and_entity_id"
   end
 
   create_table "pricing_configs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -890,6 +964,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100005) do
     t.bigint "free_pickup_radius_m", default: 0
     t.bigint "dead_km_per_km_rate_paise", default: 0
     t.boolean "dead_km_enabled", default: false
+    t.string "approval_status", default: "approved"
+    t.string "submitted_by"
+    t.string "reviewed_by"
+    t.datetime "reviewed_at"
+    t.string "rejection_reason"
+    t.text "change_summary"
+    t.index ["approval_status"], name: "index_pricing_configs_on_approval_status"
     t.index ["city_code", "vehicle_type", "active", "effective_from"], name: "idx_pricing_configs_current"
     t.index ["vendor_vehicle_code", "city_code"], name: "index_pricing_configs_on_vendor_code_and_city"
     t.unique_constraint ["city_code", "vehicle_type", "version"], name: "idx_on_city_code_vehicle_type_version_008f27eb85"
@@ -904,6 +985,70 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100005) do
     t.datetime "updated_at", null: false
     t.index ["pricing_config_id"], name: "index_pricing_distance_slabs_on_pricing_config_id"
     t.unique_constraint ["pricing_config_id", "min_distance_m"], name: "idx_slabs_config_min_distance"
+  end
+
+  create_table "pricing_emergency_freezes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "city_code"
+    t.string "reason", null: false
+    t.string "activated_by", null: false
+    t.string "deactivated_by"
+    t.datetime "activated_at", null: false
+    t.datetime "deactivated_at"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city_code", "active"], name: "index_pricing_emergency_freezes_on_city_code_and_active"
+  end
+
+  create_table "pricing_model_configs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "algorithm_name", null: false
+    t.string "model_version", null: false
+    t.string "mode", default: "shadow"
+    t.bigint "canary_pct", default: 0
+    t.string "city_code"
+    t.jsonb "parameters", default: {}
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+
+    t.unique_constraint ["algorithm_name", "city_code"], name: "index_pricing_model_configs_on_algorithm_name_and_city_code"
+  end
+
+  create_table "pricing_model_scores", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "pricing_quote_id"
+    t.string "model_version", null: false
+    t.string "city_code", null: false
+    t.string "vehicle_type"
+    t.bigint "deterministic_price_paise"
+    t.bigint "model_suggested_paise"
+    t.float "expected_acceptance_pct"
+    t.float "expected_margin_pct"
+    t.jsonb "features", default: {}
+    t.jsonb "model_metadata", default: {}
+    t.string "outcome"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["model_version", "city_code"], name: "index_pricing_model_scores_on_model_version_and_city_code"
+    t.index ["pricing_quote_id"], name: "index_pricing_model_scores_on_pricing_quote_id"
+  end
+
+  create_table "pricing_outcomes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "pricing_quote_id", null: false
+    t.string "outcome", null: false
+    t.string "city_code", null: false
+    t.string "vehicle_type"
+    t.string "time_band"
+    t.string "pickup_zone_code"
+    t.string "drop_zone_code"
+    t.string "h3_index_r7"
+    t.bigint "quoted_price_paise"
+    t.bigint "response_time_seconds"
+    t.string "rejection_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city_code", "outcome"], name: "index_pricing_outcomes_on_city_code_and_outcome"
+    t.index ["h3_index_r7", "time_band"], name: "index_pricing_outcomes_on_h3_index_r7_and_time_band"
+    t.index ["pricing_quote_id"], name: "index_pricing_outcomes_on_pricing_quote_id"
   end
 
   create_table "pricing_quote_decisions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -928,12 +1073,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100005) do
     t.text "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "time_band"
+    t.string "pickup_zone_code"
+    t.string "drop_zone_code"
+    t.bigint "quoted_price_paise"
+    t.bigint "actual_price_paise"
+    t.bigint "variance_paise"
+    t.float "variance_pct"
+    t.string "pricing_tier"
+    t.float "distance_km"
+    t.string "config_version"
+    t.boolean "within_threshold", default: true
     t.index ["city_code", "vehicle_type", "created_at"], name: "idx_quote_decisions_city_vehicle_created"
     t.index ["decision_status"], name: "index_pricing_quote_decisions_on_decision_status"
     t.index ["pricing_config_id"], name: "index_pricing_quote_decisions_on_pricing_config_id"
     t.index ["pricing_quote_id"], name: "index_pricing_quote_decisions_on_pricing_quote_id"
     t.index ["pricing_version"], name: "index_pricing_quote_decisions_on_pricing_version"
     t.index ["request_id"], name: "index_pricing_quote_decisions_on_request_id"
+    t.index ["within_threshold"], name: "index_pricing_quote_decisions_on_within_threshold"
     t.unique_constraint ["pricing_quote_id"], name: "idx_quote_decisions_quote_unique"
   end
 
@@ -1003,6 +1160,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_100005) do
     t.index ["request_id"], name: "index_pricing_quotes_on_request_id"
     t.index ["valid_until"], name: "index_pricing_quotes_on_valid_until"
     t.index ["vehicle_type"], name: "index_pricing_quotes_on_vehicle_type"
+  end
+
+  create_table "pricing_rollout_flags", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "flag_name", null: false
+    t.string "city_code"
+    t.boolean "enabled", default: false
+    t.bigint "rollout_pct", default: 0
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+
+    t.unique_constraint ["flag_name", "city_code"], name: "index_pricing_rollout_flags_on_flag_name_and_city_code"
   end
 
   create_table "pricing_surge_rules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
