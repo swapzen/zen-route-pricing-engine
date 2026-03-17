@@ -129,9 +129,13 @@ module RoutePricing
             # Fetch zone-specific slabs
             zone_slabs = cached_zone_slabs(reference_zone, vehicle_type)
             
-            # 5a. Try time-specific pricing first
+            # 5a. Try time-specific pricing first (with 8-band → 3-band fallback)
             if time_band.present?
               time_pricing = zone_pricing.time_pricings.detect { |tp| tp.active && tp.time_band == time_band }
+              unless time_pricing
+                fallback = RoutePricing::Services::TimeBandResolver.fallback_band(time_band)
+                time_pricing = zone_pricing.time_pricings.detect { |tp| tp.active && tp.time_band == fallback } if fallback != time_band
+              end
               if time_pricing
                 # Zone-specific time-band rates are pre-calibrated, so bypass zone multipliers
                 zone_pricing_configs = extract_zone_pricing_configs(pickup_zone, drop_zone)
@@ -231,8 +235,16 @@ module RoutePricing
         return nil unless zone_pricing
 
         if time_band.present?
+          # Try exact band first (e.g., morning_rush)
           time_pricing = zone_pricing.time_pricings.detect { |tp| tp.active && tp.time_band == time_band }
           return time_pricing if time_pricing
+
+          # Fallback to parent 3-band (e.g., morning_rush → morning)
+          fallback = RoutePricing::Services::TimeBandResolver.fallback_band(time_band)
+          if fallback != time_band
+            time_pricing = zone_pricing.time_pricings.detect { |tp| tp.active && tp.time_band == fallback }
+            return time_pricing if time_pricing
+          end
         end
 
         # Return base zone pricing as fallback
@@ -502,6 +514,16 @@ module RoutePricing
                                    p.from_zone_id == from_zone_id && p.to_zone_id == to_zone_id }
         return result if result
 
+        # 1b. Fallback to parent 3-band (e.g., morning_rush → morning)
+        if time_band.present?
+          fallback = RoutePricing::Services::TimeBandResolver.fallback_band(time_band)
+          if fallback != time_band
+            result = pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band == fallback &&
+                                       p.from_zone_id == from_zone_id && p.to_zone_id == to_zone_id }
+            return result if result
+          end
+        end
+
         # 2. Without time_band (fallback)
         if time_band.present?
           result = pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band.nil? &&
@@ -513,6 +535,16 @@ module RoutePricing
         result = pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band == time_band &&
                                    p.from_zone_id == to_zone_id && p.to_zone_id == from_zone_id && !p.directional }
         return result if result
+
+        # 3b. Non-directional swapped with fallback band
+        if time_band.present?
+          fallback = RoutePricing::Services::TimeBandResolver.fallback_band(time_band)
+          if fallback != time_band
+            result = pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band == fallback &&
+                                       p.from_zone_id == to_zone_id && p.to_zone_id == from_zone_id && !p.directional }
+            return result if result
+          end
+        end
 
         # 4. Non-directional swapped without time_band
         if time_band.present?

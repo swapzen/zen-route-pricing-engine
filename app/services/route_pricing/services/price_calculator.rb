@@ -47,12 +47,7 @@ module RoutePricing
         # Without this, a request at 14:00 UTC (19:30 IST) would get 'afternoon'
         # for zone pricing but 'evening' for surge — causing pricing inconsistency.
         local_time = quote_time.in_time_zone(@config.timezone)
-        hour = local_time.hour
-        time_band = case hour
-                    when 6...12 then 'morning'
-                    when 12...18 then 'afternoon'
-                    else 'evening'
-                    end
+        time_band = RoutePricing::Services::TimeBandResolver.resolve(local_time)
         
         # Step 1: Resolve Zone Pricing (v5.0 Time-Aware Zone-Based Structure)
         zone_pricing = @zone_resolver.resolve(
@@ -708,7 +703,7 @@ module RoutePricing
         # Try H3 supply density first (Phase C upgrade)
         if defined?(H3) && defined?(H3SupplyDensity)
           begin
-            h3_r7 = H3.from_geo_input([pickup_lat.to_f, pickup_lng.to_f], 7).to_s(16)
+            h3_r7 = H3.from_geo_coordinates([pickup_lat.to_f, pickup_lng.to_f], 7).to_s(16)
             density = H3SupplyDensity.for_cell(h3_r7, city_code, time_band).first
             return density.avg_pickup_distance_m if density
           rescue StandardError => e

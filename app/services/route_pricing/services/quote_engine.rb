@@ -8,7 +8,7 @@ module RoutePricing
         @route_resolver = route_resolver
       end
 
-      def create_quote(city_code:, vehicle_type:, pickup_lat:, pickup_lng:, drop_lat:, drop_lng:, item_value_paise: nil, request_id: nil, quote_time: Time.current, weight_kg: nil)
+      def create_quote(city_code:, vehicle_type:, pickup_lat:, pickup_lng:, drop_lat:, drop_lng:, item_value_paise: nil, request_id: nil, quote_time: Time.current, weight_kg: nil, merchant_id: nil)
         # 0. Compute H3 indices for caching and logging
         h3_indices = compute_h3_indices(pickup_lat, pickup_lng, drop_lat, drop_lng)
         pickup_h3_r8 = h3_indices[:pickup_h3_r8]
@@ -19,12 +19,7 @@ module RoutePricing
         # 0b. H3-aware quote cache: all points within the same hex pair share a cache entry
         time_bucket = (Time.current.to_i / 7200)
         local_time = quote_time.in_time_zone('Asia/Kolkata')
-        hour = local_time.hour
-        time_band_for_cache = case hour
-                              when 6...12 then 'morning'
-                              when 12...18 then 'afternoon'
-                              else 'evening'
-                              end
+        time_band_for_cache = RoutePricing::Services::TimeBandResolver.resolve(local_time)
 
         quote_cache_key = nil
         if pickup_h3_r8 && drop_h3_r8
@@ -76,6 +71,17 @@ module RoutePricing
           pickup_lng: pickup_lng
         )
 
+        # 3c. Apply merchant policies if merchant_id present
+        merchant_adjustments = nil
+        if merchant_id.present?
+          merchant_result = apply_merchant_policies(merchant_id, pricing_result[:final_price_paise],
+                                                    city_code: city_code, vehicle_type: vehicle_type)
+          if merchant_result
+            pricing_result[:final_price_paise] = merchant_result[:final_price_paise]
+            merchant_adjustments = merchant_result[:adjustments]
+          end
+        end
+
         # 4. Persist quote
         vendor_attrs = build_vendor_quote_attrs(pricing_result[:final_price_paise], vendor_prediction)
         h3_attrs = build_h3_quote_attrs(pickup_h3_r8, drop_h3_r8, pickup_h3_r7, drop_h3_r7, pricing_result)
@@ -125,6 +131,9 @@ module RoutePricing
           breakdown: pricing_result[:breakdown]
         }
 
+        # Add merchant adjustments to response
+        result[:merchant_adjustments] = merchant_adjustments if merchant_adjustments&.any?
+
         # Add H3 context to response if available
         if pickup_h3_r8 || drop_h3_r8
           result[:h3_context] = {
@@ -133,6 +142,9 @@ module RoutePricing
             resolution: 8
           }
         end
+
+        # 5b. Shadow model scoring (non-blocking)
+        run_shadow_model(quote, pricing_result, city_code, vehicle_type)
 
         # Cache the result for H3-based quote caching
         if quote_cache_key
@@ -421,6 +433,42 @@ module RoutePricing
           drop_h3_r7: drop_h3_r7,
           h3_surge_multiplier: h3_surge
         }
+      end
+
+      # Apply merchant pricing policies
+      def apply_merchant_policies(merchant_id, base_price_paise, city_code:, vehicle_type:)
+        return nil unless defined?(MerchantPricingPolicy) && MerchantPricingPolicy.table_exists?
+
+        MerchantPricingPolicy.apply_policies(
+          merchant_id, base_price_paise,
+          city: city_code, vehicle: vehicle_type
+        )
+      rescue StandardError => e
+        Rails.logger.warn("Merchant policy application failed: #{e.message}")
+        nil
+      end
+
+      # Run shadow model scoring (non-blocking, failures are logged only)
+      def run_shadow_model(quote, pricing_result, city_code, vehicle_type)
+        return unless defined?(PricingModelConfig) && PricingModelConfig.table_exists?
+
+        model_config = PricingModelConfig.active_model(city_code)
+        return unless model_config
+
+        zone_info = pricing_result.dig(:breakdown, :zone_info) || {}
+        optimizer = CandidatePriceOptimizer.new(model_config: model_config)
+        optimizer.score(
+          quote_id: quote.id,
+          deterministic_price_paise: quote.price_paise,
+          city_code: city_code,
+          vehicle_type: vehicle_type,
+          time_band: zone_info[:time_band],
+          pickup_zone: zone_info[:pickup_zone],
+          drop_zone: zone_info[:drop_zone],
+          distance_km: quote.distance_m ? quote.distance_m / 1000.0 : nil
+        )
+      rescue StandardError => e
+        Rails.logger.warn("Shadow model scoring failed: #{e.message}")
       end
 
       # Build vendor-related attributes for PricingQuote.create!
