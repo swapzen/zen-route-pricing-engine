@@ -36,6 +36,11 @@ module ZenRoutePricingEngine
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
+    # Disable auto schema dump after migrations. This shared CockroachDB has
+    # GEOGRAPHY columns (OID 90002) that the Ruby schema dumper can't serialize,
+    # and swapzen-api owns the canonical schema anyway.
+    config.active_record.dump_schema_after_migration = false
+
     # Only loads a smaller set of middleware suitable for API only apps.
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
