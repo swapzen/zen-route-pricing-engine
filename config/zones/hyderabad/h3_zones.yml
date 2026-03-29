@@ -533,7 +533,6 @@ zones:
     active: true
     auto_generated: false
     h3_cells_r7:
-    - 8760a24b6ffffff
     - 8760b1968ffffff
     - 8760b1969ffffff
     - 8760b196bffffff
@@ -6238,7 +6237,6 @@ zones:
     h3_cells_r7:
     - 8760a2584ffffff
     - 8760a25a2ffffff
-    - 8760a25b1ffffff
     - 8760a25b5ffffff
     pricing:
       early_morning:
@@ -6762,7 +6760,6 @@ zones:
     h3_cells_r7:
     - 8760a2582ffffff
     - 8760a2590ffffff
-    - 8760a2591ffffff
     - 8760a2595ffffff
     pricing:
       early_morning:
@@ -11212,7 +11209,6 @@ zones:
     h3_cells_r7:
     - 8760a2586ffffff
     - 8760a2595ffffff
-    - 8760a25b1ffffff
     - 8760a25b3ffffff
     pricing:
       early_morning:
@@ -11736,7 +11732,6 @@ zones:
     active: true
     auto_generated: false
     h3_cells_r7:
-    - 8760a24a6ffffff
     - 8760a2598ffffff
     - 8760a2599ffffff
     - 8760a259affffff
@@ -14880,10 +14875,8 @@ zones:
     auto_generated: false
     h3_cells_r7:
     - 8760a24a2ffffff
-    - 8760a24a6ffffff
     - 8760a24b1ffffff
     - 8760a24b5ffffff
-    - 8760a259bffffff
     pricing:
       early_morning:
         two_wheeler:
@@ -15140,8 +15133,6 @@ zones:
     active: true
     auto_generated: false
     h3_cells_r7:
-    - 8760a25b0ffffff
-    - 8760a25b2ffffff
     - 8760a25b4ffffff
     - 8760a25b5ffffff
     - 8760a25b6ffffff
@@ -15414,7 +15405,6 @@ zones:
     active: true
     auto_generated: false
     h3_cells_r7:
-    - 8760a25b0ffffff
     - 8760a25b4ffffff
     - 8760a25b5ffffff
     - 8760a25b6ffffff
@@ -16199,7 +16189,6 @@ zones:
     - 8760a2582ffffff
     - 8760a2586ffffff
     - 8760a2590ffffff
-    - 8760a2591ffffff
     - 8760a2594ffffff
     - 8760a2595ffffff
     - 8760a25b3ffffff
@@ -17765,7 +17754,6 @@ zones:
     active: true
     auto_generated: false
     h3_cells_r7:
-    - 8760a25b2ffffff
     - 8760a25b6ffffff
     - 8760b52cdffffff
     - 8760b52e9ffffff
@@ -18289,7 +18277,6 @@ zones:
     h3_cells_r7:
     - 8760a2594ffffff
     - 8760a2596ffffff
-    - 8760a25b2ffffff
     - 8760b52c9ffffff
     - 8760b52cdffffff
     pricing:
@@ -19074,9 +19061,6 @@ zones:
     h3_cells_r7:
     - 8760a2586ffffff
     - 8760a2595ffffff
-    - 8760a25b0ffffff
-    - 8760a25b1ffffff
-    - 8760a25b2ffffff
     - 8760a25b3ffffff
     pricing:
       early_morning:
@@ -19860,8 +19844,6 @@ zones:
     auto_generated: false
     h3_cells_r7:
     - 8760a25a2ffffff
-    - 8760a25b0ffffff
-    - 8760a25b1ffffff
     - 8760a25b5ffffff
     pricing:
       early_morning:
@@ -23530,7 +23512,6 @@ zones:
     auto_generated: false
     h3_cells_r7:
     - 8760a2590ffffff
-    - 8760a2591ffffff
     - 8760a2593ffffff
     - 8760a2594ffffff
     - 8760a2595ffffff
