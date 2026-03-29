@@ -8,10 +8,16 @@ module RoutePricing
       CACHE_TTL = 2.hours  # Reduced from 6h to keep traffic data fresh (matches 2h time bucket in cache key)
       PROVIDER_TIMEOUT = 15  # Defense-in-depth: max seconds for provider call (HTTP timeouts are 10s each)
 
-      def initialize
+      def initialize(route_resolver: nil)
         @normalizer = CoordinateNormalizer.new
         @provider = Providers::GoogleMapsProvider.new
         @cache_key_builder = Keys::CacheKeyBuilder.new
+        @circuit_breaker = CircuitBreaker.new(
+          service: 'google_maps',
+          threshold: 3,
+          timeout: 120,
+          window: 300
+        )
       end
 
       # Resolve route with step-by-step directions for segment pricing
@@ -35,7 +41,7 @@ module RoutePricing
           return result.merge(pickup_norm: pickup_norm, drop_norm: drop_norm, cache_key: cache_key)
         end
 
-        route_data = Timeout.timeout(PROVIDER_TIMEOUT) do
+        route_data = call_provider_with_breaker(city_code) do
           @provider.get_directions(
             pickup_lat: pickup_norm[:lat],
             pickup_lng: pickup_norm[:lng],
@@ -90,8 +96,8 @@ module RoutePricing
           )
         end
 
-        # Cache miss - call provider with timeout guard
-        route_data = Timeout.timeout(PROVIDER_TIMEOUT) do
+        # Cache miss - call provider with circuit breaker + timeout guard
+        route_data = call_provider_with_breaker(city_code) do
           @provider.get_route(
             pickup_lat: pickup_norm[:lat],
             pickup_lng: pickup_norm[:lng],
@@ -110,6 +116,22 @@ module RoutePricing
           cache_key: cache_key,
           cache_hit: false
         )
+      end
+
+      # Expose circuit breaker stats for admin health endpoint
+      def provider_health
+        @circuit_breaker.stats
+      end
+
+      private
+
+      def call_provider_with_breaker(_city_code)
+        Timeout.timeout(PROVIDER_TIMEOUT) do
+          @circuit_breaker.call { yield }
+        end
+      rescue CircuitBreaker::CircuitOpenError => e
+        Rails.logger.warn("[CIRCUIT_OPEN] #{e.message}. Propagating to trigger haversine fallback.")
+        raise StandardError, "Circuit open: #{e.message}"
       end
     end
   end

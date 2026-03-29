@@ -8,8 +8,19 @@ module RoutePricing
     module Providers
       class GoogleMapsProvider
         CACHE_TTL = 6.hours
-        TORTUOSITY_FACTOR = 1.4
+        TORTUOSITY_FACTOR = 1.4  # default fallback
         AVERAGE_SPEED_KMH = 25
+
+        # Per-city tortuosity factors for haversine fallback
+        # Based on road network density analysis
+        CITY_TORTUOSITY = {
+          'hyd' => 1.35,
+          'blr' => 1.42,
+          'mum' => 1.50,
+          'del' => 1.38,
+          'che' => 1.40,
+          'pun' => 1.38
+        }.freeze
 
         def initialize
           @api_key = ENV['GOOGLE_MAPS_API_KEY']
@@ -171,11 +182,12 @@ module RoutePricing
           }
         end
 
-        def haversine_fallback(pickup_lat, pickup_lng, drop_lat, drop_lng)
+        def haversine_fallback(pickup_lat, pickup_lng, drop_lat, drop_lng, city_code: nil)
           air_distance_m = haversine_distance(pickup_lat, pickup_lng, drop_lat, drop_lng)
-          
-          # Apply tortuosity factor
-          road_distance_m = (air_distance_m * TORTUOSITY_FACTOR).round
+
+          # Apply per-city tortuosity factor (or default)
+          factor = city_code ? CITY_TORTUOSITY.fetch(city_code.to_s, TORTUOSITY_FACTOR) : TORTUOSITY_FACTOR
+          road_distance_m = (air_distance_m * factor).round
 
           # Estimate duration using average speed
           duration_s = ((road_distance_m / 1000.0) / AVERAGE_SPEED_KMH * 3600).round
@@ -185,7 +197,8 @@ module RoutePricing
             duration_s: duration_s,
             duration_in_traffic_s: nil,
             traffic_model: 'haversine',
-            provider: 'haversine_fallback'
+            provider: 'haversine_fallback',
+            fallback_reason: 'provider_unavailable'
           }
         end
 

@@ -93,6 +93,9 @@ Rails.application.routes.draw do
       post 'porter_benchmarks/bulk_save', to: 'porter_benchmarks#bulk_save'
       post 'porter_benchmarks/recalibrate', to: 'porter_benchmarks#recalibrate'
 
+      # Provider health (circuit breaker status)
+      get 'provider_health', to: 'provider_health#show'
+
       # Zone toggle
       patch 'zones/:id/toggle', to: 'zones#toggle'
 
