@@ -9,6 +9,9 @@ module RoutePricing
       
       # Unit economics guardrail
       MIN_TARGET_MARGIN_PCT = 5.0  # Minimum 5% margin required
+
+      # Multiplicative cap: total product of all stacking multipliers cannot exceed this
+      MAX_TOTAL_MULTIPLICATIVE_EFFECT = 2.5
       
       # =====================================================================
       # INDUSTRY-STANDARD PRICING COMPONENTS (Cogoport/ShipX patterns)
@@ -266,7 +269,38 @@ module RoutePricing
 
         # Apply Multipliers
         multiplied = raw_subtotal * combined_surge * @config.vehicle_multiplier * @config.city_multiplier
-        
+
+        # =====================================================================
+        # MULTIPLICATIVE CAP — prevent runaway stacking
+        # =====================================================================
+        all_mults = [zone_type_mult, oda_mult, weather_mult, backhaul_mult, cancel_risk_mult,
+                     weight_multiplier, combined_surge, @config.vehicle_multiplier.to_f,
+                     @config.city_multiplier.to_f]
+        total_mult_effect = all_mults.reduce(1.0, :*)
+        mult_cap_applied = false
+
+        if !calibration_mode && total_mult_effect > MAX_TOTAL_MULTIPLICATIVE_EFFECT
+          cap_scale = MAX_TOTAL_MULTIPLICATIVE_EFFECT / total_mult_effect
+          multiplied *= cap_scale
+          mult_cap_applied = true
+          Rails.logger.warn(
+            "[MULT_CAP] Total multiplier effect #{total_mult_effect.round(2)} exceeds " \
+            "#{MAX_TOTAL_MULTIPLICATIVE_EFFECT}. Scaled down by #{cap_scale.round(3)}"
+          )
+        end
+
+        # Monitor when 3+ multipliers are simultaneously active
+        active_mult_names = []
+        { zone_type: zone_type_mult, oda: oda_mult, weather: weather_mult,
+          backhaul: backhaul_mult, cancel_risk: cancel_risk_mult, weight: weight_multiplier,
+          traffic: traffic_multiplier, time_of_day: time_multiplier,
+          zone_demand: zone_multiplier, h3_surge: h3_surge }.each do |name, val|
+          active_mult_names << "#{name}=#{val.round(3)}" if val > 1.01
+        end
+        if active_mult_names.size >= 3
+          Rails.logger.info("[MULTI_SURGE] #{active_mult_names.size} multipliers active: #{active_mult_names.join(', ')}")
+        end
+
         # Apply Buffers
         subtotal_with_buffers = multiplied * (1 + variance_buffer + high_value_buffer)
         
@@ -431,8 +465,37 @@ module RoutePricing
           margin_guardrail: margin_total,
           price_after_margin: price_after_margin.round,
           scheduled_discount: scheduled_discount_info[:applied] ? scheduled_discount_info : nil,
+          # Multiplicative cap
+          total_multiplicative_effect: total_mult_effect.round(3),
+          mult_cap_applied: mult_cap_applied,
           final_price: final_price_paise
         }
+
+        # Price summary — human-friendly cost breakdown
+        surge_impact = (multiplied - raw_subtotal).round
+        breakdown[:price_summary] = {
+          base: base_fare,
+          distance: shaped_distance.round,
+          time_charge: time_component.round,
+          dead_km: dead_km_charge.round,
+          waiting: waiting_charge.round,
+          subtotal: raw_subtotal.round,
+          surge_impact: surge_impact,
+          final: final_price_paise
+        }
+
+        # Price drivers — top factors affecting this quote
+        breakdown[:price_drivers] = compute_price_drivers(
+          raw_subtotal, all_mults,
+          zone_type_mult: zone_type_mult, oda_mult: oda_mult, weather_mult: weather_mult,
+          backhaul_mult: backhaul_mult, cancel_risk_mult: cancel_risk_mult,
+          weight_multiplier: weight_multiplier, traffic_multiplier: traffic_multiplier,
+          time_multiplier: time_multiplier, zone_multiplier: zone_multiplier,
+          h3_surge: h3_surge, band_multiplier: band_multiplier,
+          vehicle_multiplier: @config.vehicle_multiplier.to_f,
+          city_multiplier: @config.city_multiplier.to_f
+        )
+
         breakdown[:unit_economics] = unit_economics if ENV['PRICING_EXPOSE_INTERNALS'] == 'true'
         deep_freeze(breakdown)
 
@@ -692,6 +755,36 @@ module RoutePricing
         reasons << { code: 'standard', label: 'Standard pricing', multiplier: 1.0 } if reasons.empty?
 
         reasons
+      end
+
+      # Compute price drivers — categorized multipliers with estimated paise impact
+      def compute_price_drivers(raw_subtotal, _all_mults, **mults)
+        drivers = [
+          { name: 'distance_band',  category: :base_calc,          mult: mults[:band_multiplier] },
+          { name: 'zone_type',      category: :industry_standard,  mult: mults[:zone_type_mult] },
+          { name: 'oda',            category: :industry_standard,  mult: mults[:oda_mult] },
+          { name: 'weather',        category: :dynamic_market,     mult: mults[:weather_mult] },
+          { name: 'backhaul',       category: :dynamic_market,     mult: mults[:backhaul_mult] },
+          { name: 'cancel_risk',    category: :dynamic_market,     mult: mults[:cancel_risk_mult] },
+          { name: 'weight',         category: :base_calc,          mult: mults[:weight_multiplier] },
+          { name: 'traffic',        category: :dynamic_market,     mult: mults[:traffic_multiplier] },
+          { name: 'time_of_day',    category: :dynamic_market,     mult: mults[:time_multiplier] },
+          { name: 'zone_demand',    category: :dynamic_market,     mult: mults[:zone_multiplier] },
+          { name: 'h3_surge',       category: :dynamic_market,     mult: mults[:h3_surge] },
+          { name: 'vehicle',        category: :config_level,       mult: mults[:vehicle_multiplier] },
+          { name: 'city',           category: :config_level,       mult: mults[:city_multiplier] }
+        ]
+
+        active = drivers.select { |d| (d[:mult] - 1.0).abs > 0.005 }
+        active.each { |d| d[:impact_paise] = (raw_subtotal * (d[:mult] - 1.0)).round }
+        top_3 = active.sort_by { |d| -d[:impact_paise].abs }.first(3)
+
+        {
+          active_multiplier_count: active.size,
+          total_multiplicative_effect: drivers.map { |d| d[:mult] }.reduce(1.0, :*).round(3),
+          top_3_drivers: top_3.map { |d| { name: d[:name], category: d[:category], multiplier: d[:mult].round(3), impact_paise: d[:impact_paise] } },
+          by_category: drivers.group_by { |d| d[:category] }.transform_values { |ds| ds.map { |d| { name: d[:name], multiplier: d[:mult].round(3) } } }
+        }
       end
 
       # Scheduled booking discount: future bookings get a configurable discount
