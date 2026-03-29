@@ -1,0 +1,89 @@
+# Porter Hyderabad Competitor Rate Card (Scraped March 2026)
+# Used for benchmarking and calibration — NOT used in pricing calculations
+competitor: porter
+city_code: hyd
+scraped_at: "2026-03-17"
+source_urls:
+  - https://porter.in/trucks/hyderabad
+  - https://porter.in/two-wheelers/hyderabad
+
+vehicles:
+  two_wheeler:
+    display_name: "2 Wheeler (Bike)"
+    base_fare_rs: 48
+    included_distance_km: 1.0
+    included_time_min: 25
+    weight_limit_kg: 20
+    est_per_km_rs: 14
+    est_per_min_rs: 2
+    notes: "Base fare ₹48 (card) / ₹32.6 (FAQ). Per-km estimated ₹13-15 from competitor cross-reference."
+
+  three_wheeler:
+    display_name: "3 Wheeler"
+    base_fare_rs: 161
+    included_distance_km: 2.0
+    included_time_min: 70
+    weight_limit_kg: 500
+    est_per_km_rs: 18
+    est_per_min_rs: 3
+    notes: "Lightest truck option. Estimated per-km ₹15-22 intra-city."
+
+  tata_ace:
+    display_name: "Tata Ace (Chota Hathi)"
+    base_fare_rs: 218
+    included_distance_km: 2.0
+    included_time_min: 70
+    weight_limit_kg: 750
+    est_per_km_rs: 20
+    est_per_min_rs: 5
+    distance_samples:
+      - { route: "Rangareddy", km: 55, fare_rs: 2300 }
+      - { route: "Nalgonda", km: 100, fare_rs: 2400 }
+      - { route: "Warangal", km: 146, fare_rs: 3700 }
+      - { route: "Karimnagar", km: 164, fare_rs: 4200 }
+      - { route: "Vijayawada", km: 274, fare_rs: 7300 }
+    notes: "Most popular. Confirmed 2km + 70min included. Outstation ₹24-27/km."
+
+  pickup_8ft:
+    display_name: "Pickup 8ft (Super Ace)"
+    base_fare_rs: 318
+    included_distance_km: 2.0
+    included_time_min: 70
+    weight_limit_kg: 1250
+    est_per_km_rs: 25
+    est_per_min_rs: 5
+    notes: "Estimated per-km ₹20-28 intra-city."
+
+  tata_407:
+    display_name: "Tata 407"
+    base_fare_rs: 551
+    included_distance_km: 2.0
+    included_time_min: 70
+    weight_limit_kg: 2500
+    est_per_km_rs: 35
+    est_per_min_rs: 5
+    notes: "Heavy vehicle. Estimated per-km ₹30-43 intra-city."
+
+  canter_14ft:
+    display_name: "Pickup 14ft (Canter)"
+    base_fare_rs: 1500
+    included_distance_km: 2.0
+    included_time_min: 70
+    weight_limit_kg: 3500
+    est_per_km_rs: 50
+    est_per_min_rs: 5
+    notes: "Heaviest. Estimated per-km ₹40-55."
+
+additional_charges:
+  road_tax: "Over and above fare"
+  parking_fee: "Over and above fare"
+  tolls: "Over and above fare"
+  gst: "5% (without ITC) or 12% (with ITC)"
+  extra_waiting: "~₹5/min after included time"
+
+multi_city_comparison:
+  three_wheeler: { hyd: 161, blr: 205, del: 250, mum: 202, pun: 125 }
+  tata_ace: { hyd: 218, blr: 230, del: 350, mum: 236, pun: 220 }
+  pickup_8ft: { hyd: 318, blr: 1100, del: 550, mum: 385, pun: 350 }
+  tata_407: { hyd: 551, blr: 591, del: 590, mum: 775, pun: 750 }
+  canter_14ft: { hyd: 1500, blr: 1100, del: 1120, mum: 1300, pun: 1500 }

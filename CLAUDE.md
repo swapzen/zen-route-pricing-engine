@@ -71,6 +71,7 @@
 ## Git & Deployment Safety
 
 - Only commit when asked, NEVER git push without explicit user permission
+- Do NOT add "Co-Authored-By" lines to commit messages
 - NEVER force push, NEVER run commands with RAILS_ENV=production
 - NEVER reference or connect to production URLs from local dev
 

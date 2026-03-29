@@ -9,6 +9,7 @@ class PricingActual < ApplicationRecord
   validates :vendor, presence: true
 
   before_create :compute_prediction_variance
+  after_create :log_decision
 
   # Calculate variance from quote
   def variance_paise
@@ -30,5 +31,13 @@ class PricingActual < ApplicationRecord
     self.predicted_vendor_paise = predicted
     self.prediction_variance_paise = actual_price_paise - predicted
     self.prediction_variance_pct = ((prediction_variance_paise.to_f / predicted) * 100).round(2)
+  end
+
+  def log_decision
+    return unless pricing_quote
+
+    PricingQuoteDecision.log_decision!(pricing_quote, self)
+  rescue StandardError => e
+    Rails.logger.warn("Failed to log pricing decision: #{e.message}")
   end
 end

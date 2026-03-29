@@ -51,6 +51,7 @@ module RoutePricing
         zone = create_zone(cluster)
         create_h3_mappings(zone, cluster[:cells])
         create_default_pricing(zone)
+        compute_boundary(zone)
         @stats[:zones_created] += 1
       end
 
@@ -98,26 +99,79 @@ module RoutePricing
       end
 
       def create_default_pricing(zone)
+        # Try inheriting from parent zone first
+        if zone.parent_zone_code.present? && inherit_from_parent(zone)
+          return
+        end
+
+        # Fallback: city defaults with zone-type multiplier
+        create_pricing_from_defaults(zone)
+      end
+
+      def inherit_from_parent(zone)
+        parent = Zone.for_city(@city_code).find_by(zone_code: zone.parent_zone_code)
+        return false unless parent
+
+        parent_pricings = ZoneVehiclePricing.where(zone_id: parent.id, active: true)
+                                            .includes(:time_pricings)
+        return false if parent_pricings.empty?
+
+        # Zone-type multiplier ratio: auto-zone type vs parent type
+        auto_mult = Zone::DEFAULT_ZONE_MULTIPLIERS[zone.zone_type] || 1.0
+        parent_mult = Zone::DEFAULT_ZONE_MULTIPLIERS[parent.zone_type] || 1.0
+        ratio = parent_mult > 0 ? auto_mult / parent_mult : 1.0
+
+        parent_pricings.each do |pvp|
+          zone_pricing = ZoneVehiclePricing.create!(
+            city_code: @city_code,
+            zone: zone,
+            vehicle_type: pvp.vehicle_type,
+            base_fare_paise: (pvp.base_fare_paise * ratio).round,
+            per_km_rate_paise: (pvp.per_km_rate_paise * ratio).round,
+            per_min_rate_paise: ((pvp.per_min_rate_paise || 0) * ratio).round,
+            min_fare_paise: (pvp.min_fare_paise * ratio).round,
+            base_distance_m: pvp.base_distance_m || 1000,
+            active: true
+          )
+          @stats[:pricing_records] += 1
+
+          pvp.time_pricings.select(&:active?).each do |ptp|
+            ZoneVehicleTimePricing.create!(
+              zone_vehicle_pricing: zone_pricing,
+              time_band: ptp.time_band,
+              base_fare_paise: (ptp.base_fare_paise * ratio).round,
+              per_km_rate_paise: (ptp.per_km_rate_paise * ratio).round,
+              per_min_rate_paise: ((ptp.per_min_rate_paise || 0) * ratio).round,
+              min_fare_paise: (ptp.min_fare_paise * ratio).round,
+              active: true
+            )
+            @stats[:pricing_records] += 1
+          end
+        end
+
+        true
+      end
+
+      def create_pricing_from_defaults(zone)
         global_rates = load_global_time_rates
+        type_mult = Zone::DEFAULT_ZONE_MULTIPLIERS[zone.zone_type] || 1.0
 
         VEHICLE_TYPES.each do |vehicle_type|
-          # Use morning rates as the base zone pricing
           morning_rates = global_rates.dig('morning', vehicle_type) || { 'base' => 5000, 'rate' => 1000 }
 
           zone_pricing = ZoneVehiclePricing.create!(
             city_code: @city_code,
             zone: zone,
             vehicle_type: vehicle_type,
-            base_fare_paise: morning_rates['base'] || 5000,
-            per_km_rate_paise: morning_rates['rate'] || 1000,
-            per_min_rate_paise: morning_rates['min_rate'] || 0,
-            min_fare_paise: morning_rates['base'] || 5000,
+            base_fare_paise: ((morning_rates['base'] || 5000) * type_mult).round,
+            per_km_rate_paise: ((morning_rates['rate'] || 1000) * type_mult).round,
+            per_min_rate_paise: ((morning_rates['min_rate'] || 0) * type_mult).round,
+            min_fare_paise: ((morning_rates['base'] || 5000) * type_mult).round,
             base_distance_m: 1000,
             active: true
           )
           @stats[:pricing_records] += 1
 
-          # Create time-band pricing
           TIME_BANDS.each do |time_band|
             rates = global_rates.dig(time_band, vehicle_type)
             next unless rates
@@ -125,10 +179,10 @@ module RoutePricing
             ZoneVehicleTimePricing.create!(
               zone_vehicle_pricing: zone_pricing,
               time_band: time_band,
-              base_fare_paise: rates['base'] || 5000,
-              per_km_rate_paise: rates['rate'] || 1000,
-              per_min_rate_paise: rates['min_rate'] || 0,
-              min_fare_paise: rates['base'] || 5000,
+              base_fare_paise: ((rates['base'] || 5000) * type_mult).round,
+              per_km_rate_paise: ((rates['rate'] || 1000) * type_mult).round,
+              per_min_rate_paise: ((rates['min_rate'] || 0) * type_mult).round,
+              min_fare_paise: ((rates['base'] || 5000) * type_mult).round,
               active: true
             )
             @stats[:pricing_records] += 1
@@ -138,7 +192,7 @@ module RoutePricing
 
       def load_global_time_rates
         @global_time_rates ||= begin
-          path = Rails.root.join('config', 'zones', 'hyderabad', 'vehicle_defaults.yml')
+          path = Rails.root.join('config', 'zones', city_folder_name, 'vehicle_defaults.yml')
           if File.exist?(path)
             data = YAML.load_file(path)
             data['global_time_rates'] || {}
@@ -146,6 +200,12 @@ module RoutePricing
             {}
           end
         end
+      end
+
+      def compute_boundary(zone)
+        RoutePricing::Services::ZoneBoundaryComputer.new(zone).compute!
+      rescue StandardError => e
+        Rails.logger.warn "[AutoZonePersister] Boundary computation failed for #{zone.zone_code}: #{e.message}"
       end
 
       def default_priority_for_type(zone_type)
@@ -168,6 +228,16 @@ module RoutePricing
       def humanize_zone_code(code)
         # "auto_residential_dense_001" → "Auto Residential Dense 001"
         code.split('_').map(&:capitalize).join(' ')
+      end
+
+      def city_folder_name
+        {
+          'hyd' => 'hyderabad',
+          'blr' => 'bangalore',
+          'mum' => 'mumbai',
+          'del' => 'delhi',
+          'chn' => 'chennai'
+        }[@city_code.to_s.downcase] || @city_code.to_s.downcase
       end
     end
   end

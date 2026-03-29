@@ -26,6 +26,69 @@ module RoutePricing
         render json: { error: e.message }, status: :unprocessable_entity
       end
 
+      # POST /route_pricing/admin/submit_for_approval
+      def submit_for_approval
+        config = PricingConfig.find_by(id: params[:config_id])
+        unless config
+          return render json: { error: 'Config not found' }, status: :not_found
+        end
+
+        config.submit_for_approval!(params[:submitted_by] || 'admin')
+
+        PricingChangeLog.log!(config, 'submit_for_approval', params[:submitted_by] || 'admin',
+                              before: { approval_status: 'draft' },
+                              after: { approval_status: 'pending' })
+
+        render json: { success: true, config_id: config.id, approval_status: config.approval_status }, status: :ok
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
+      # POST /route_pricing/admin/approve_config
+      def approve_config
+        config = PricingConfig.find_by(id: params[:config_id])
+        unless config
+          return render json: { error: 'Config not found' }, status: :not_found
+        end
+
+        # Check for emergency freeze
+        if PricingEmergencyFreeze.city_frozen?(config.city_code)
+          return render json: { error: 'Cannot approve: pricing is frozen for this city' }, status: :forbidden
+        end
+
+        config.approve!(params[:reviewed_by] || 'admin')
+
+        PricingChangeLog.log!(config, 'approve', params[:reviewed_by] || 'admin',
+                              before: { approval_status: 'pending' },
+                              after: { approval_status: 'approved', active: true })
+
+        render json: { success: true, config_id: config.id, approval_status: config.approval_status }, status: :ok
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
+      # POST /route_pricing/admin/reject_config
+      def reject_config
+        config = PricingConfig.find_by(id: params[:config_id])
+        unless config
+          return render json: { error: 'Config not found' }, status: :not_found
+        end
+
+        unless params[:reason].present?
+          return render json: { error: 'Rejection reason is required' }, status: :bad_request
+        end
+
+        config.reject!(params[:reviewed_by] || 'admin', params[:reason])
+
+        PricingChangeLog.log!(config, 'reject', params[:reviewed_by] || 'admin',
+                              before: { approval_status: 'pending' },
+                              after: { approval_status: 'rejected', rejection_reason: params[:reason] })
+
+        render json: { success: true, config_id: config.id, approval_status: config.approval_status }, status: :ok
+      rescue StandardError => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
       # GET /route_pricing/admin/list_configs
       def index
         configs = PricingConfig.all

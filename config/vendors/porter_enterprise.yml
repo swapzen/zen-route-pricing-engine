@@ -1,8 +1,9 @@
 # =============================================================================
 # PORTER ENTERPRISE RATE CARD - Hyderabad
 # =============================================================================
-# Based on Porter's enterprise pricing (2026 calibration).
-# Rates are in paise. min_rate = per-minute rate (0 = not used by vendor).
+# Based on Porter's scraped pricing (March 2026 calibration).
+# Rates are in paise. min_rate = per-minute rate.
+# Morning = closest to base fare. Afternoon ~10-15% premium. Evening ~20-40% premium.
 #
 # USAGE: VendorConfigLoader.new('porter', 'hyd').sync!
 # =============================================================================
@@ -13,28 +14,37 @@ surge_cap: 2.0
 
 rates:
   morning:
-    two_wheeler:     { base: 4000, rate: 800, min_rate: 0, min_fare: 4000, free_km_m: 1000 }
-    scooter:         { base: 7700, rate: 900, min_rate: 0, min_fare: 7700, free_km_m: 1000 }
-    mini_3w:         { base: 14600, rate: 900, min_rate: 0, min_fare: 14600, free_km_m: 1000 }
-    three_wheeler:   { base: 31800, rate: 2100, min_rate: 0, min_fare: 31800, free_km_m: 1000 }
-    tata_ace:        { base: 35500, rate: 2200, min_rate: 0, min_fare: 35500, free_km_m: 1000 }
-    pickup_8ft:      { base: 47300, rate: 2000, min_rate: 0, min_fare: 47300, free_km_m: 1000 }
-    canter_14ft:     { base: 163400, rate: 3900, min_rate: 0, min_fare: 163400, free_km_m: 1000 }
+    two_wheeler:     { base: 4800, rate: 1400, min_rate: 200, min_fare: 4800, free_km_m: 1000 }
+    scooter:         { base: 6000, rate: 1500, min_rate: 200, min_fare: 6000, free_km_m: 1000 }
+    mini_3w:         { base: 10000, rate: 1200, min_rate: 200, min_fare: 10000, free_km_m: 1000 }
+    three_wheeler:   { base: 16100, rate: 1800, min_rate: 300, min_fare: 16100, free_km_m: 2000 }
+    three_wheeler_ev: { base: 14500, rate: 1600, min_rate: 300, min_fare: 14500, free_km_m: 2000 }
+    tata_ace:        { base: 21800, rate: 2000, min_rate: 500, min_fare: 21800, free_km_m: 2000 }
+    pickup_8ft:      { base: 31800, rate: 2500, min_rate: 500, min_fare: 31800, free_km_m: 2000 }
+    eeco:            { base: 28000, rate: 2300, min_rate: 400, min_fare: 28000, free_km_m: 2000 }
+    tata_407:        { base: 55100, rate: 3500, min_rate: 500, min_fare: 55100, free_km_m: 2000 }
+    canter_14ft:     { base: 150000, rate: 5000, min_rate: 500, min_fare: 150000, free_km_m: 2000 }
 
   afternoon:
-    two_wheeler:     { base: 6700, rate: 800, min_rate: 0, min_fare: 6700, free_km_m: 1000 }
-    scooter:         { base: 8600, rate: 1000, min_rate: 0, min_fare: 8600, free_km_m: 1000 }
-    mini_3w:         { base: 21400, rate: 800, min_rate: 0, min_fare: 21400, free_km_m: 1000 }
-    three_wheeler:   { base: 34200, rate: 2300, min_rate: 0, min_fare: 34200, free_km_m: 1000 }
-    tata_ace:        { base: 38600, rate: 2400, min_rate: 0, min_fare: 38600, free_km_m: 1000 }
-    pickup_8ft:      { base: 52700, rate: 2300, min_rate: 0, min_fare: 52700, free_km_m: 1000 }
-    canter_14ft:     { base: 164400, rate: 4100, min_rate: 0, min_fare: 164400, free_km_m: 1000 }
+    two_wheeler:     { base: 5300, rate: 1400, min_rate: 200, min_fare: 5300, free_km_m: 1000 }
+    scooter:         { base: 6600, rate: 1500, min_rate: 200, min_fare: 6600, free_km_m: 1000 }
+    mini_3w:         { base: 11500, rate: 1300, min_rate: 200, min_fare: 11500, free_km_m: 1000 }
+    three_wheeler:   { base: 18500, rate: 2000, min_rate: 300, min_fare: 18500, free_km_m: 2000 }
+    three_wheeler_ev: { base: 16700, rate: 1800, min_rate: 300, min_fare: 16700, free_km_m: 2000 }
+    tata_ace:        { base: 25000, rate: 2200, min_rate: 500, min_fare: 25000, free_km_m: 2000 }
+    pickup_8ft:      { base: 36600, rate: 2700, min_rate: 500, min_fare: 36600, free_km_m: 2000 }
+    eeco:            { base: 32200, rate: 2500, min_rate: 400, min_fare: 32200, free_km_m: 2000 }
+    tata_407:        { base: 63400, rate: 3800, min_rate: 500, min_fare: 63400, free_km_m: 2000 }
+    canter_14ft:     { base: 165000, rate: 5300, min_rate: 500, min_fare: 165000, free_km_m: 2000 }
 
   evening:
-    two_wheeler:     { base: 4700, rate: 800, min_rate: 0, min_fare: 4700, free_km_m: 1000 }
-    scooter:         { base: 7400, rate: 1000, min_rate: 0, min_fare: 7400, free_km_m: 1000 }
-    mini_3w:         { base: 14100, rate: 1000, min_rate: 0, min_fare: 14100, free_km_m: 1000 }
-    three_wheeler:   { base: 53100, rate: 2200, min_rate: 0, min_fare: 53100, free_km_m: 1000 }
-    tata_ace:        { base: 56700, rate: 2300, min_rate: 0, min_fare: 56700, free_km_m: 1000 }
-    pickup_8ft:      { base: 72600, rate: 2100, min_rate: 0, min_fare: 72600, free_km_m: 1000 }
-    canter_14ft:     { base: 195000, rate: 4100, min_rate: 0, min_fare: 195000, free_km_m: 1000 }
+    two_wheeler:     { base: 5800, rate: 1500, min_rate: 200, min_fare: 5800, free_km_m: 1000 }
+    scooter:         { base: 7200, rate: 1600, min_rate: 200, min_fare: 7200, free_km_m: 1000 }
+    mini_3w:         { base: 13000, rate: 1400, min_rate: 200, min_fare: 13000, free_km_m: 1000 }
+    three_wheeler:   { base: 22500, rate: 2200, min_rate: 300, min_fare: 22500, free_km_m: 2000 }
+    three_wheeler_ev: { base: 20300, rate: 2000, min_rate: 300, min_fare: 20300, free_km_m: 2000 }
+    tata_ace:        { base: 30500, rate: 2300, min_rate: 500, min_fare: 30500, free_km_m: 2000 }
+    pickup_8ft:      { base: 44500, rate: 2900, min_rate: 500, min_fare: 44500, free_km_m: 2000 }
+    eeco:            { base: 39200, rate: 2700, min_rate: 400, min_fare: 39200, free_km_m: 2000 }
+    tata_407:        { base: 77100, rate: 4200, min_rate: 500, min_fare: 77100, free_km_m: 2000 }
+    canter_14ft:     { base: 195000, rate: 5800, min_rate: 500, min_fare: 195000, free_km_m: 2000 }

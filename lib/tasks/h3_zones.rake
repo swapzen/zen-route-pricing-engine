@@ -96,6 +96,11 @@ namespace :zones do
     map_stats = RoutePricing::Services::H3ZoneResolver.build_city_map(city_code)
     puts "\nIn-memory map loaded: #{map_stats[:r8]} R8 entries, #{map_stats[:r7]} R7 entries"
     puts "Done! Total: #{total_r7} R7 mappings, #{total_r8} R8 cells polyfilled"
+
+    # Compute boundary polygons from H3 cells
+    puts "\nComputing zone boundary polygons..."
+    boundary_stats = RoutePricing::Services::ZoneBoundaryComputer.compute_for_city!(city_code)
+    puts "Boundaries computed: #{boundary_stats[:computed]} zones (#{boundary_stats[:errors]} errors)"
   end
 
   desc "Seed H3 supply density defaults for a city"
@@ -140,6 +145,56 @@ namespace :zones do
     end
 
     puts "Done! Created #{created} supply density records"
+  end
+
+  desc "Compute boundary polygons from H3 cells for all zones in a city"
+  task :compute_boundaries, [:city_code] => :environment do |_t, args|
+    city_code = args[:city_code] || ENV['city'] || 'hyd'
+
+    puts "Computing zone boundary polygons for #{city_code}..."
+    stats = RoutePricing::Services::ZoneBoundaryComputer.compute_for_city!(city_code)
+    puts "Done! Computed #{stats[:computed]} boundaries (#{stats[:errors]} errors)"
+  end
+
+  desc "Sync h3_zones.yml to DB (zones + H3 mappings + pricing + city defaults)"
+  task :h3_sync, [:city_code] => :environment do |_t, args|
+    city_code = args[:city_code] || ENV['city'] || 'hyd'
+    force = ENV['FORCE_PRICING'] == 'true'
+
+    puts "Syncing h3_zones.yml for #{city_code} (force_pricing: #{force})..."
+    loader = H3ZoneConfigLoader.new(city_code)
+    result = loader.sync!(force_pricing: force)
+
+    if result[:success]
+      stats = result[:stats]
+      puts "\nSync complete!"
+      stats.each do |key, value|
+        next if key == :errors
+        puts "  #{key}: #{value}"
+      end
+      if stats[:errors]&.any?
+        puts "\nErrors:"
+        stats[:errors].each { |e| puts "  #{e[:zone_code]}: #{e[:error]}" }
+      end
+    else
+      puts "Sync FAILED: #{result[:error]}"
+      exit 1
+    end
+  end
+
+  desc "Auto-detect adjacent zone pairs and generate inter-zone corridor pricing"
+  task :detect_corridors, [:city_code] => :environment do |_t, args|
+    city_code = args[:city_code] || ENV['city'] || 'hyd'
+
+    puts "Detecting adjacent zone pairs for #{city_code}..."
+    detector = RoutePricing::Services::InterZoneDetector.new(city_code)
+    stats = detector.detect_and_generate!
+
+    puts "Done!"
+    puts "  Adjacent pairs detected: #{stats[:pairs_detected]}"
+    puts "  Corridors created: #{stats[:corridors_created]}"
+    puts "  Corridors skipped (manual exists): #{stats[:corridors_skipped]}"
+    puts "  Previous auto-corridors removed: #{stats[:previous_removed]}"
   end
 end
 

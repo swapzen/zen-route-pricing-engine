@@ -77,6 +77,39 @@ vehicles:
       - [10000, 25000, 3300]
       - [25000, null, 2150]
 
+  three_wheeler_ev:
+    display_name: "3 Wheeler EV"
+    vendor_code: "3W_EV"
+    capacity_kg: 500
+    base_fare_paise: 20000
+    slabs:
+      - [0, 3000, 2400]
+      - [3000, 10000, 3000]
+      - [10000, 25000, 2970]
+      - [25000, null, 1900]
+
+  eeco:
+    display_name: "Eeco"
+    vendor_code: "EECO"
+    capacity_kg: 600
+    base_fare_paise: 35000
+    slabs:
+      - [0, 3000, 3200]
+      - [3000, 10000, 3800]
+      - [10000, 25000, 3600]
+      - [25000, null, 2400]
+
+  tata_407:
+    display_name: "Tata 407"
+    vendor_code: "TATA_407"
+    capacity_kg: 2500
+    base_fare_paise: 40000
+    slabs:
+      - [0, 3000, 3600]
+      - [3000, 10000, 4200]
+      - [10000, 25000, 4000]
+      - [25000, null, 2800]
+
   canter_14ft:
     display_name: "Canter 14ft"
     vendor_code: "CANTER_14FT"
@@ -93,31 +126,40 @@ vehicles:
 # =============================================================================
 global_time_rates:
   morning:
-    two_wheeler:   { base: 4000, rate: 800 }
-    scooter:       { base: 7700, rate: 900 }
-    mini_3w:       { base: 14600, rate: 900 }
-    three_wheeler: { base: 31800, rate: 2100 }
-    tata_ace:      { base: 35500, rate: 2200 }
-    pickup_8ft:    { base: 47300, rate: 2000 }
-    canter_14ft:   { base: 163400, rate: 3900 }
+    two_wheeler:      { base: 4000, rate: 800 }
+    scooter:          { base: 7700, rate: 900 }
+    mini_3w:          { base: 14600, rate: 900 }
+    three_wheeler:    { base: 31800, rate: 2100 }
+    three_wheeler_ev: { base: 31800, rate: 2100 }
+    tata_ace:         { base: 35500, rate: 2200 }
+    pickup_8ft:       { base: 47300, rate: 2000 }
+    eeco:             { base: 55000, rate: 3800 }
+    tata_407:         { base: 60000, rate: 4200 }
+    canter_14ft:      { base: 163400, rate: 3900 }
 
   afternoon:
-    two_wheeler:   { base: 6700, rate: 800 }
-    scooter:       { base: 8600, rate: 1000 }
-    mini_3w:       { base: 21400, rate: 800 }
-    three_wheeler: { base: 34200, rate: 2300 }
-    tata_ace:      { base: 38600, rate: 2400 }
-    pickup_8ft:    { base: 52700, rate: 2300 }
-    canter_14ft:   { base: 164400, rate: 4100 }
+    two_wheeler:      { base: 6700, rate: 800 }
+    scooter:          { base: 8600, rate: 1000 }
+    mini_3w:          { base: 21400, rate: 800 }
+    three_wheeler:    { base: 34200, rate: 2300 }
+    three_wheeler_ev: { base: 34200, rate: 2300 }
+    tata_ace:         { base: 38600, rate: 2400 }
+    pickup_8ft:       { base: 52700, rate: 2300 }
+    eeco:             { base: 58000, rate: 4000 }
+    tata_407:         { base: 63000, rate: 4400 }
+    canter_14ft:      { base: 164400, rate: 4100 }
 
   evening:
-    two_wheeler:   { base: 4700, rate: 800 }
-    scooter:       { base: 7400, rate: 1000 }
-    mini_3w:       { base: 14100, rate: 1000 }
-    three_wheeler: { base: 53100, rate: 2200 }
-    tata_ace:      { base: 56700, rate: 2300 }
-    pickup_8ft:    { base: 72600, rate: 2100 }
-    canter_14ft:   { base: 195000, rate: 4100 }
+    two_wheeler:      { base: 4700, rate: 800 }
+    scooter:          { base: 7400, rate: 1000 }
+    mini_3w:          { base: 14100, rate: 1000 }
+    three_wheeler:    { base: 53100, rate: 2200 }
+    three_wheeler_ev: { base: 53100, rate: 2200 }
+    tata_ace:         { base: 56700, rate: 2300 }
+    pickup_8ft:       { base: 72600, rate: 2100 }
+    eeco:             { base: 78000, rate: 4000 }
+    tata_407:         { base: 85000, rate: 4400 }
+    canter_14ft:      { base: 195000, rate: 4100 }
 
 # =============================================================================
 # INTER-ZONE FORMULA CONFIGURATION

@@ -302,9 +302,7 @@ module RoutePricing
         )
       end
 
-      # Load inter-zone formula config from city-specific YAML (single source of truth).
-      # The YAML uses patterns like "any_to_airport_logistics" which match
-      # any origin zone type going to airport_logistics.
+      # Load inter-zone formula config: DB first, YAML fallback.
       def load_inter_zone_config(city_code)
         city_folder = city_folder_for(city_code)
 
@@ -316,46 +314,62 @@ module RoutePricing
         end
 
         self.class.inter_zone_config_cache[city_folder] ||= begin
-          config_path = Rails.root.join('config', 'zones', city_folder, 'vehicle_defaults.yml')
-          if File.exist?(config_path)
-            yaml = YAML.load_file(config_path)
-            formula = yaml['inter_zone_formula'] || {}
-            type_adjustments = formula['type_adjustments'] || {}
-
-            # Convert YAML patterns to lookup hash.
-            lookup = {}
-            type_adjustments.each do |pattern_key, time_values|
-              next if pattern_key == 'default'
-              symbolized = time_values.transform_keys(&:to_sym).transform_values(&:to_f)
-
-              parts = pattern_key.split('_to_')
-              next unless parts.length == 2
-
-              from_part = parts[0]
-              to_part = parts[1]
-
-              if from_part == 'any'
-                lookup[[:any, to_part]] = symbolized
-              elsif to_part == 'any'
-                lookup[[from_part, :any]] = symbolized
-              else
-                lookup[[from_part, to_part]] = symbolized
-              end
-            end
-
-            {
-              origin_weight: (formula['origin_weight'] || DEFAULT_ORIGIN_WEIGHT).to_f,
-              destination_weight: (formula['destination_weight'] || DEFAULT_DESTINATION_WEIGHT).to_f,
-              adjustments: lookup,
-              default: (type_adjustments['default'] || {}).transform_keys(&:to_sym).transform_values(&:to_f)
-            }
+          # DB first
+          db_config = load_inter_zone_from_db(city_code)
+          if db_config && db_config[:adjustments].present?
+            db_config
           else
-            {}
+            # YAML fallback
+            load_inter_zone_from_yaml(city_folder)
           end
         rescue StandardError => e
           Rails.logger.warn("Inter-zone config load failed for #{city_code}: #{e.message}")
           {}
         end.tap { self.class.inter_zone_cache_timestamps[city_folder] = Time.current }
+      end
+
+      def load_inter_zone_from_db(city_code)
+        return nil unless defined?(InterZoneConfig) && InterZoneConfig.table_exists?
+
+        InterZoneConfig.load_for_city(city_code)
+      rescue StandardError
+        nil
+      end
+
+      def load_inter_zone_from_yaml(city_folder)
+        config_path = Rails.root.join('config', 'zones', city_folder, 'vehicle_defaults.yml')
+        return {} unless File.exist?(config_path)
+
+        yaml = YAML.load_file(config_path)
+        formula = yaml['inter_zone_formula'] || {}
+        type_adjustments = formula['type_adjustments'] || {}
+
+        lookup = {}
+        type_adjustments.each do |pattern_key, time_values|
+          next if pattern_key == 'default'
+          symbolized = time_values.transform_keys(&:to_sym).transform_values(&:to_f)
+
+          parts = pattern_key.split('_to_')
+          next unless parts.length == 2
+
+          from_part = parts[0]
+          to_part = parts[1]
+
+          if from_part == 'any'
+            lookup[[:any, to_part]] = symbolized
+          elsif to_part == 'any'
+            lookup[[from_part, :any]] = symbolized
+          else
+            lookup[[from_part, to_part]] = symbolized
+          end
+        end
+
+        {
+          origin_weight: (formula['origin_weight'] || DEFAULT_ORIGIN_WEIGHT).to_f,
+          destination_weight: (formula['destination_weight'] || DEFAULT_DESTINATION_WEIGHT).to_f,
+          adjustments: lookup,
+          default: (type_adjustments['default'] || {}).transform_keys(&:to_sym).transform_values(&:to_f)
+        }
       end
 
       def city_folder_for(city_code)
@@ -451,21 +465,19 @@ module RoutePricing
       end
 
       def find_zone(city_code, lat, lng)
-        # BBox: calibrated manual zones only (priority-ordered)
+        # Primary: H3 resolution (O(1), unified for all zones)
+        h3_resolver = h3_resolver_for(city_code)
+        zone = h3_resolver&.resolve(lat, lng)
+        return zone if zone&.active?
+
+        # Safety fallback: bbox scan (handles H3 gaps or unpopulated staging)
         @zones_cache ||= {}
         @zones_cache[city_code] ||= Zone.for_city(city_code).active
-          .where(auto_generated: false)
           .order(priority: :desc, zone_code: :asc).to_a
 
         @zones_cache[city_code].each do |z|
           return z if z.contains_point?(lat, lng)
         end
-
-        # H3 fallback: only trust auto-generated zones (gap coverage)
-        # Manual zones use bbox as authoritative boundary
-        h3_resolver = h3_resolver_for(city_code)
-        zone = h3_resolver&.resolve(lat, lng)
-        return zone if zone&.auto_generated?
 
         nil
       end

@@ -16,8 +16,8 @@
 
 city_code: hyd
 city_name: Hyderabad
-version: "1.0"
-last_updated: "2026-01-16"
+version: "2.0"
+last_updated: "2026-03-29"
 
 # -----------------------------------------------------------------------------
 # ZONE TYPES
@@ -126,20 +126,7 @@ zones:
       heavy_truck: 1.10
       default: 1.02
 
-  charminar_extended:
-    name: "Charminar Extended Area"
-    zone_type: traditional_commercial
-    active: true
-    bounds:
-      lat_min: 17.355
-      lat_max: 17.37
-      lng_min: 78.47
-      lng_max: 78.48
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.05
-      heavy_truck: 1.10
-      default: 1.02
+  # charminar_extended: REMOVED v2.0 — 1.7 km2, too small for H3 R7, fully inside old_city
 
   santoshnagar:
     name: "Santoshnagar"
@@ -316,20 +303,7 @@ zones:
       heavy_truck: 1.0
       default: 1.0
 
-  ameerpet_extended:
-    name: "Ameerpet Extended CBD"
-    zone_type: business_cbd
-    active: true
-    bounds:
-      lat_min: 17.43
-      lat_max: 17.45
-      lng_min: 78.44
-      lng_max: 78.46
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
+  # ameerpet_extended: REMOVED v2.0 — 4.6 km2, fully inside ameerpet_core, redundant
 
   khairatabad:
     name: "Khairatabad"
@@ -441,22 +415,11 @@ zones:
       heavy_truck: 1.0
       default: 1.0
 
-  nexus_kukatpally:
-    name: "Nexus Mall Kukatpally"
-    zone_type: residential_mixed
-    active: true
-    bounds:
-      lat_min: 17.49
-      lat_max: 17.50
-      lng_min: 78.39
-      lng_max: 78.40
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
+  # nexus_kukatpally: REMOVED v2.0 — 1.1 km2, fully inside jntu_kukatpally
 
-  ayyappa_society:
+  # ayyappa_society: REMOVED v2.0 — 1.1 km2, fully inside hitech_madhapur
+
+  alwyn_colony:
     name: "Ayyappa Society Premium Residential"
     zone_type: business_cbd
     active: true
@@ -536,20 +499,7 @@ zones:
       heavy_truck: 1.05
       default: 1.05
 
-  paradise:
-    name: "Paradise Circle"
-    zone_type: business_cbd
-    active: true
-    bounds:
-      lat_min: 17.44
-      lat_max: 17.45
-      lng_min: 78.48
-      lng_max: 78.49
-    multipliers:
-      small_vehicle: 1.05
-      mid_truck: 1.05
-      heavy_truck: 1.05
-      default: 1.05
+  # paradise: REMOVED v2.0 — 1.1 km2, fully inside kavadiguda
 
   kavadiguda:
     name: "Kavadiguda"
@@ -1151,29 +1101,188 @@ zones:
       heavy_truck: 0.90
       default: 0.90
 
+  # vanasthali: REMOVED v2.0 — 1.1 km2, fully inside lb_nagar_east
+
   # ===========================================================================
-  # SPECIAL ZONES (Existing operational)
+  # 13. GAP-FILL ZONES (Added v2.0 — areas not previously covered)
   # ===========================================================================
-  
-  vanasthali:
-    name: "Vanasthali Puram Residential"
+
+  bachupally:
+    name: "Bachupally"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.53
+      lat_max: 17.57
+      lng_min: 78.35
+      lng_max: 78.40
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  gandipet:
+    name: "Suncity Gandipet"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.35
+      lat_max: 17.39
+      lng_min: 78.32
+      lng_max: 78.37
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  shamirpet:
+    name: "Shamirpet"
+    zone_type: outer_ring
+    active: true
+    bounds:
+      lat_min: 17.56
+      lat_max: 17.61
+      lng_min: 78.52
+      lng_max: 78.58
+    multipliers:
+      small_vehicle: 0.90
+      mid_truck: 0.90
+      heavy_truck: 0.90
+      default: 0.90
+
+  ibrahimpatnam:
+    name: "Ibrahimpatnam"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.27
+      lat_max: 17.32
+      lng_min: 78.57
+      lng_max: 78.62
+    multipliers:
+      small_vehicle: 0.90
+      mid_truck: 0.90
+      heavy_truck: 0.90
+      default: 0.90
+
+  # ===========================================================================
+  # 14. ADDITIONAL GAP-FILL (Added v2.0)
+  # Areas between existing zones with no coverage
+  # ===========================================================================
+
+  begumpet:
+    name: "Begumpet Somajiguda"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.44
+      lat_max: 17.47
+      lng_min: 78.46
+      lng_max: 78.49
+    multipliers:
+      small_vehicle: 1.05
+      mid_truck: 1.05
+      heavy_truck: 1.05
+      default: 1.05
+
+  nampally:
+    name: "Nampally Abids"
+    zone_type: business_cbd
+    active: true
+    bounds:
+      lat_min: 17.38
+      lat_max: 17.41
+      lng_min: 78.46
+      lng_max: 78.49
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.05
+      heavy_truck: 1.05
+      default: 1.02
+
+  dilsukhnagar:
+    name: "Dilsukhnagar"
     zone_type: residential_dense
     active: true
     bounds:
-      lat_min: 17.34
-      lat_max: 17.35
-      lng_min: 78.56
-      lng_max: 78.57
+      lat_min: 17.36
+      lat_max: 17.40
+      lng_min: 78.52
+      lng_max: 78.56
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.05
+      heavy_truck: 1.05
+      default: 1.02
+
+  tolichowki:
+    name: "Tolichowki Rethibowli"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.39
+      lat_max: 17.42
+      lng_min: 78.42
+      lng_max: 78.45
     multipliers:
       small_vehicle: 1.0
       mid_truck: 1.0
       heavy_truck: 1.0
       default: 1.0
 
+  erragadda:
+    name: "Erragadda ESI"
+    zone_type: residential_mixed
+    active: true
+    bounds:
+      lat_min: 17.45
+      lat_max: 17.48
+      lng_min: 78.43
+      lng_max: 78.46
+    multipliers:
+      small_vehicle: 1.0
+      mid_truck: 1.0
+      heavy_truck: 1.0
+      default: 1.0
+
+  beeramguda:
+    name: "Beeramguda RC Puram"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.51
+      lat_max: 17.55
+      lng_min: 78.28
+      lng_max: 78.34
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
+  bandlaguda:
+    name: "Bandlaguda Kismathpur"
+    zone_type: residential_growth
+    active: true
+    bounds:
+      lat_min: 17.31
+      lat_max: 17.35
+      lng_min: 78.42
+      lng_max: 78.46
+    multipliers:
+      small_vehicle: 0.95
+      mid_truck: 0.95
+      heavy_truck: 0.95
+      default: 0.95
+
 # =============================================================================
 # END OF ZONE DEFINITIONS
 # =============================================================================
-# Total zones: 55+
-# Active zones: 14 (current operational)
-# Inactive zones: 41+ (available for expansion)
+# v2.0: 75 zones (71 active from v1 - 6 removed micro-zones + 11 new gap-fill)
+# Removed: charminar_extended, ameerpet_extended, nexus_kukatpally,
+#          ayyappa_society, paradise, vanasthali (all <5 km2 / inside parent)
+# Added: bachupally, gandipet, shamirpet, ibrahimpatnam, begumpet,
+#        nampally, dilsukhnagar, tolichowki, erragadda, beeramguda, bandlaguda
 # =============================================================================

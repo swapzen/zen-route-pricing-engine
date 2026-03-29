@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_17_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_18_120000) do
   create_schema "crdb_internal"
 
   create_table "active_storage_attachments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -833,6 +833,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_17_000001) do
     t.float "trust_weight", default: 0.15
     t.float "quality_weight", default: 0.15
     t.float "duplicate_weight", default: 0.1
+    t.bigint "payment_deadline_mutual_hours", default: 12, null: false
+    t.bigint "payment_deadline_monetary_hours", default: 12, null: false
+    t.bigint "payment_deadline_partial_paid_hours", default: 24, null: false
   end
 
   create_table "porter_benchmarks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -856,6 +859,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_17_000001) do
     t.datetime "updated_at", null: false
     t.index ["city_code", "time_band"], name: "index_porter_benchmarks_on_city_code_and_time_band"
     t.unique_constraint ["route_key", "vehicle_type", "time_band"], name: "idx_porter_bench_route_vt_tb"
+  end
+
+  create_table "porter_screenshots", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "city_code", default: "hyd"
+    t.string "time_band"
+    t.string "notes"
+    t.string "uploaded_by"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "preferred_exchange_categories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

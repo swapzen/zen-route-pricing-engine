@@ -14,4 +14,20 @@ class H3SupplyDensity < ApplicationRecord
   }
 
   scope :for_city, ->(city_code) { where(city_code: city_code) }
+
+  # Combine supply density with acceptance rate from PricingOutcome
+  def pressure_score
+    outcomes = PricingOutcome.for_hex(h3_index_r7).recent(24)
+    total = outcomes.count
+    return 50.0 if total.zero? # neutral when no data
+
+    accepted = outcomes.accepted.count
+    acceptance_rate = accepted.to_f / total * 100
+
+    supply_factor = estimated_driver_count > 0 ? [10.0 / estimated_driver_count, 3.0].min : 2.0
+    demand_factor = [total / 10.0, 3.0].min
+    rejection_factor = [(100.0 - acceptance_rate) / 30.0, 3.0].min
+
+    ((demand_factor + supply_factor + rejection_factor) / 3.0 * 100).round(1)
+  end
 end

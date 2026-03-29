@@ -1,0 +1,713 @@
+# =============================================================================
+# HYDERABAD ROUTE MATRIX — Competitor Pricing Research
+# =============================================================================
+# Generated: 2026-03-17
+# Purpose: Systematic pricing comparison across representative O-D pairs
+# Coverage: 18 anchor zones × 50 routes spanning short/medium/long distances
+#
+# Zone centroids computed as: lat = (lat_min + lat_max) / 2
+#                             lng = (lng_min + lng_max) / 2
+#
+# Estimated distances are straight-line (Haversine) × 1.35 road-factor.
+# Use Google Maps API for precise routing before running live comparisons.
+#
+# Distance bands:
+#   short:  3–8 km   (intra-cluster)
+#   medium: 10–20 km (cross-cluster)
+#   long:   25–40 km (cross-city / airport)
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# ANCHOR ZONES (18 selected for geographic spread)
+# ---------------------------------------------------------------------------
+# Zone code              Centroid (lat, lng)      Type
+# shamshabad             17.2500, 78.4350         airport_logistics
+# adibatla               17.2300, 78.5400         industrial
+# falaknuma              17.3300, 78.4700         traditional_commercial
+# chandrayangutta        17.3100, 78.4800         residential_dense
+# old_city               17.3650, 78.4750         traditional_commercial
+# rajendranagar          17.3400, 78.4200         residential_dense
+# golconda               17.3950, 78.4000         heritage_commercial
+# fin_district           17.4300, 78.3450         tech_corridor
+# hitech_madhapur        17.4425, 78.3900         tech_corridor
+# kondapur               17.4650, 78.3650         tech_corridor
+# banjara_hills          17.4250, 78.4450         premium_residential
+# ameerpet_core          17.4350, 78.4450         business_cbd
+# secunderabad_cbd       17.4450, 78.5050         business_cbd
+# lb_nagar_east          17.3750, 78.5300         residential_dense
+# uppal_corridor         17.4050, 78.5650         residential_growth
+# miyapur                17.5050, 78.3500         residential_mixed
+# kompally               17.5400, 78.4800         residential_growth
+# ghatkesar              17.4500, 78.6800         residential_growth
+# ---------------------------------------------------------------------------
+
+routes:
+
+  # =========================================================================
+  # SHORT ROUTES (3–8 km) — Intra-cluster / adjacent zones
+  # =========================================================================
+
+  - id: 1
+    name: "HITEC City to Kondapur"
+    category: short
+    pickup_zone: hitech_madhapur
+    drop_zone: kondapur
+    pickup_lat: 17.4425
+    pickup_lng: 78.3900
+    drop_lat: 17.4650
+    drop_lng: 78.3650
+    estimated_distance_km: 4
+    notes: "Core IT corridor intra-zone hop — heavy 2W/auto traffic"
+
+  - id: 2
+    name: "Ameerpet to Banjara Hills"
+    category: short
+    pickup_zone: ameerpet_core
+    drop_zone: banjara_hills
+    pickup_lat: 17.4350
+    pickup_lng: 78.4450
+    drop_lat: 17.4250
+    drop_lng: 78.4450
+    estimated_distance_km: 3
+    notes: "Central CBD to premium residential — very short, high demand"
+
+  - id: 3
+    name: "Old City to Bahadurpura"
+    category: short
+    pickup_zone: old_city
+    drop_zone: bahadurpura
+    pickup_lat: 17.3650
+    pickup_lng: 78.4750
+    drop_lat: 17.3650
+    drop_lng: 78.4650
+    estimated_distance_km: 4
+    notes: "Old city intra-cluster — narrow lanes, traditional commercial"
+
+  - id: 4
+    name: "Falaknuma to Old City"
+    category: short
+    pickup_zone: falaknuma
+    drop_zone: old_city
+    pickup_lat: 17.3300
+    pickup_lng: 78.4700
+    drop_lat: 17.3650
+    drop_lng: 78.4750
+    estimated_distance_km: 4
+    notes: "South old city to Charminar area — heritage zone pair"
+
+  - id: 5
+    name: "Secunderabad to Malkajgiri"
+    category: short
+    pickup_zone: secunderabad_cbd
+    drop_zone: malkajgiri
+    pickup_lat: 17.4450
+    pickup_lng: 78.5050
+    drop_lat: 17.4550
+    drop_lng: 78.5300
+    estimated_distance_km: 4
+    notes: "Secunderabad east fringe — high residential density"
+
+  - id: 6
+    name: "Financial District to Narsingi"
+    category: short
+    pickup_zone: fin_district
+    drop_zone: narsingi
+    pickup_lat: 17.4300
+    pickup_lng: 78.3450
+    drop_lat: 17.4000
+    drop_lng: 78.3500
+    estimated_distance_km: 5
+    notes: "Tech core to adjacent residential — commute flow"
+
+  - id: 7
+    name: "LB Nagar to Uppal"
+    category: short
+    pickup_zone: lb_nagar_east
+    drop_zone: uppal_corridor
+    pickup_lat: 17.3750
+    pickup_lng: 78.5300
+    drop_lat: 17.4050
+    drop_lng: 78.5650
+    estimated_distance_km: 5
+    notes: "Eastern residential cluster — growth corridor pair"
+
+  - id: 8
+    name: "Golconda to Financial District"
+    category: short
+    pickup_zone: golconda
+    drop_zone: fin_district
+    pickup_lat: 17.3950
+    pickup_lng: 78.4000
+    drop_lat: 17.4300
+    drop_lng: 78.3450
+    estimated_distance_km: 7
+    notes: "Heritage to tech — western corridor short haul"
+
+  - id: 9
+    name: "Rajendranagar to Attapur"
+    category: short
+    pickup_zone: rajendranagar
+    drop_zone: attapur
+    pickup_lat: 17.3400
+    pickup_lng: 78.4200
+    drop_lat: 17.3750
+    drop_lng: 78.4350
+    estimated_distance_km: 5
+    notes: "South Hyderabad residential pair"
+
+  - id: 10
+    name: "Chandrayangutta to Falaknuma"
+    category: short
+    pickup_zone: chandrayangutta
+    drop_zone: falaknuma
+    pickup_lat: 17.3100
+    pickup_lng: 78.4800
+    drop_lat: 17.3300
+    drop_lng: 78.4700
+    estimated_distance_km: 4
+    notes: "Southernmost residential to old city southern gate"
+
+  # =========================================================================
+  # MEDIUM ROUTES (10–20 km) — Cross-cluster city traversal
+  # =========================================================================
+
+  - id: 11
+    name: "Gachibowli to Secunderabad"
+    category: medium
+    pickup_zone: hitech_madhapur
+    drop_zone: secunderabad_cbd
+    pickup_lat: 17.4425
+    pickup_lng: 78.3900
+    drop_lat: 17.4450
+    drop_lng: 78.5050
+    estimated_distance_km: 16
+    notes: "Classic IT-to-CBD corridor — benchmark route for pricing"
+
+  - id: 12
+    name: "HITEC City to Old City"
+    category: medium
+    pickup_zone: hitech_madhapur
+    drop_zone: old_city
+    pickup_lat: 17.4425
+    pickup_lng: 78.3900
+    drop_lat: 17.3650
+    drop_lng: 78.4750
+    estimated_distance_km: 14
+    notes: "Tech hub to Charminar — W-E cross-city staple"
+
+  - id: 13
+    name: "Kondapur to Ameerpet"
+    category: medium
+    pickup_zone: kondapur
+    drop_zone: ameerpet_core
+    pickup_lat: 17.4650
+    pickup_lng: 78.3650
+    drop_lat: 17.4350
+    drop_lng: 78.4450
+    estimated_distance_km: 11
+    notes: "IT corridor to metro CBD — high B2B demand"
+
+  - id: 14
+    name: "Miyapur to Secunderabad"
+    category: medium
+    pickup_zone: miyapur
+    drop_zone: secunderabad_cbd
+    pickup_lat: 17.5050
+    pickup_lng: 78.3500
+    drop_lat: 17.4450
+    drop_lng: 78.5050
+    estimated_distance_km: 18
+    notes: "NW suburb to N CBD — commute diagonal"
+
+  - id: 15
+    name: "Kompally to HITEC City"
+    category: medium
+    pickup_zone: kompally
+    drop_zone: hitech_madhapur
+    pickup_lat: 17.5400
+    pickup_lng: 78.4800
+    drop_lat: 17.4425
+    drop_lng: 78.3900
+    estimated_distance_km: 17
+    notes: "North growth zone to IT hub — north-to-west diagonal"
+
+  - id: 16
+    name: "LB Nagar to Ameerpet"
+    category: medium
+    pickup_zone: lb_nagar_east
+    drop_zone: ameerpet_core
+    pickup_lat: 17.3750
+    pickup_lng: 78.5300
+    drop_lat: 17.4350
+    drop_lng: 78.4450
+    estimated_distance_km: 12
+    notes: "SE residential to central CBD — classic commute"
+
+  - id: 17
+    name: "Old City to Banjara Hills"
+    category: medium
+    pickup_zone: old_city
+    drop_zone: banjara_hills
+    pickup_lat: 17.3650
+    pickup_lng: 78.4750
+    drop_lat: 17.4250
+    drop_lng: 78.4450
+    estimated_distance_km: 8
+    notes: "Traditional commercial to premium residential — cross-segment"
+
+  - id: 18
+    name: "Uppal to Secunderabad"
+    category: medium
+    pickup_zone: uppal_corridor
+    drop_zone: secunderabad_cbd
+    pickup_lat: 17.4050
+    pickup_lng: 78.5650
+    drop_lat: 17.4450
+    drop_lng: 78.5050
+    estimated_distance_km: 9
+    notes: "East growth corridor to CBD"
+
+  - id: 19
+    name: "Rajendranagar to Ameerpet"
+    category: medium
+    pickup_zone: rajendranagar
+    drop_zone: ameerpet_core
+    pickup_lat: 17.3400
+    pickup_lng: 78.4200
+    drop_lat: 17.4350
+    drop_lng: 78.4450
+    estimated_distance_km: 12
+    notes: "South to central CBD — long north-facing move"
+
+  - id: 20
+    name: "Jeedimetla to Kondapur"
+    category: medium
+    pickup_zone: jeedimetla
+    drop_zone: kondapur
+    pickup_lat: 17.5150
+    pickup_lng: 78.4600
+    drop_lat: 17.4650
+    drop_lng: 78.3650
+    estimated_distance_km: 14
+    notes: "North industrial to IT hub — B2B goods flow"
+
+  - id: 21
+    name: "Golconda to Ameerpet"
+    category: medium
+    pickup_zone: golconda
+    drop_zone: ameerpet_core
+    pickup_lat: 17.3950
+    pickup_lng: 78.4000
+    drop_lat: 17.4350
+    drop_lng: 78.4450
+    estimated_distance_km: 7
+    notes: "Heritage W zone to CBD — heritage commercial to business"
+
+  - id: 22
+    name: "Nacharam to Secunderabad"
+    category: medium
+    pickup_zone: nacharam
+    drop_zone: secunderabad_cbd
+    pickup_lat: 17.4350
+    pickup_lng: 78.5600
+    drop_lat: 17.4450
+    drop_lng: 78.5050
+    estimated_distance_km: 7
+    notes: "East industrial to CBD — B2B industrial move"
+
+  - id: 23
+    name: "Malkajgiri to Kondapur"
+    category: medium
+    pickup_zone: malkajgiri
+    drop_zone: kondapur
+    pickup_lat: 17.4550
+    pickup_lng: 78.5300
+    drop_lat: 17.4650
+    drop_lng: 78.3650
+    estimated_distance_km: 19
+    notes: "NE residential to IT corridor — cross-city commute"
+
+  - id: 24
+    name: "Miyapur to Ameerpet"
+    category: medium
+    pickup_zone: miyapur
+    drop_zone: ameerpet_core
+    pickup_lat: 17.5050
+    pickup_lng: 78.3500
+    drop_lat: 17.4350
+    drop_lng: 78.4450
+    estimated_distance_km: 13
+    notes: "NW residential to CBD — diagonal commute"
+
+  - id: 25
+    name: "Financial District to Banjara Hills"
+    category: medium
+    pickup_zone: fin_district
+    drop_zone: banjara_hills
+    pickup_lat: 17.4300
+    pickup_lng: 78.3450
+    drop_lat: 17.4250
+    drop_lng: 78.4450
+    estimated_distance_km: 11
+    notes: "Tech to premium residential — executive delivery"
+
+  - id: 26
+    name: "Kompally to Secunderabad"
+    category: medium
+    pickup_zone: kompally
+    drop_zone: secunderabad_cbd
+    pickup_lat: 17.5400
+    pickup_lng: 78.4800
+    drop_lat: 17.4450
+    drop_lng: 78.5050
+    estimated_distance_km: 12
+    notes: "North growth suburb to north CBD hub"
+
+  - id: 27
+    name: "Falaknuma to Mehdipatnam"
+    category: medium
+    pickup_zone: falaknuma
+    drop_zone: mehdipatnam
+    pickup_lat: 17.3300
+    pickup_lng: 78.4700
+    drop_lat: 17.4000
+    drop_lng: 78.4350
+    estimated_distance_km: 10
+    notes: "Deep south to southwest CBD — old city outskirts"
+
+  - id: 28
+    name: "LB Nagar to Old City"
+    category: medium
+    pickup_zone: lb_nagar_east
+    drop_zone: old_city
+    pickup_lat: 17.3750
+    pickup_lng: 78.5300
+    drop_lat: 17.3650
+    drop_lng: 78.4750
+    estimated_distance_km: 7
+    notes: "SE residential to traditional commercial"
+
+  - id: 29
+    name: "Uppal to HITEC City"
+    category: medium
+    pickup_zone: uppal_corridor
+    drop_zone: hitech_madhapur
+    pickup_lat: 17.4050
+    pickup_lng: 78.5650
+    drop_lat: 17.4425
+    drop_lng: 78.3900
+    estimated_distance_km: 19
+    notes: "East corridor to IT hub — large cross-city volume"
+
+  - id: 30
+    name: "Jeedimetla to Ameerpet"
+    category: medium
+    pickup_zone: jeedimetla
+    drop_zone: ameerpet_core
+    pickup_lat: 17.5150
+    pickup_lng: 78.4600
+    drop_lat: 17.4350
+    drop_lng: 78.4450
+    estimated_distance_km: 10
+    notes: "North industrial to CBD — manufactured goods movement"
+
+  # =========================================================================
+  # LONG ROUTES (25–40 km) — Cross-city / peripheral
+  # =========================================================================
+
+  - id: 31
+    name: "Shamshabad Airport to HITEC City"
+    category: long
+    pickup_zone: shamshabad
+    drop_zone: hitech_madhapur
+    pickup_lat: 17.2500
+    pickup_lng: 78.4350
+    drop_lat: 17.4425
+    drop_lng: 78.3900
+    estimated_distance_km: 30
+    notes: "Airport to IT hub — airport transfer benchmark route"
+
+  - id: 32
+    name: "Shamshabad Airport to Secunderabad"
+    category: long
+    pickup_zone: shamshabad
+    drop_zone: secunderabad_cbd
+    pickup_lat: 17.2500
+    pickup_lng: 78.4350
+    drop_lat: 17.4450
+    drop_lng: 78.5050
+    estimated_distance_km: 32
+    notes: "Airport to Secunderabad station — longest airport route"
+
+  - id: 33
+    name: "Shamshabad Airport to Ameerpet"
+    category: long
+    pickup_zone: shamshabad
+    drop_zone: ameerpet_core
+    pickup_lat: 17.2500
+    pickup_lng: 78.4350
+    drop_lat: 17.4350
+    drop_lng: 78.4450
+    estimated_distance_km: 27
+    notes: "Airport to CBD center — core airport logistics"
+
+  - id: 34
+    name: "Shamshabad Airport to Old City"
+    category: long
+    pickup_zone: shamshabad
+    drop_zone: old_city
+    pickup_lat: 17.2500
+    pickup_lng: 78.4350
+    drop_lat: 17.3650
+    drop_lng: 78.4750
+    estimated_distance_km: 20
+    notes: "Airport to old city — mid-long airport route"
+
+  - id: 35
+    name: "Patancheru to Secunderabad"
+    category: long
+    pickup_zone: patancheru
+    drop_zone: secunderabad_cbd
+    pickup_lat: 17.5400
+    pickup_lng: 78.2600
+    drop_lat: 17.4450
+    drop_lng: 78.5050
+    estimated_distance_km: 35
+    notes: "Far west industrial to CBD — maximum W-E span"
+
+  - id: 36
+    name: "Patancheru to HITEC City"
+    category: long
+    pickup_zone: patancheru
+    drop_zone: hitech_madhapur
+    pickup_lat: 17.5400
+    pickup_lng: 78.2600
+    drop_lat: 17.4425
+    drop_lng: 78.3900
+    estimated_distance_km: 22
+    notes: "West industrial to IT hub — manufacturing to tech"
+
+  - id: 37
+    name: "Ghatkesar to HITEC City"
+    category: long
+    pickup_zone: ghatkesar
+    drop_zone: hitech_madhapur
+    pickup_lat: 17.4500
+    pickup_lng: 78.6800
+    drop_lat: 17.4425
+    drop_lng: 78.3900
+    estimated_distance_km: 33
+    notes: "Far east peripheral to IT hub — maximum E-W span"
+
+  - id: 38
+    name: "Ghatkesar to Secunderabad"
+    category: long
+    pickup_zone: ghatkesar
+    drop_zone: secunderabad_cbd
+    pickup_lat: 17.4500
+    pickup_lng: 78.6800
+    drop_lat: 17.4450
+    drop_lng: 78.5050
+    estimated_distance_km: 21
+    notes: "Far east to CBD N — east periphery route"
+
+  - id: 39
+    name: "Dundigal to Old City"
+    category: long
+    pickup_zone: dundigal
+    drop_zone: old_city
+    pickup_lat: 17.5800
+    pickup_lng: 78.4200
+    drop_lat: 17.3650
+    drop_lng: 78.4750
+    estimated_distance_km: 28
+    notes: "Far north to south — maximum N-S span"
+
+  - id: 40
+    name: "Kompally to Shamshabad Airport"
+    category: long
+    pickup_zone: kompally
+    drop_zone: shamshabad
+    pickup_lat: 17.5400
+    pickup_lng: 78.4800
+    drop_lat: 17.2500
+    drop_lng: 78.4350
+    estimated_distance_km: 36
+    notes: "N suburb to airport — return airport haul"
+
+  - id: 41
+    name: "Patancheru to Old City"
+    category: long
+    pickup_zone: patancheru
+    drop_zone: old_city
+    pickup_lat: 17.5400
+    pickup_lng: 78.2600
+    drop_lat: 17.3650
+    drop_lng: 78.4750
+    estimated_distance_km: 38
+    notes: "Far west to old city — ultra long W-SE diagonal"
+
+  - id: 42
+    name: "Ghatkesar to Old City"
+    category: long
+    pickup_zone: ghatkesar
+    drop_zone: old_city
+    pickup_lat: 17.4500
+    pickup_lng: 78.6800
+    drop_lat: 17.3650
+    drop_lng: 78.4750
+    estimated_distance_km: 28
+    notes: "Far east to old city — E-W diagonal with old city"
+
+  # =========================================================================
+  # AIRPORT ROUTES — To/From Shamshabad
+  # =========================================================================
+
+  - id: 43
+    name: "Shamshabad Airport to Kondapur"
+    category: airport
+    pickup_zone: shamshabad
+    drop_zone: kondapur
+    pickup_lat: 17.2500
+    pickup_lng: 78.4350
+    drop_lat: 17.4650
+    drop_lng: 78.3650
+    estimated_distance_km: 31
+    notes: "Airport to IT tech corridor — high cargo/courier volume"
+
+  - id: 44
+    name: "Adibatla to Shamshabad Airport"
+    category: airport
+    pickup_zone: adibatla
+    drop_zone: shamshabad
+    pickup_lat: 17.2300
+    pickup_lng: 78.5400
+    drop_lat: 17.2500
+    drop_lng: 78.4350
+    estimated_distance_km: 12
+    notes: "Aerospace cluster to airport — industrial airport pair"
+
+  - id: 45
+    name: "Shamshabad Airport to LB Nagar"
+    category: airport
+    pickup_zone: shamshabad
+    drop_zone: lb_nagar_east
+    pickup_lat: 17.2500
+    pickup_lng: 78.4350
+    drop_lat: 17.3750
+    drop_lng: 78.5300
+    estimated_distance_km: 18
+    notes: "Airport to SE residential — last mile airport route"
+
+  - id: 46
+    name: "Shamshabad Airport to Miyapur"
+    category: airport
+    pickup_zone: shamshabad
+    drop_zone: miyapur
+    pickup_lat: 17.2500
+    pickup_lng: 78.4350
+    drop_lat: 17.5050
+    drop_lng: 78.3500
+    estimated_distance_km: 34
+    notes: "Airport to far NW suburb — longest airport diagonal"
+
+  # =========================================================================
+  # IT CORRIDOR ROUTES — Tech hub intra-cluster
+  # =========================================================================
+
+  - id: 47
+    name: "Financial District to HITEC City"
+    category: it_corridor
+    pickup_zone: fin_district
+    drop_zone: hitech_madhapur
+    pickup_lat: 17.4300
+    pickup_lng: 78.3450
+    drop_lat: 17.4425
+    drop_lng: 78.3900
+    estimated_distance_km: 6
+    notes: "Intra-IT-corridor — DLF to HITEC City office parks"
+
+  - id: 48
+    name: "Kondapur to Financial District"
+    category: it_corridor
+    pickup_zone: kondapur
+    drop_zone: fin_district
+    pickup_lat: 17.4650
+    pickup_lng: 78.3650
+    drop_lat: 17.4300
+    drop_lng: 78.3450
+    estimated_distance_km: 5
+    notes: "IT north spine — Kondapur to Financial District"
+
+  - id: 49
+    name: "HITEC City to Miyapur"
+    category: it_corridor
+    pickup_zone: hitech_madhapur
+    drop_zone: miyapur
+    pickup_lat: 17.4425
+    pickup_lng: 78.3900
+    drop_lat: 17.5050
+    drop_lng: 78.3500
+    estimated_distance_km: 9
+    notes: "IT hub to NW residential — employee commute corridor"
+
+  # =========================================================================
+  # INDUSTRIAL ROUTES — Goods & logistics movement
+  # =========================================================================
+
+  - id: 50
+    name: "Jeedimetla to Nacharam"
+    category: industrial
+    pickup_zone: jeedimetla
+    drop_zone: nacharam
+    pickup_lat: 17.5150
+    pickup_lng: 78.4600
+    drop_lat: 17.4350
+    drop_lng: 78.5600
+    estimated_distance_km: 16
+    notes: "North industrial to east industrial — inter-cluster B2B"
+
+  - id: 51
+    name: "Patancheru to Jeedimetla"
+    category: industrial
+    pickup_zone: patancheru
+    drop_zone: jeedimetla
+    pickup_lat: 17.5400
+    pickup_lng: 78.2600
+    drop_lat: 17.5150
+    drop_lng: 78.4600
+    estimated_distance_km: 22
+    notes: "Far west pharma belt to north industrial — heavy goods"
+
+  - id: 52
+    name: "Adibatla to Old City"
+    category: industrial
+    pickup_zone: adibatla
+    drop_zone: old_city
+    pickup_lat: 17.2300
+    pickup_lng: 78.5400
+    drop_lat: 17.3650
+    drop_lng: 78.4750
+    estimated_distance_km: 19
+    notes: "Aerospace SE to traditional commercial — industrial to market"
+
+# =============================================================================
+# SUMMARY STATISTICS
+# =============================================================================
+# Total routes: 52
+# Short (3–8 km):    10 routes  (ids 1–10)
+# Medium (10–20 km): 20 routes  (ids 11–30)
+# Long (25–40 km):   12 routes  (ids 31–42)
+# Airport routes:     4 routes  (ids 43–46)
+# IT corridor:        3 routes  (ids 47–49)
+# Industrial:         3 routes  (ids 50–52)
+#
+# Zone coverage (18 anchor zones):
+#   IT tech corridor:        fin_district, hitech_madhapur, kondapur
+#   Business CBD:            ameerpet_core, secunderabad_cbd, banjara_hills
+#   Old city / heritage:     old_city, falaknuma, golconda, chandrayangutta
+#   South residential:       rajendranagar, lb_nagar_east
+#   East growth:             uppal_corridor, nacharam, ghatkesar
+#   North industrial/suburb: jeedimetla, kompally, miyapur
+#   Airport/industrial:      shamshabad, adibatla, patancheru
+# =============================================================================

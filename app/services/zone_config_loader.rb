@@ -613,7 +613,8 @@ class ZoneConfigLoader
   # Deactivate corridors in DB that are no longer in YAML
   # ---------------------------------------------------------------------------
   def deactivate_stale_corridors!
-    active_db_corridors = ZonePairVehiclePricing.where(city_code: city_code, active: true)
+    # Only touch manual corridors — auto-generated corridors are managed by InterZoneDetector
+    active_db_corridors = ZonePairVehiclePricing.where(city_code: city_code, active: true, auto_generated: [false, nil])
 
     active_db_corridors.find_each do |corridor|
       key = [city_code, corridor.from_zone_id, corridor.to_zone_id, corridor.vehicle_type, corridor.time_band]

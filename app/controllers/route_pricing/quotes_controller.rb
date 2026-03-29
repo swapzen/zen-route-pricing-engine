@@ -157,6 +157,23 @@ module RoutePricing
         notes: params[:notes]
       )
 
+      # Log outcome if provided
+      if params[:outcome].present?
+        PricingOutcome.create!(
+          pricing_quote: quote,
+          outcome: params[:outcome],
+          city_code: quote.city_code,
+          vehicle_type: quote.vehicle_type,
+          time_band: quote.breakdown_json&.dig('zone_info', 'time_band'),
+          pickup_zone_code: quote.breakdown_json&.dig('zone_info', 'pickup_zone'),
+          drop_zone_code: quote.breakdown_json&.dig('zone_info', 'drop_zone'),
+          h3_index_r7: quote.try(:pickup_h3_r7),
+          quoted_price_paise: quote.price_paise,
+          response_time_seconds: params[:response_time_seconds]&.to_i,
+          rejection_reason: params[:rejection_reason]
+        )
+      end
+
       response = {
         success: true,
         actual_id: actual.id,

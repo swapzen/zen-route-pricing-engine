@@ -18,9 +18,47 @@ class PricingConfig < ApplicationRecord
   validates :free_pickup_radius_m, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validates :dead_km_per_km_rate_paise, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
 
+  # Approval workflow
+  APPROVAL_STATUSES = %w[draft pending approved rejected].freeze
+  validates :approval_status, inclusion: { in: APPROVAL_STATUSES }, allow_nil: true
+
   # Scopes
   scope :active, -> { where(active: true) }
-  
+  scope :approved, -> { where(approval_status: 'approved') }
+  scope :pending_approval, -> { where(approval_status: 'pending') }
+  scope :draft, -> { where(approval_status: 'draft') }
+
+  def submit_for_approval!(submitter)
+    update!(approval_status: 'pending', submitted_by: submitter)
+  end
+
+  def approve!(reviewer)
+    transaction do
+      # Sunset previous active config for same city+vehicle
+      PricingConfig.where(city_code: city_code, vehicle_type: vehicle_type, active: true)
+                   .where.not(id: id)
+                   .update_all(active: false, effective_until: Time.current)
+
+      update!(
+        approval_status: 'approved',
+        reviewed_by: reviewer,
+        reviewed_at: Time.current,
+        active: true,
+        effective_from: Time.current,
+        effective_until: nil
+      )
+    end
+  end
+
+  def reject!(reviewer, reason)
+    update!(
+      approval_status: 'rejected',
+      reviewed_by: reviewer,
+      reviewed_at: Time.current,
+      rejection_reason: reason
+    )
+  end
+
   # Returns current active config for city × vehicle (class method, not scope)
   # Note: city_code comparison is case-insensitive
   def self.current_version(city_code, vehicle_type)
