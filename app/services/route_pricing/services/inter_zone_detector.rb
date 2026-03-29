@@ -14,7 +14,7 @@ module RoutePricing
       # 5. Generate pricing: weighted average (60% origin, 40% dest) with type adjustments
 
       VEHICLE_TYPES = RoutePricing::VehicleCategories::ALL_VEHICLES
-      TIME_BANDS = %w[morning afternoon evening].freeze
+      TIME_BANDS = %w[early_morning morning_rush midday afternoon evening_rush night weekend_day weekend_night].freeze
 
       def initialize(city_code)
         @city_code = city_code

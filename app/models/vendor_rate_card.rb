@@ -11,7 +11,12 @@ class VendorRateCard < ApplicationRecord
             numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :surge_cap_multiplier, numericality: { greater_than: 0 }
   validates :effective_from, presence: true
-  validates :time_band, inclusion: { in: %w[morning afternoon evening] }, allow_nil: true
+  VALID_TIME_BANDS = %w[
+    early_morning morning_rush midday afternoon evening_rush night
+    weekend_day weekend_night
+  ].freeze
+
+  validates :time_band, inclusion: { in: VALID_TIME_BANDS }, allow_nil: true
 
   scope :active, -> { where(active: true) }
   scope :current, -> {

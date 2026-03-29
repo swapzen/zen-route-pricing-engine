@@ -14,7 +14,7 @@ class VendorConfigLoader
   attr_reader :vendor_code, :city_code, :stats
 
   VEHICLE_TYPES = RoutePricing::VehicleCategories::ALL_VEHICLES
-  TIME_BANDS = %w[morning afternoon evening].freeze
+  TIME_BANDS = %w[early_morning morning_rush midday afternoon evening_rush night weekend_day weekend_night].freeze
 
   def initialize(vendor_code, city_code)
     @vendor_code = vendor_code.downcase

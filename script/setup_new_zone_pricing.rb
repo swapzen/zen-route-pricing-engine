@@ -9,7 +9,7 @@ puts "=" * 80
 
 VEHICLE_TYPES = %w[two_wheeler scooter mini_3w three_wheeler tata_ace pickup_8ft canter_14ft].freeze
 
-TIME_BANDS = %w[morning afternoon evening].freeze
+TIME_BANDS = %w[early_morning morning_rush midday afternoon evening_rush night weekend_day weekend_night].freeze
 
 # Pricing templates by zone type (in paise)
 # Pattern: Tech corridors = competitive, CBD = premium, Residential = moderate

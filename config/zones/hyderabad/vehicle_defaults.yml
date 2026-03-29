@@ -1,223 +1,519 @@
-# =============================================================================
-# VEHICLE DEFAULTS - Global baseline rates for Hyderabad
-# =============================================================================
-# These are fallback rates when zone-specific pricing is not defined.
-# Based on Porter benchmark calibration (v3.1)
-# =============================================================================
-
+---
 city_code: hyd
-version: "1.0"
+version: '1.0'
 base_distance_m: 1000
-
-# Global vehicle configurations
 vehicles:
   two_wheeler:
-    display_name: "2 Wheeler"
-    vendor_code: "2W"
+    display_name: 2 Wheeler
+    vendor_code: 2W
     capacity_kg: 20
     base_fare_paise: 4500
     slabs:
-      - [0, 3000, 350]
-      - [3000, 10000, 860]
-      - [10000, 25000, 1150]
-      - [25000, null, 750]
-
+    - - 0
+      - 3000
+      - 350
+    - - 3000
+      - 10000
+      - 860
+    - - 10000
+      - 25000
+      - 1150
+    - - 25000
+      -
+      - 750
   scooter:
-    display_name: "Scooter"
-    vendor_code: "SCOOTER"
+    display_name: Scooter
+    vendor_code: SCOOTER
     capacity_kg: 20
     base_fare_paise: 6000
     slabs:
-      - [0, 3000, 450]
-      - [3000, 10000, 1100]
-      - [10000, 25000, 1400]
-      - [25000, null, 900]
-
+    - - 0
+      - 3000
+      - 450
+    - - 3000
+      - 10000
+      - 1100
+    - - 10000
+      - 25000
+      - 1400
+    - - 25000
+      -
+      - 900
   mini_3w:
-    display_name: "Mini 3W"
-    vendor_code: "MINI_3W"
+    display_name: Mini 3W
+    vendor_code: MINI_3W
     capacity_kg: 500
     base_fare_paise: 10000
     slabs:
-      - [0, 3000, 900]
-      - [3000, 10000, 1265]
-      - [10000, 25000, 1000]
-      - [25000, null, 750]
-
+    - - 0
+      - 3000
+      - 900
+    - - 3000
+      - 10000
+      - 1265
+    - - 10000
+      - 25000
+      - 1000
+    - - 25000
+      -
+      - 750
   three_wheeler:
-    display_name: "3 Wheeler"
-    vendor_code: "3W"
+    display_name: 3 Wheeler
+    vendor_code: 3W
     capacity_kg: 500
     base_fare_paise: 20000
     slabs:
-      - [0, 3000, 2400]
-      - [3000, 10000, 3000]
-      - [10000, 25000, 2970]
-      - [25000, null, 1900]
-
+    - - 0
+      - 3000
+      - 2400
+    - - 3000
+      - 10000
+      - 3000
+    - - 10000
+      - 25000
+      - 2970
+    - - 25000
+      -
+      - 1900
   tata_ace:
-    display_name: "Tata Ace"
-    vendor_code: "TATA_ACE"
+    display_name: Tata Ace
+    vendor_code: TATA_ACE
     capacity_kg: 750
     base_fare_paise: 25000
     slabs:
-      - [0, 3000, 2600]
-      - [3000, 10000, 3200]
-      - [10000, 25000, 3080]
-      - [25000, null, 2000]
-
+    - - 0
+      - 3000
+      - 2600
+    - - 3000
+      - 10000
+      - 3200
+    - - 10000
+      - 25000
+      - 3080
+    - - 25000
+      -
+      - 2000
   pickup_8ft:
-    display_name: "Pickup 8ft"
-    vendor_code: "PICKUP_8FT"
+    display_name: Pickup 8ft
+    vendor_code: PICKUP_8FT
     capacity_kg: 1250
     base_fare_paise: 30000
     slabs:
-      - [0, 3000, 3000]
-      - [3000, 10000, 3500]
-      - [10000, 25000, 3300]
-      - [25000, null, 2150]
-
+    - - 0
+      - 3000
+      - 3000
+    - - 3000
+      - 10000
+      - 3500
+    - - 10000
+      - 25000
+      - 3300
+    - - 25000
+      -
+      - 2150
   three_wheeler_ev:
-    display_name: "3 Wheeler EV"
-    vendor_code: "3W_EV"
+    display_name: 3 Wheeler EV
+    vendor_code: 3W_EV
     capacity_kg: 500
     base_fare_paise: 20000
     slabs:
-      - [0, 3000, 2400]
-      - [3000, 10000, 3000]
-      - [10000, 25000, 2970]
-      - [25000, null, 1900]
-
+    - - 0
+      - 3000
+      - 2400
+    - - 3000
+      - 10000
+      - 3000
+    - - 10000
+      - 25000
+      - 2970
+    - - 25000
+      -
+      - 1900
   eeco:
-    display_name: "Eeco"
-    vendor_code: "EECO"
+    display_name: Eeco
+    vendor_code: EECO
     capacity_kg: 600
     base_fare_paise: 35000
     slabs:
-      - [0, 3000, 3200]
-      - [3000, 10000, 3800]
-      - [10000, 25000, 3600]
-      - [25000, null, 2400]
-
+    - - 0
+      - 3000
+      - 3200
+    - - 3000
+      - 10000
+      - 3800
+    - - 10000
+      - 25000
+      - 3600
+    - - 25000
+      -
+      - 2400
   tata_407:
-    display_name: "Tata 407"
-    vendor_code: "TATA_407"
+    display_name: Tata 407
+    vendor_code: TATA_407
     capacity_kg: 2500
     base_fare_paise: 40000
     slabs:
-      - [0, 3000, 3600]
-      - [3000, 10000, 4200]
-      - [10000, 25000, 4000]
-      - [25000, null, 2800]
-
+    - - 0
+      - 3000
+      - 3600
+    - - 3000
+      - 10000
+      - 4200
+    - - 10000
+      - 25000
+      - 4000
+    - - 25000
+      -
+      - 2800
   canter_14ft:
-    display_name: "Canter 14ft"
-    vendor_code: "CANTER_14FT"
+    display_name: Canter 14ft
+    vendor_code: CANTER_14FT
     capacity_kg: 3500
     base_fare_paise: 145000
     slabs:
-      - [0, 3000, 5000]
-      - [3000, 10000, 4600]
-      - [10000, 25000, 5200]
-      - [25000, null, 3500]
-
-# =============================================================================
-# GLOBAL TIME-BAND RATES (Fallback for zones without specific rates)
-# =============================================================================
+    - - 0
+      - 3000
+      - 5000
+    - - 3000
+      - 10000
+      - 4600
+    - - 10000
+      - 25000
+      - 5200
+    - - 25000
+      -
+      - 3500
 global_time_rates:
-  morning:
-    two_wheeler:      { base: 4000, rate: 800 }
-    scooter:          { base: 7700, rate: 900 }
-    mini_3w:          { base: 14600, rate: 900 }
-    three_wheeler:    { base: 31800, rate: 2100 }
-    three_wheeler_ev: { base: 31800, rate: 2100 }
-    tata_ace:         { base: 35500, rate: 2200 }
-    pickup_8ft:       { base: 47300, rate: 2000 }
-    eeco:             { base: 55000, rate: 3800 }
-    tata_407:         { base: 60000, rate: 4200 }
-    canter_14ft:      { base: 163400, rate: 3900 }
-
+  early_morning:
+    two_wheeler:
+      base: 3680
+      rate: 740
+    scooter:
+      base: 7080
+      rate: 830
+    mini_3w:
+      base: 13430
+      rate: 830
+    three_wheeler:
+      base: 29260
+      rate: 1930
+    three_wheeler_ev:
+      base: 29260
+      rate: 1930
+    tata_ace:
+      base: 32660
+      rate: 2020
+    pickup_8ft:
+      base: 43520
+      rate: 1840
+    eeco:
+      base: 50600
+      rate: 3500
+    tata_407:
+      base: 55200
+      rate: 3860
+    canter_14ft:
+      base: 150330
+      rate: 3590
+  morning_rush:
+    two_wheeler:
+      base: 4000
+      rate: 800
+    scooter:
+      base: 7700
+      rate: 900
+    mini_3w:
+      base: 14600
+      rate: 900
+    three_wheeler:
+      base: 31800
+      rate: 2100
+    three_wheeler_ev:
+      base: 31800
+      rate: 2100
+    tata_ace:
+      base: 35500
+      rate: 2200
+    pickup_8ft:
+      base: 47300
+      rate: 2000
+    eeco:
+      base: 55000
+      rate: 3800
+    tata_407:
+      base: 60000
+      rate: 4200
+    canter_14ft:
+      base: 163400
+      rate: 3900
+  midday:
+    two_wheeler:
+      base: 6370
+      rate: 760
+    scooter:
+      base: 8170
+      rate: 950
+    mini_3w:
+      base: 20330
+      rate: 760
+    three_wheeler:
+      base: 32490
+      rate: 2190
+    three_wheeler_ev:
+      base: 32490
+      rate: 2190
+    tata_ace:
+      base: 36670
+      rate: 2280
+    pickup_8ft:
+      base: 50070
+      rate: 2190
+    eeco:
+      base: 55100
+      rate: 3800
+    tata_407:
+      base: 59850
+      rate: 4180
+    canter_14ft:
+      base: 156180
+      rate: 3900
   afternoon:
-    two_wheeler:      { base: 6700, rate: 800 }
-    scooter:          { base: 8600, rate: 1000 }
-    mini_3w:          { base: 21400, rate: 800 }
-    three_wheeler:    { base: 34200, rate: 2300 }
-    three_wheeler_ev: { base: 34200, rate: 2300 }
-    tata_ace:         { base: 38600, rate: 2400 }
-    pickup_8ft:       { base: 52700, rate: 2300 }
-    eeco:             { base: 58000, rate: 4000 }
-    tata_407:         { base: 63000, rate: 4400 }
-    canter_14ft:      { base: 164400, rate: 4100 }
-
-  evening:
-    two_wheeler:      { base: 4700, rate: 800 }
-    scooter:          { base: 7400, rate: 1000 }
-    mini_3w:          { base: 14100, rate: 1000 }
-    three_wheeler:    { base: 53100, rate: 2200 }
-    three_wheeler_ev: { base: 53100, rate: 2200 }
-    tata_ace:         { base: 56700, rate: 2300 }
-    pickup_8ft:       { base: 72600, rate: 2100 }
-    eeco:             { base: 78000, rate: 4000 }
-    tata_407:         { base: 85000, rate: 4400 }
-    canter_14ft:      { base: 195000, rate: 4100 }
-
-# =============================================================================
-# INTER-ZONE FORMULA CONFIGURATION
-# =============================================================================
-# Used when calculating prices between zones without explicit corridors
+    two_wheeler:
+      base: 6700
+      rate: 800
+    scooter:
+      base: 8600
+      rate: 1000
+    mini_3w:
+      base: 21400
+      rate: 800
+    three_wheeler:
+      base: 34200
+      rate: 2300
+    three_wheeler_ev:
+      base: 34200
+      rate: 2300
+    tata_ace:
+      base: 38600
+      rate: 2400
+    pickup_8ft:
+      base: 52700
+      rate: 2300
+    eeco:
+      base: 58000
+      rate: 4000
+    tata_407:
+      base: 63000
+      rate: 4400
+    canter_14ft:
+      base: 164400
+      rate: 4100
+  evening_rush:
+    two_wheeler:
+      base: 5260
+      rate: 900
+    scooter:
+      base: 8290
+      rate: 1120
+    mini_3w:
+      base: 15790
+      rate: 1120
+    three_wheeler:
+      base: 59470
+      rate: 2460
+    three_wheeler_ev:
+      base: 59470
+      rate: 2460
+    tata_ace:
+      base: 63500
+      rate: 2580
+    pickup_8ft:
+      base: 81310
+      rate: 2350
+    eeco:
+      base: 87360
+      rate: 4480
+    tata_407:
+      base: 95200
+      rate: 4930
+    canter_14ft:
+      base: 218400
+      rate: 4590
+  night:
+    two_wheeler:
+      base: 4700
+      rate: 800
+    scooter:
+      base: 7400
+      rate: 1000
+    mini_3w:
+      base: 14100
+      rate: 1000
+    three_wheeler:
+      base: 53100
+      rate: 2200
+    three_wheeler_ev:
+      base: 53100
+      rate: 2200
+    tata_ace:
+      base: 56700
+      rate: 2300
+    pickup_8ft:
+      base: 72600
+      rate: 2100
+    eeco:
+      base: 78000
+      rate: 4000
+    tata_407:
+      base: 85000
+      rate: 4400
+    canter_14ft:
+      base: 195000
+      rate: 4100
+  weekend_day:
+    two_wheeler:
+      base: 6370
+      rate: 760
+    scooter:
+      base: 8170
+      rate: 950
+    mini_3w:
+      base: 20330
+      rate: 760
+    three_wheeler:
+      base: 32490
+      rate: 2190
+    three_wheeler_ev:
+      base: 32490
+      rate: 2190
+    tata_ace:
+      base: 36670
+      rate: 2280
+    pickup_8ft:
+      base: 50070
+      rate: 2190
+    eeco:
+      base: 55100
+      rate: 3800
+    tata_407:
+      base: 59850
+      rate: 4180
+    canter_14ft:
+      base: 156180
+      rate: 3900
+  weekend_night:
+    two_wheeler:
+      base: 4230
+      rate: 720
+    scooter:
+      base: 6660
+      rate: 900
+    mini_3w:
+      base: 12690
+      rate: 900
+    three_wheeler:
+      base: 47790
+      rate: 1980
+    three_wheeler_ev:
+      base: 47790
+      rate: 1980
+    tata_ace:
+      base: 51030
+      rate: 2070
+    pickup_8ft:
+      base: 65340
+      rate: 1890
+    eeco:
+      base: 70200
+      rate: 3600
+    tata_407:
+      base: 76500
+      rate: 3960
+    canter_14ft:
+      base: 175500
+      rate: 3690
 inter_zone_formula:
-  # Weight for origin zone vs destination zone rates
   origin_weight: 0.6
   destination_weight: 0.4
-  
-  # Zone type adjustments (multipliers)
   type_adjustments:
-    # Morning rush: residential → tech/business
     residential_dense_to_tech_corridor:
-      morning: 1.08
-      afternoon: 1.00
-      evening: 0.95
-    
-    residential_mixed_to_tech_corridor:
-      morning: 1.05
-      afternoon: 1.00
-      evening: 0.95
-    
-    # Evening rush: tech → residential
-    tech_corridor_to_residential_dense:
-      morning: 0.95
-      afternoon: 1.00
-      evening: 1.08
-    
-    tech_corridor_to_residential_mixed:
-      morning: 0.95
-      afternoon: 1.00
-      evening: 1.05
-    
-    # Old city congestion premium
-    any_to_traditional_commercial:
-      morning: 1.05
-      afternoon: 1.08
-      evening: 1.05
-    
-    traditional_commercial_to_any:
-      morning: 1.05
-      afternoon: 1.08
-      evening: 1.05
-    
-    # Airport premium
-    any_to_airport_logistics:
-      morning: 1.15
-      afternoon: 1.10
-      evening: 1.15
-    
-    airport_logistics_to_any:
-      morning: 1.10
-      afternoon: 1.05
-      evening: 1.10
-    
-    # Default (no adjustment)
-    default:
-      morning: 1.0
+      early_morning: 1.03
+      morning_rush: 1.08
+      midday: 0.98
       afternoon: 1.0
-      evening: 1.0
+      evening_rush: 1.0
+      night: 0.95
+      weekend_day: 0.97
+      weekend_night: 0.9
+    residential_mixed_to_tech_corridor:
+      early_morning: 1.0
+      morning_rush: 1.05
+      midday: 0.98
+      afternoon: 1.0
+      evening_rush: 1.0
+      night: 0.95
+      weekend_day: 0.97
+      weekend_night: 0.9
+    tech_corridor_to_residential_dense:
+      early_morning: 0.9
+      morning_rush: 0.95
+      midday: 0.98
+      afternoon: 1.0
+      evening_rush: 1.13
+      night: 1.08
+      weekend_day: 0.97
+      weekend_night: 1.03
+    tech_corridor_to_residential_mixed:
+      early_morning: 0.9
+      morning_rush: 0.95
+      midday: 0.98
+      afternoon: 1.0
+      evening_rush: 1.1
+      night: 1.05
+      weekend_day: 0.97
+      weekend_night: 1.0
+    any_to_traditional_commercial:
+      early_morning: 1.0
+      morning_rush: 1.05
+      midday: 1.06
+      afternoon: 1.08
+      evening_rush: 1.1
+      night: 1.05
+      weekend_day: 1.05
+      weekend_night: 1.0
+    traditional_commercial_to_any:
+      early_morning: 1.0
+      morning_rush: 1.05
+      midday: 1.06
+      afternoon: 1.08
+      evening_rush: 1.1
+      night: 1.05
+      weekend_day: 1.05
+      weekend_night: 1.0
+    any_to_airport_logistics:
+      early_morning: 1.09
+      morning_rush: 1.15
+      midday: 1.08
+      afternoon: 1.1
+      evening_rush: 1.21
+      night: 1.15
+      weekend_day: 1.07
+      weekend_night: 1.09
+    airport_logistics_to_any:
+      early_morning: 1.05
+      morning_rush: 1.1
+      midday: 1.03
+      afternoon: 1.05
+      evening_rush: 1.16
+      night: 1.1
+      weekend_day: 1.02
+      weekend_night: 1.05
+    default:
+      early_morning: 0.95
+      morning_rush: 1.0
+      midday: 0.98
+      afternoon: 1.0
+      evening_rush: 1.05
+      night: 1.0
+      weekend_day: 0.97
+      weekend_night: 0.95

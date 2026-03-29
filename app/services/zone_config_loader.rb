@@ -21,7 +21,10 @@ class ZoneConfigLoader
   attr_reader :city_code, :config, :stats
 
   VEHICLE_TYPES = RoutePricing::VehicleCategories::ALL_VEHICLES
-  TIME_BANDS = %w[morning afternoon evening].freeze
+  TIME_BANDS = %w[
+    early_morning morning_rush midday afternoon evening_rush night
+    weekend_day weekend_night
+  ].freeze
   CORRIDOR_CATEGORIES = %w[
     morning_rush_corridors
     business_corridors

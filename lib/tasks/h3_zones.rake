@@ -117,7 +117,7 @@ namespace :zones do
     puts "Seeding supply density for #{r7_cells.count} R7 cells in #{city_code}..."
 
     created = 0
-    time_bands = %w[morning afternoon evening]
+    time_bands = %w[early_morning morning_rush midday afternoon evening_rush night weekend_day weekend_night]
 
     r7_cells.each do |r7_hex|
       # Get zone for this cell to determine zone-type default

@@ -60,7 +60,7 @@ module RoutePricing
           rejected = group.count { |o| o.outcome == 'rejected' }
           acceptance_rate = total > 0 ? (accepted.to_f / total * 100).round(2) : 0
 
-          supply = H3SupplyDensity.for_cell(hex, @city_code, time_band || 'morning').first
+          supply = H3SupplyDensity.for_cell(hex, @city_code, time_band || RoutePricing::Services::TimeBandResolver.current_band).first
 
           {
             h3_index_r7: hex,

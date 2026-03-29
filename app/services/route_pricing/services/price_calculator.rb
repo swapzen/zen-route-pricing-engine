@@ -40,7 +40,7 @@ module RoutePricing
 
       def calculate(distance_m:, pickup_lat: nil, pickup_lng: nil, drop_lat: nil, drop_lng: nil,
                     item_value_paise: nil, duration_in_traffic_s: nil, duration_s: nil, quote_time: Time.current,
-                    weight_kg: nil)
+                    weight_kg: nil, route_segments: nil)
         
         # Step 0: Determine time band (using city timezone for consistency)
         # IMPORTANT: Convert to city timezone to avoid UTC vs local time mismatch.
@@ -71,18 +71,22 @@ module RoutePricing
         chargeable_m = [0, distance_m - base_distance].max
 
         # Step 3: Distance component
-        # Strategy: Use pricing mode from resolver (:slab for city default, :zone_slab, :linear for overlays)
-        distance_component = case zone_pricing.pricing_mode
-        when :zone_slab
-          # Use zone-specific slabs (highest priority)
-          calculate_zone_slab_cost(zone_pricing.zone_slabs, chargeable_m) || 
-            calculate_linear_cost(chargeable_m, zone_pricing.per_km_rate_paise)
-        when :slab
-          # Use city-level slabs
-          calculate_distance_component(chargeable_m)
+        # Phase 1: Route-segment pricing (flag-gated) — uses per-zone rates for each segment
+        segment_pricing_used = false
+        distance_component = if route_segments.present? && PricingRolloutFlag.enabled?('route_segment_pricing', city_code: @config.city_code)
+          segment_pricing_used = true
+          calculate_segment_distance_component(route_segments, time_band)
         else
-          # Linear pricing for overrides
-          calculate_linear_cost(chargeable_m, zone_pricing.per_km_rate_paise)
+          # Strategy: Use pricing mode from resolver (:slab for city default, :zone_slab, :linear for overlays)
+          case zone_pricing.pricing_mode
+          when :zone_slab
+            calculate_zone_slab_cost(zone_pricing.zone_slabs, chargeable_m) ||
+              calculate_linear_cost(chargeable_m, zone_pricing.per_km_rate_paise)
+          when :slab
+            calculate_distance_component(chargeable_m)
+          else
+            calculate_linear_cost(chargeable_m, zone_pricing.per_km_rate_paise)
+          end
         end
 
         # Step 3b: Time component (per-minute pricing)
@@ -96,13 +100,16 @@ module RoutePricing
         # Step 3c: Dead-km charge (pickup distance cost)
         dead_km_charge = calculate_dead_km_charge(pickup_lat, pickup_lng, @config.city_code, time_band)
 
+        # Step 3d: Waiting/loading charge (Phase 5)
+        waiting_charge = calculate_waiting_charge(zone_pricing.zone_info)
+
         # Step 4: Raw subtotal
         # Distance band shaping applies ONLY to the distance component, not base_fare.
         # Base fare is a fixed cost (driver showing up, loading) and should not be
         # scaled by distance. The distance component is the variable cost.
         band_multiplier = calculate_distance_band_multiplier(@config.vehicle_type, distance_m)
         shaped_distance = distance_component.to_f * band_multiplier
-        raw_subtotal = base_fare + shaped_distance + time_component + dead_km_charge
+        raw_subtotal = base_fare + shaped_distance + time_component + dead_km_charge + waiting_charge
         
         # =====================================================================
         # INDUSTRY-STANDARD CHARGE COMPONENTS (Cogoport/ShipX patterns)
@@ -131,6 +138,44 @@ module RoutePricing
         raw_subtotal += fuel_surcharge_paise
         raw_subtotal += special_location_surcharge
 
+        # Check calibration mode early (needed by weather/backhaul/cancellation)
+        calibration_mode = ENV['PRICING_MODE'] == 'calibration'
+
+        # =====================================================================
+        # WEATHER MULTIPLIER (Phase 2) — flag-gated
+        # =====================================================================
+        weather_condition = nil
+        weather_mult = 1.0
+        if !calibration_mode && PricingRolloutFlag.enabled?('weather_pricing', city_code: @config.city_code)
+          weather = RoutePricing::Services::WeatherProvider.new.current_weather(city_code: @config.city_code)
+          weather_condition = weather[:condition]
+          weather_mult = (@config.weather_multipliers || {})[weather[:multiplier_key]]&.to_f || 1.0
+          raw_subtotal *= weather_mult
+        end
+
+        # =====================================================================
+        # BACKHAUL MULTIPLIER (Phase 3) — flag-gated
+        # =====================================================================
+        backhaul_mult = 1.0
+        if !calibration_mode && PricingRolloutFlag.enabled?('backhaul_pricing', city_code: @config.city_code)
+          backhaul_mult = RoutePricing::Services::BackhaulCalculator.new.calculate(
+            zone: zone_pricing.zone_info,
+            time_band: time_band,
+            city_code: @config.city_code,
+            max_premium: @config.try(:max_backhaul_premium) || 0.20
+          )
+          raw_subtotal *= backhaul_mult
+        end
+
+        # =====================================================================
+        # CANCELLATION RISK MULTIPLIER (Phase 6) — flag-gated
+        # =====================================================================
+        cancel_risk_mult = 1.0
+        if !calibration_mode && PricingRolloutFlag.enabled?('cancellation_risk_pricing', city_code: @config.city_code)
+          cancel_risk_mult = calculate_cancellation_risk_multiplier(zone_pricing.zone_info)
+          raw_subtotal *= cancel_risk_mult
+        end
+
         # =====================================================================
         # WEIGHT-BASED PRICING
         # =====================================================================
@@ -140,9 +185,6 @@ module RoutePricing
         # =====================================================================
         # 3-LAYER DYNAMIC SURGE CALCULATION
         # =====================================================================
-        # Check if we're in calibration mode (for tuning against market benchmarks)
-        calibration_mode = ENV['PRICING_MODE'] == 'calibration'
-        
         # v5.0: Routes with time-aware zone pricing bypass all multipliers
         # Time-specific base prices already encode time-of-day demand
         time_aware_bypass = [:zone_time_override, :corridor_override].include?(zone_pricing.source)
@@ -342,6 +384,8 @@ module RoutePricing
           # Dead-km charge (Phase A)
           dead_km_charge: dead_km_charge.round,
           estimated_pickup_distance_m: @last_estimated_pickup_distance_m || 0,
+          # Waiting charge (Phase 5)
+          waiting_charge: waiting_charge.round,
           distance_band_multiplier: band_multiplier,
           shaped_distance_component: shaped_distance.round,
           slab_pricing_used: @config.pricing_distance_slabs.any?,
@@ -351,6 +395,15 @@ module RoutePricing
           zone_type_multiplier: zone_type_mult.round(3),
           oda_multiplier: oda_mult.round(3),
           special_location_surcharge_paise: special_location_surcharge,
+          # Weather (Phase 2)
+          weather_condition: weather_condition,
+          weather_multiplier: weather_mult.round(3),
+          # Backhaul (Phase 3)
+          backhaul_multiplier: backhaul_mult.round(3),
+          # Cancellation risk (Phase 6)
+          cancellation_risk_multiplier: cancel_risk_mult.round(3),
+          # Route segment pricing (Phase 1)
+          segment_pricing_used: segment_pricing_used,
           # Weight-based pricing
           weight_kg: weight_kg,
           weight_multiplier: weight_multiplier.round(3),
@@ -723,6 +776,93 @@ module RoutePricing
         when 'industrial', 'outer_ring' then 4000
         else 3000
         end
+      end
+
+      # Waiting/loading charge (Phase 5)
+      # Estimates customer waiting time by zone type and charges for excess wait
+      def calculate_waiting_charge(zone_info)
+        per_min_rate = @config.try(:waiting_per_min_rate_paise).to_i
+        return 0 if per_min_rate <= 0
+
+        free_minutes = @config.try(:free_waiting_minutes) || 10
+
+        # Estimate waiting time by zone type
+        zone_type = zone_info&.dig(:pickup_type) || 'default'
+        estimated_wait_min = case zone_type
+                             when 'tech_corridor'      then 5
+                             when 'business_cbd'       then 8
+                             when 'residential_dense'  then 12
+                             when 'residential_mixed'  then 10
+                             when 'residential_growth' then 12
+                             when 'airport_logistics'  then 3
+                             when 'industrial'         then 6
+                             when 'outer_ring'         then 8
+                             else 8
+                             end
+
+        chargeable_wait = [0, estimated_wait_min - free_minutes].max
+        chargeable_wait * per_min_rate
+      end
+
+      # Cancellation risk multiplier (Phase 6)
+      # Higher cancellation zones get a small premium to absorb risk
+      def calculate_cancellation_risk_multiplier(zone_info)
+        pickup_zone_code = zone_info&.dig(:pickup_zone)
+        return 1.0 unless pickup_zone_code
+
+        zone = Zone.find_by(zone_code: pickup_zone_code, city: @config.city_code)
+        cancel_rate = zone&.cancellation_rate_pct
+        return 1.0 unless cancel_rate && cancel_rate > 0
+
+        # cancel_risk_mult = 1.0 + (cancel_rate / 100.0) * 0.5
+        # 15% cancel → 1.075x, 5% → 1.025x
+        1.0 + (cancel_rate / 100.0) * 0.5
+      rescue StandardError
+        1.0
+      end
+
+      # Route segment distance component (Phase 1)
+      # Uses per-zone rates for each segment of the route
+      def calculate_segment_distance_component(route_segments, time_band)
+        total_paise = 0
+
+        route_segments.each do |segment|
+          zone = segment[:zone] || segment['zone']
+          distance_m = (segment[:distance_m] || segment['distance_m']).to_f
+          next if distance_m <= 0
+
+          # Look up zone-specific per-km rate
+          per_km_rate = resolve_segment_zone_rate(zone, @config.vehicle_type, time_band)
+          km = distance_m / 1000.0
+          total_paise += (km * per_km_rate).round
+        end
+
+        total_paise
+      end
+
+      # Look up per-km rate for a zone segment
+      def resolve_segment_zone_rate(zone_code, vehicle_type, time_band)
+        return @config.per_km_rate_paise unless zone_code
+
+        zone = Zone.find_by(zone_code: zone_code, city: @config.city_code)
+        return @config.per_km_rate_paise unless zone
+
+        zvp = ZoneVehiclePricing.find_by(zone: zone, vehicle_type: vehicle_type, active: true)
+        return @config.per_km_rate_paise unless zvp
+
+        # Try time-band specific rate first
+        if time_band.present?
+          tp = zvp.time_pricings.detect { |t| t.active && t.time_band == time_band }
+          unless tp
+            fallback = RoutePricing::Services::TimeBandResolver.fallback_band(time_band)
+            tp = zvp.time_pricings.detect { |t| t.active && t.time_band == fallback } if fallback != time_band
+          end
+          return tp.per_km_rate_paise if tp
+        end
+
+        zvp.per_km_rate_paise
+      rescue StandardError
+        @config.per_km_rate_paise
       end
 
       # ODA Multiplier using zone-level config (preferred over hardcoded)

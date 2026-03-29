@@ -1,696 +1,3668 @@
-# =============================================================================
-# HYDERABAD PRIORITY CORRIDORS
-# =============================================================================
-# High-traffic routes requiring precise pricing to compete with Porter
-# Organized by commute pattern type
-# =============================================================================
-
-version: "1.0"
+---
+version: '1.0'
 city_code: hyd
-
-# =============================================================================
-# MORNING RUSH: Residential → Tech Corridors
-# =============================================================================
-# Pattern: Workers commuting from residential areas to IT hubs
-# Time: 7 AM - 11 AM, higher demand, pricing premium
-
 morning_rush_corridors:
-
-  # --- TO HITEC CITY / MADHAPUR ---
-  
   jntu_to_hitech:
     from_zone: jntu_kukatpally
     to_zone: hitech_madhapur
     directional: true
     distance_km: 6
-    description: "JNTU Kukatpally → HITEC City (Morning IT Commute)"
+    description: JNTU Kukatpally → HITEC City (Morning IT Commute)
     pricing:
-      morning:
-        two_wheeler:   { base: 4500, rate: 700 }
-        scooter:       { base: 6000, rate: 900 }
-        mini_3w:       { base: 9000, rate: 1400 }
-        three_wheeler: { base: 22000, rate: 3000 }
-        tata_ace:      { base: 24000, rate: 3200 }
-        pickup_8ft:    { base: 28000, rate: 3800 }
-        canter_14ft:   { base: 85000, rate: 8000 }
+      early_morning:
+        two_wheeler:
+          base: 4140
+          rate: 640
+        scooter:
+          base: 5520
+          rate: 830
+        mini_3w:
+          base: 8280
+          rate: 1290
+        three_wheeler:
+          base: 20240
+          rate: 2760
+        tata_ace:
+          base: 22080
+          rate: 2940
+        pickup_8ft:
+          base: 25760
+          rate: 3500
+        canter_14ft:
+          base: 78200
+          rate: 7360
+      morning_rush:
+        two_wheeler:
+          base: 4500
+          rate: 700
+        scooter:
+          base: 6000
+          rate: 900
+        mini_3w:
+          base: 9000
+          rate: 1400
+        three_wheeler:
+          base: 22000
+          rate: 3000
+        tata_ace:
+          base: 24000
+          rate: 3200
+        pickup_8ft:
+          base: 28000
+          rate: 3800
+        canter_14ft:
+          base: 85000
+          rate: 8000
+      midday:
+        two_wheeler:
+          base: 4560
+          rate: 710
+        scooter:
+          base: 5990
+          rate: 900
+        mini_3w:
+          base: 9500
+          rate: 1430
+        three_wheeler:
+          base: 21850
+          rate: 2950
+        tata_ace:
+          base: 23750
+          rate: 3140
+        pickup_8ft:
+          base: 28500
+          rate: 3800
+        canter_14ft:
+          base: 83600
+          rate: 8080
       afternoon:
-        two_wheeler:   { base: 4800, rate: 750 }
-        scooter:       { base: 6300, rate: 950 }
-        mini_3w:       { base: 10000, rate: 1500 }
-        three_wheeler: { base: 23000, rate: 3100 }
-        tata_ace:      { base: 25000, rate: 3300 }
-        pickup_8ft:    { base: 30000, rate: 4000 }
-        canter_14ft:   { base: 88000, rate: 8500 }
-      evening:
-        two_wheeler:   { base: 4500, rate: 700 }
-        scooter:       { base: 6000, rate: 900 }
-        mini_3w:       { base: 9000, rate: 1400 }
-        three_wheeler: { base: 32000, rate: 4000 }
-        tata_ace:      { base: 34000, rate: 4200 }
-        pickup_8ft:    { base: 40000, rate: 5000 }
-        canter_14ft:   { base: 100000, rate: 10000 }
-
+        two_wheeler:
+          base: 4800
+          rate: 750
+        scooter:
+          base: 6300
+          rate: 950
+        mini_3w:
+          base: 10000
+          rate: 1500
+        three_wheeler:
+          base: 23000
+          rate: 3100
+        tata_ace:
+          base: 25000
+          rate: 3300
+        pickup_8ft:
+          base: 30000
+          rate: 4000
+        canter_14ft:
+          base: 88000
+          rate: 8500
+      evening_rush:
+        two_wheeler:
+          base: 5040
+          rate: 780
+        scooter:
+          base: 6720
+          rate: 1010
+        mini_3w:
+          base: 10080
+          rate: 1570
+        three_wheeler:
+          base: 35840
+          rate: 4480
+        tata_ace:
+          base: 38080
+          rate: 4700
+        pickup_8ft:
+          base: 44800
+          rate: 5600
+        canter_14ft:
+          base: 112000
+          rate: 11200
+      night:
+        two_wheeler:
+          base: 4500
+          rate: 700
+        scooter:
+          base: 6000
+          rate: 900
+        mini_3w:
+          base: 9000
+          rate: 1400
+        three_wheeler:
+          base: 32000
+          rate: 4000
+        tata_ace:
+          base: 34000
+          rate: 4200
+        pickup_8ft:
+          base: 40000
+          rate: 5000
+        canter_14ft:
+          base: 100000
+          rate: 10000
+      weekend_day:
+        two_wheeler:
+          base: 4560
+          rate: 710
+        scooter:
+          base: 5990
+          rate: 900
+        mini_3w:
+          base: 9500
+          rate: 1430
+        three_wheeler:
+          base: 21850
+          rate: 2950
+        tata_ace:
+          base: 23750
+          rate: 3140
+        pickup_8ft:
+          base: 28500
+          rate: 3800
+        canter_14ft:
+          base: 83600
+          rate: 8080
+      weekend_night:
+        two_wheeler:
+          base: 4050
+          rate: 630
+        scooter:
+          base: 5400
+          rate: 810
+        mini_3w:
+          base: 8100
+          rate: 1260
+        three_wheeler:
+          base: 28800
+          rate: 3600
+        tata_ace:
+          base: 30600
+          rate: 3780
+        pickup_8ft:
+          base: 36000
+          rate: 4500
+        canter_14ft:
+          base: 90000
+          rate: 9000
   kondapur_to_hitech:
     from_zone: kondapur
     to_zone: hitech_madhapur
     directional: true
     distance_km: 4
-    description: "Kondapur → HITEC City"
+    description: Kondapur → HITEC City
     pricing:
-      morning:
-        two_wheeler:   { base: 4000, rate: 600 }
-        scooter:       { base: 5500, rate: 800 }
-        mini_3w:       { base: 8000, rate: 1200 }
-        three_wheeler: { base: 20000, rate: 2800 }
-        tata_ace:      { base: 22000, rate: 3000 }
-        pickup_8ft:    { base: 26000, rate: 3500 }
-        canter_14ft:   { base: 80000, rate: 7500 }
+      early_morning:
+        two_wheeler:
+          base: 3680
+          rate: 550
+        scooter:
+          base: 5060
+          rate: 740
+        mini_3w:
+          base: 7360
+          rate: 1100
+        three_wheeler:
+          base: 18400
+          rate: 2580
+        tata_ace:
+          base: 20240
+          rate: 2760
+        pickup_8ft:
+          base: 23920
+          rate: 3220
+        canter_14ft:
+          base: 73600
+          rate: 6900
+      morning_rush:
+        two_wheeler:
+          base: 4000
+          rate: 600
+        scooter:
+          base: 5500
+          rate: 800
+        mini_3w:
+          base: 8000
+          rate: 1200
+        three_wheeler:
+          base: 20000
+          rate: 2800
+        tata_ace:
+          base: 22000
+          rate: 3000
+        pickup_8ft:
+          base: 26000
+          rate: 3500
+        canter_14ft:
+          base: 80000
+          rate: 7500
+      midday:
+        two_wheeler:
+          base: 3990
+          rate: 620
+        scooter:
+          base: 5510
+          rate: 810
+        mini_3w:
+          base: 8080
+          rate: 1240
+        three_wheeler:
+          base: 19950
+          rate: 2760
+        tata_ace:
+          base: 21850
+          rate: 2950
+        pickup_8ft:
+          base: 25650
+          rate: 3520
+        canter_14ft:
+          base: 77900
+          rate: 7410
       afternoon:
-        two_wheeler:   { base: 4200, rate: 650 }
-        scooter:       { base: 5800, rate: 850 }
-        mini_3w:       { base: 8500, rate: 1300 }
-        three_wheeler: { base: 21000, rate: 2900 }
-        tata_ace:      { base: 23000, rate: 3100 }
-        pickup_8ft:    { base: 27000, rate: 3700 }
-        canter_14ft:   { base: 82000, rate: 7800 }
-      evening:
-        two_wheeler:   { base: 4000, rate: 600 }
-        scooter:       { base: 5500, rate: 800 }
-        mini_3w:       { base: 8000, rate: 1200 }
-        three_wheeler: { base: 30000, rate: 3800 }
-        tata_ace:      { base: 32000, rate: 4000 }
-        pickup_8ft:    { base: 38000, rate: 4800 }
-        canter_14ft:   { base: 95000, rate: 9500 }
-
+        two_wheeler:
+          base: 4200
+          rate: 650
+        scooter:
+          base: 5800
+          rate: 850
+        mini_3w:
+          base: 8500
+          rate: 1300
+        three_wheeler:
+          base: 21000
+          rate: 2900
+        tata_ace:
+          base: 23000
+          rate: 3100
+        pickup_8ft:
+          base: 27000
+          rate: 3700
+        canter_14ft:
+          base: 82000
+          rate: 7800
+      evening_rush:
+        two_wheeler:
+          base: 4480
+          rate: 670
+        scooter:
+          base: 6160
+          rate: 900
+        mini_3w:
+          base: 8960
+          rate: 1340
+        three_wheeler:
+          base: 33600
+          rate: 4260
+        tata_ace:
+          base: 35840
+          rate: 4480
+        pickup_8ft:
+          base: 42560
+          rate: 5380
+        canter_14ft:
+          base: 106400
+          rate: 10640
+      night:
+        two_wheeler:
+          base: 4000
+          rate: 600
+        scooter:
+          base: 5500
+          rate: 800
+        mini_3w:
+          base: 8000
+          rate: 1200
+        three_wheeler:
+          base: 30000
+          rate: 3800
+        tata_ace:
+          base: 32000
+          rate: 4000
+        pickup_8ft:
+          base: 38000
+          rate: 4800
+        canter_14ft:
+          base: 95000
+          rate: 9500
+      weekend_day:
+        two_wheeler:
+          base: 3990
+          rate: 620
+        scooter:
+          base: 5510
+          rate: 810
+        mini_3w:
+          base: 8080
+          rate: 1240
+        three_wheeler:
+          base: 19950
+          rate: 2760
+        tata_ace:
+          base: 21850
+          rate: 2950
+        pickup_8ft:
+          base: 25650
+          rate: 3520
+        canter_14ft:
+          base: 77900
+          rate: 7410
+      weekend_night:
+        two_wheeler:
+          base: 3600
+          rate: 540
+        scooter:
+          base: 4950
+          rate: 720
+        mini_3w:
+          base: 7200
+          rate: 1080
+        three_wheeler:
+          base: 27000
+          rate: 3420
+        tata_ace:
+          base: 28800
+          rate: 3600
+        pickup_8ft:
+          base: 34200
+          rate: 4320
+        canter_14ft:
+          base: 85500
+          rate: 8550
   jubilee_to_hitech:
     from_zone: jubilee_hills
     to_zone: hitech_madhapur
     directional: true
     distance_km: 5
-    description: "Jubilee Hills → HITEC City (Premium Residential)"
+    description: Jubilee Hills → HITEC City (Premium Residential)
     pricing:
-      morning:
-        two_wheeler:   { base: 5000, rate: 800 }
-        scooter:       { base: 6500, rate: 1000 }
-        mini_3w:       { base: 10000, rate: 1500 }
-        three_wheeler: { base: 25000, rate: 3500 }
-        tata_ace:      { base: 27000, rate: 3700 }
-        pickup_8ft:    { base: 32000, rate: 4200 }
-        canter_14ft:   { base: 95000, rate: 9000 }
+      early_morning:
+        two_wheeler:
+          base: 4600
+          rate: 740
+        scooter:
+          base: 5980
+          rate: 920
+        mini_3w:
+          base: 9200
+          rate: 1380
+        three_wheeler:
+          base: 23000
+          rate: 3220
+        tata_ace:
+          base: 24840
+          rate: 3400
+        pickup_8ft:
+          base: 29440
+          rate: 3860
+        canter_14ft:
+          base: 87400
+          rate: 8280
+      morning_rush:
+        two_wheeler:
+          base: 5000
+          rate: 800
+        scooter:
+          base: 6500
+          rate: 1000
+        mini_3w:
+          base: 10000
+          rate: 1500
+        three_wheeler:
+          base: 25000
+          rate: 3500
+        tata_ace:
+          base: 27000
+          rate: 3700
+        pickup_8ft:
+          base: 32000
+          rate: 4200
+        canter_14ft:
+          base: 95000
+          rate: 9000
+      midday:
+        two_wheeler:
+          base: 4940
+          rate: 810
+        scooter:
+          base: 6460
+          rate: 1000
+        mini_3w:
+          base: 9980
+          rate: 1520
+        three_wheeler:
+          base: 24700
+          rate: 3420
+        tata_ace:
+          base: 26600
+          rate: 3610
+        pickup_8ft:
+          base: 31350
+          rate: 4180
+        canter_14ft:
+          base: 93100
+          rate: 8840
       afternoon:
-        two_wheeler:   { base: 5200, rate: 850 }
-        scooter:       { base: 6800, rate: 1050 }
-        mini_3w:       { base: 10500, rate: 1600 }
-        three_wheeler: { base: 26000, rate: 3600 }
-        tata_ace:      { base: 28000, rate: 3800 }
-        pickup_8ft:    { base: 33000, rate: 4400 }
-        canter_14ft:   { base: 98000, rate: 9300 }
-      evening:
-        two_wheeler:   { base: 5000, rate: 800 }
-        scooter:       { base: 6500, rate: 1000 }
-        mini_3w:       { base: 10000, rate: 1500 }
-        three_wheeler: { base: 35000, rate: 4500 }
-        tata_ace:      { base: 37000, rate: 4700 }
-        pickup_8ft:    { base: 44000, rate: 5500 }
-        canter_14ft:   { base: 110000, rate: 11000 }
-
+        two_wheeler:
+          base: 5200
+          rate: 850
+        scooter:
+          base: 6800
+          rate: 1050
+        mini_3w:
+          base: 10500
+          rate: 1600
+        three_wheeler:
+          base: 26000
+          rate: 3600
+        tata_ace:
+          base: 28000
+          rate: 3800
+        pickup_8ft:
+          base: 33000
+          rate: 4400
+        canter_14ft:
+          base: 98000
+          rate: 9300
+      evening_rush:
+        two_wheeler:
+          base: 5600
+          rate: 900
+        scooter:
+          base: 7280
+          rate: 1120
+        mini_3w:
+          base: 11200
+          rate: 1680
+        three_wheeler:
+          base: 39200
+          rate: 5040
+        tata_ace:
+          base: 41440
+          rate: 5260
+        pickup_8ft:
+          base: 49280
+          rate: 6160
+        canter_14ft:
+          base: 123200
+          rate: 12320
+      night:
+        two_wheeler:
+          base: 5000
+          rate: 800
+        scooter:
+          base: 6500
+          rate: 1000
+        mini_3w:
+          base: 10000
+          rate: 1500
+        three_wheeler:
+          base: 35000
+          rate: 4500
+        tata_ace:
+          base: 37000
+          rate: 4700
+        pickup_8ft:
+          base: 44000
+          rate: 5500
+        canter_14ft:
+          base: 110000
+          rate: 11000
+      weekend_day:
+        two_wheeler:
+          base: 4940
+          rate: 810
+        scooter:
+          base: 6460
+          rate: 1000
+        mini_3w:
+          base: 9980
+          rate: 1520
+        three_wheeler:
+          base: 24700
+          rate: 3420
+        tata_ace:
+          base: 26600
+          rate: 3610
+        pickup_8ft:
+          base: 31350
+          rate: 4180
+        canter_14ft:
+          base: 93100
+          rate: 8840
+      weekend_night:
+        two_wheeler:
+          base: 4500
+          rate: 720
+        scooter:
+          base: 5850
+          rate: 900
+        mini_3w:
+          base: 9000
+          rate: 1350
+        three_wheeler:
+          base: 31500
+          rate: 4050
+        tata_ace:
+          base: 33300
+          rate: 4230
+        pickup_8ft:
+          base: 39600
+          rate: 4950
+        canter_14ft:
+          base: 99000
+          rate: 9900
   banjara_to_hitech:
     from_zone: banjara_hills
     to_zone: hitech_madhapur
     directional: true
     distance_km: 7
-    description: "Banjara Hills → HITEC City (Premium Residential)"
+    description: Banjara Hills → HITEC City (Premium Residential)
     pricing:
-      morning:
-        two_wheeler:   { base: 5200, rate: 850 }
-        scooter:       { base: 6800, rate: 1050 }
-        mini_3w:       { base: 10500, rate: 1600 }
-        three_wheeler: { base: 26000, rate: 3600 }
-        tata_ace:      { base: 28000, rate: 3800 }
-        pickup_8ft:    { base: 33000, rate: 4400 }
-        canter_14ft:   { base: 98000, rate: 9300 }
+      early_morning:
+        two_wheeler:
+          base: 4780
+          rate: 780
+        scooter:
+          base: 6260
+          rate: 970
+        mini_3w:
+          base: 9660
+          rate: 1470
+        three_wheeler:
+          base: 23920
+          rate: 3310
+        tata_ace:
+          base: 25760
+          rate: 3500
+        pickup_8ft:
+          base: 30360
+          rate: 4050
+        canter_14ft:
+          base: 90160
+          rate: 8560
+      morning_rush:
+        two_wheeler:
+          base: 5200
+          rate: 850
+        scooter:
+          base: 6800
+          rate: 1050
+        mini_3w:
+          base: 10500
+          rate: 1600
+        three_wheeler:
+          base: 26000
+          rate: 3600
+        tata_ace:
+          base: 28000
+          rate: 3800
+        pickup_8ft:
+          base: 33000
+          rate: 4400
+        canter_14ft:
+          base: 98000
+          rate: 9300
+      midday:
+        two_wheeler:
+          base: 5230
+          rate: 860
+        scooter:
+          base: 6750
+          rate: 1050
+        mini_3w:
+          base: 10450
+          rate: 1620
+        three_wheeler:
+          base: 25650
+          rate: 3520
+        tata_ace:
+          base: 27550
+          rate: 3710
+        pickup_8ft:
+          base: 32300
+          rate: 4370
+        canter_14ft:
+          base: 95000
+          rate: 9030
       afternoon:
-        two_wheeler:   { base: 5500, rate: 900 }
-        scooter:       { base: 7100, rate: 1100 }
-        mini_3w:       { base: 11000, rate: 1700 }
-        three_wheeler: { base: 27000, rate: 3700 }
-        tata_ace:      { base: 29000, rate: 3900 }
-        pickup_8ft:    { base: 34000, rate: 4600 }
-        canter_14ft:   { base: 100000, rate: 9500 }
-      evening:
-        two_wheeler:   { base: 5200, rate: 850 }
-        scooter:       { base: 6800, rate: 1050 }
-        mini_3w:       { base: 10500, rate: 1600 }
-        three_wheeler: { base: 36000, rate: 4600 }
-        tata_ace:      { base: 38000, rate: 4800 }
-        pickup_8ft:    { base: 45000, rate: 5700 }
-        canter_14ft:   { base: 115000, rate: 11500 }
-
-  # --- TO FINANCIAL DISTRICT ---
-
+        two_wheeler:
+          base: 5500
+          rate: 900
+        scooter:
+          base: 7100
+          rate: 1100
+        mini_3w:
+          base: 11000
+          rate: 1700
+        three_wheeler:
+          base: 27000
+          rate: 3700
+        tata_ace:
+          base: 29000
+          rate: 3900
+        pickup_8ft:
+          base: 34000
+          rate: 4600
+        canter_14ft:
+          base: 100000
+          rate: 9500
+      evening_rush:
+        two_wheeler:
+          base: 5820
+          rate: 950
+        scooter:
+          base: 7620
+          rate: 1180
+        mini_3w:
+          base: 11760
+          rate: 1790
+        three_wheeler:
+          base: 40320
+          rate: 5150
+        tata_ace:
+          base: 42560
+          rate: 5380
+        pickup_8ft:
+          base: 50400
+          rate: 6380
+        canter_14ft:
+          base: 128800
+          rate: 12880
+      night:
+        two_wheeler:
+          base: 5200
+          rate: 850
+        scooter:
+          base: 6800
+          rate: 1050
+        mini_3w:
+          base: 10500
+          rate: 1600
+        three_wheeler:
+          base: 36000
+          rate: 4600
+        tata_ace:
+          base: 38000
+          rate: 4800
+        pickup_8ft:
+          base: 45000
+          rate: 5700
+        canter_14ft:
+          base: 115000
+          rate: 11500
+      weekend_day:
+        two_wheeler:
+          base: 5230
+          rate: 860
+        scooter:
+          base: 6750
+          rate: 1050
+        mini_3w:
+          base: 10450
+          rate: 1620
+        three_wheeler:
+          base: 25650
+          rate: 3520
+        tata_ace:
+          base: 27550
+          rate: 3710
+        pickup_8ft:
+          base: 32300
+          rate: 4370
+        canter_14ft:
+          base: 95000
+          rate: 9030
+      weekend_night:
+        two_wheeler:
+          base: 4680
+          rate: 770
+        scooter:
+          base: 6120
+          rate: 950
+        mini_3w:
+          base: 9450
+          rate: 1440
+        three_wheeler:
+          base: 32400
+          rate: 4140
+        tata_ace:
+          base: 34200
+          rate: 4320
+        pickup_8ft:
+          base: 40500
+          rate: 5130
+        canter_14ft:
+          base: 103500
+          rate: 10350
   lb_nagar_to_fin_district:
     from_zone: lb_nagar_east
     to_zone: fin_district
     directional: true
     distance_km: 22
-    description: "LB Nagar → Financial District (Cross-City IT Commute)"
+    description: LB Nagar → Financial District (Cross-City IT Commute)
     pricing:
-      morning:
-        two_wheeler:   { base: 6000, rate: 900 }
-        scooter:       { base: 8000, rate: 1100 }
-        mini_3w:       { base: 12000, rate: 1700 }
-        three_wheeler: { base: 30000, rate: 4000 }
-        tata_ace:      { base: 32000, rate: 4200 }
-        pickup_8ft:    { base: 38000, rate: 5000 }
-        canter_14ft:   { base: 110000, rate: 10000 }
+      early_morning:
+        two_wheeler:
+          base: 5520
+          rate: 830
+        scooter:
+          base: 7360
+          rate: 1010
+        mini_3w:
+          base: 11040
+          rate: 1560
+        three_wheeler:
+          base: 27600
+          rate: 3680
+        tata_ace:
+          base: 29440
+          rate: 3860
+        pickup_8ft:
+          base: 34960
+          rate: 4600
+        canter_14ft:
+          base: 101200
+          rate: 9200
+      morning_rush:
+        two_wheeler:
+          base: 6000
+          rate: 900
+        scooter:
+          base: 8000
+          rate: 1100
+        mini_3w:
+          base: 12000
+          rate: 1700
+        three_wheeler:
+          base: 30000
+          rate: 4000
+        tata_ace:
+          base: 32000
+          rate: 4200
+        pickup_8ft:
+          base: 38000
+          rate: 5000
+        canter_14ft:
+          base: 110000
+          rate: 10000
+      midday:
+        two_wheeler:
+          base: 6180
+          rate: 900
+        scooter:
+          base: 8080
+          rate: 1090
+        mini_3w:
+          base: 12350
+          rate: 1710
+        three_wheeler:
+          base: 30400
+          rate: 3990
+        tata_ace:
+          base: 32300
+          rate: 4180
+        pickup_8ft:
+          base: 38000
+          rate: 4940
+        canter_14ft:
+          base: 109250
+          rate: 9980
       afternoon:
-        two_wheeler:   { base: 6500, rate: 950 }
-        scooter:       { base: 8500, rate: 1150 }
-        mini_3w:       { base: 13000, rate: 1800 }
-        three_wheeler: { base: 32000, rate: 4200 }
-        tata_ace:      { base: 34000, rate: 4400 }
-        pickup_8ft:    { base: 40000, rate: 5200 }
-        canter_14ft:   { base: 115000, rate: 10500 }
-      evening:
-        two_wheeler:   { base: 6000, rate: 900 }
-        scooter:       { base: 8000, rate: 1100 }
-        mini_3w:       { base: 12000, rate: 1700 }
-        three_wheeler: { base: 42000, rate: 5200 }
-        tata_ace:      { base: 44000, rate: 5400 }
-        pickup_8ft:    { base: 52000, rate: 6500 }
-        canter_14ft:   { base: 130000, rate: 12500 }
-
+        two_wheeler:
+          base: 6500
+          rate: 950
+        scooter:
+          base: 8500
+          rate: 1150
+        mini_3w:
+          base: 13000
+          rate: 1800
+        three_wheeler:
+          base: 32000
+          rate: 4200
+        tata_ace:
+          base: 34000
+          rate: 4400
+        pickup_8ft:
+          base: 40000
+          rate: 5200
+        canter_14ft:
+          base: 115000
+          rate: 10500
+      evening_rush:
+        two_wheeler:
+          base: 6720
+          rate: 1010
+        scooter:
+          base: 8960
+          rate: 1230
+        mini_3w:
+          base: 13440
+          rate: 1900
+        three_wheeler:
+          base: 47040
+          rate: 5820
+        tata_ace:
+          base: 49280
+          rate: 6050
+        pickup_8ft:
+          base: 58240
+          rate: 7280
+        canter_14ft:
+          base: 145600
+          rate: 14000
+      night:
+        two_wheeler:
+          base: 6000
+          rate: 900
+        scooter:
+          base: 8000
+          rate: 1100
+        mini_3w:
+          base: 12000
+          rate: 1700
+        three_wheeler:
+          base: 42000
+          rate: 5200
+        tata_ace:
+          base: 44000
+          rate: 5400
+        pickup_8ft:
+          base: 52000
+          rate: 6500
+        canter_14ft:
+          base: 130000
+          rate: 12500
+      weekend_day:
+        two_wheeler:
+          base: 6180
+          rate: 900
+        scooter:
+          base: 8080
+          rate: 1090
+        mini_3w:
+          base: 12350
+          rate: 1710
+        three_wheeler:
+          base: 30400
+          rate: 3990
+        tata_ace:
+          base: 32300
+          rate: 4180
+        pickup_8ft:
+          base: 38000
+          rate: 4940
+        canter_14ft:
+          base: 109250
+          rate: 9980
+      weekend_night:
+        two_wheeler:
+          base: 5400
+          rate: 810
+        scooter:
+          base: 7200
+          rate: 990
+        mini_3w:
+          base: 10800
+          rate: 1530
+        three_wheeler:
+          base: 37800
+          rate: 4680
+        tata_ace:
+          base: 39600
+          rate: 4860
+        pickup_8ft:
+          base: 46800
+          rate: 5850
+        canter_14ft:
+          base: 117000
+          rate: 11250
   uppal_to_fin_district:
     from_zone: uppal_corridor
     to_zone: fin_district
     directional: true
     distance_km: 25
-    description: "Uppal → Financial District"
+    description: Uppal → Financial District
     pricing:
-      morning:
-        two_wheeler:   { base: 6500, rate: 950 }
-        scooter:       { base: 8500, rate: 1150 }
-        mini_3w:       { base: 13000, rate: 1800 }
-        three_wheeler: { base: 32000, rate: 4200 }
-        tata_ace:      { base: 34000, rate: 4400 }
-        pickup_8ft:    { base: 40000, rate: 5200 }
-        canter_14ft:   { base: 115000, rate: 10500 }
+      early_morning:
+        two_wheeler:
+          base: 5980
+          rate: 870
+        scooter:
+          base: 7820
+          rate: 1060
+        mini_3w:
+          base: 11960
+          rate: 1660
+        three_wheeler:
+          base: 29440
+          rate: 3860
+        tata_ace:
+          base: 31280
+          rate: 4050
+        pickup_8ft:
+          base: 36800
+          rate: 4780
+        canter_14ft:
+          base: 105800
+          rate: 9660
+      morning_rush:
+        two_wheeler:
+          base: 6500
+          rate: 950
+        scooter:
+          base: 8500
+          rate: 1150
+        mini_3w:
+          base: 13000
+          rate: 1800
+        three_wheeler:
+          base: 32000
+          rate: 4200
+        tata_ace:
+          base: 34000
+          rate: 4400
+        pickup_8ft:
+          base: 40000
+          rate: 5200
+        canter_14ft:
+          base: 115000
+          rate: 10500
+      midday:
+        two_wheeler:
+          base: 6650
+          rate: 950
+        scooter:
+          base: 8550
+          rate: 1140
+        mini_3w:
+          base: 13300
+          rate: 1810
+        three_wheeler:
+          base: 32300
+          rate: 4180
+        tata_ace:
+          base: 34200
+          rate: 4370
+        pickup_8ft:
+          base: 39900
+          rate: 5130
+        canter_14ft:
+          base: 114000
+          rate: 10450
       afternoon:
-        two_wheeler:   { base: 7000, rate: 1000 }
-        scooter:       { base: 9000, rate: 1200 }
-        mini_3w:       { base: 14000, rate: 1900 }
-        three_wheeler: { base: 34000, rate: 4400 }
-        tata_ace:      { base: 36000, rate: 4600 }
-        pickup_8ft:    { base: 42000, rate: 5400 }
-        canter_14ft:   { base: 120000, rate: 11000 }
-      evening:
-        two_wheeler:   { base: 6500, rate: 950 }
-        scooter:       { base: 8500, rate: 1150 }
-        mini_3w:       { base: 13000, rate: 1800 }
-        three_wheeler: { base: 44000, rate: 5400 }
-        tata_ace:      { base: 46000, rate: 5600 }
-        pickup_8ft:    { base: 54000, rate: 6800 }
-        canter_14ft:   { base: 135000, rate: 13000 }
-
+        two_wheeler:
+          base: 7000
+          rate: 1000
+        scooter:
+          base: 9000
+          rate: 1200
+        mini_3w:
+          base: 14000
+          rate: 1900
+        three_wheeler:
+          base: 34000
+          rate: 4400
+        tata_ace:
+          base: 36000
+          rate: 4600
+        pickup_8ft:
+          base: 42000
+          rate: 5400
+        canter_14ft:
+          base: 120000
+          rate: 11000
+      evening_rush:
+        two_wheeler:
+          base: 7280
+          rate: 1060
+        scooter:
+          base: 9520
+          rate: 1290
+        mini_3w:
+          base: 14560
+          rate: 2020
+        three_wheeler:
+          base: 49280
+          rate: 6050
+        tata_ace:
+          base: 51520
+          rate: 6270
+        pickup_8ft:
+          base: 60480
+          rate: 7620
+        canter_14ft:
+          base: 151200
+          rate: 14560
+      night:
+        two_wheeler:
+          base: 6500
+          rate: 950
+        scooter:
+          base: 8500
+          rate: 1150
+        mini_3w:
+          base: 13000
+          rate: 1800
+        three_wheeler:
+          base: 44000
+          rate: 5400
+        tata_ace:
+          base: 46000
+          rate: 5600
+        pickup_8ft:
+          base: 54000
+          rate: 6800
+        canter_14ft:
+          base: 135000
+          rate: 13000
+      weekend_day:
+        two_wheeler:
+          base: 6650
+          rate: 950
+        scooter:
+          base: 8550
+          rate: 1140
+        mini_3w:
+          base: 13300
+          rate: 1810
+        three_wheeler:
+          base: 32300
+          rate: 4180
+        tata_ace:
+          base: 34200
+          rate: 4370
+        pickup_8ft:
+          base: 39900
+          rate: 5130
+        canter_14ft:
+          base: 114000
+          rate: 10450
+      weekend_night:
+        two_wheeler:
+          base: 5850
+          rate: 860
+        scooter:
+          base: 7650
+          rate: 1040
+        mini_3w:
+          base: 11700
+          rate: 1620
+        three_wheeler:
+          base: 39600
+          rate: 4860
+        tata_ace:
+          base: 41400
+          rate: 5040
+        pickup_8ft:
+          base: 48600
+          rate: 6120
+        canter_14ft:
+          base: 121500
+          rate: 11700
   secunderabad_to_hitech:
     from_zone: secunderabad_cbd
     to_zone: hitech_madhapur
     directional: true
     distance_km: 18
-    description: "Secunderabad → HITEC City (Railway Hub to Tech)"
+    description: Secunderabad → HITEC City (Railway Hub to Tech)
     pricing:
-      morning:
-        two_wheeler:   { base: 5500, rate: 850 }
-        scooter:       { base: 7200, rate: 1050 }
-        mini_3w:       { base: 11000, rate: 1600 }
-        three_wheeler: { base: 28000, rate: 3800 }
-        tata_ace:      { base: 30000, rate: 4000 }
-        pickup_8ft:    { base: 35000, rate: 4700 }
-        canter_14ft:   { base: 100000, rate: 9500 }
+      early_morning:
+        two_wheeler:
+          base: 5060
+          rate: 780
+        scooter:
+          base: 6620
+          rate: 970
+        mini_3w:
+          base: 10120
+          rate: 1470
+        three_wheeler:
+          base: 25760
+          rate: 3500
+        tata_ace:
+          base: 27600
+          rate: 3680
+        pickup_8ft:
+          base: 32200
+          rate: 4320
+        canter_14ft:
+          base: 92000
+          rate: 8740
+      morning_rush:
+        two_wheeler:
+          base: 5500
+          rate: 850
+        scooter:
+          base: 7200
+          rate: 1050
+        mini_3w:
+          base: 11000
+          rate: 1600
+        three_wheeler:
+          base: 28000
+          rate: 3800
+        tata_ace:
+          base: 30000
+          rate: 4000
+        pickup_8ft:
+          base: 35000
+          rate: 4700
+        canter_14ft:
+          base: 100000
+          rate: 9500
+      midday:
+        two_wheeler:
+          base: 5510
+          rate: 860
+        scooter:
+          base: 7130
+          rate: 1050
+        mini_3w:
+          base: 10930
+          rate: 1620
+        three_wheeler:
+          base: 27550
+          rate: 3710
+        tata_ace:
+          base: 29450
+          rate: 3900
+        pickup_8ft:
+          base: 34200
+          rate: 4660
+        canter_14ft:
+          base: 97850
+          rate: 9310
       afternoon:
-        two_wheeler:   { base: 5800, rate: 900 }
-        scooter:       { base: 7500, rate: 1100 }
-        mini_3w:       { base: 11500, rate: 1700 }
-        three_wheeler: { base: 29000, rate: 3900 }
-        tata_ace:      { base: 31000, rate: 4100 }
-        pickup_8ft:    { base: 36000, rate: 4900 }
-        canter_14ft:   { base: 103000, rate: 9800 }
-      evening:
-        two_wheeler:   { base: 5500, rate: 850 }
-        scooter:       { base: 7200, rate: 1050 }
-        mini_3w:       { base: 11000, rate: 1600 }
-        three_wheeler: { base: 38000, rate: 4900 }
-        tata_ace:      { base: 40000, rate: 5100 }
-        pickup_8ft:    { base: 47000, rate: 6000 }
-        canter_14ft:   { base: 120000, rate: 12000 }
-
-# =============================================================================
-# BUSINESS DISTRICT CORRIDORS
-# =============================================================================
-# Inter-CBD and Tech-to-CBD routes
-
+        two_wheeler:
+          base: 5800
+          rate: 900
+        scooter:
+          base: 7500
+          rate: 1100
+        mini_3w:
+          base: 11500
+          rate: 1700
+        three_wheeler:
+          base: 29000
+          rate: 3900
+        tata_ace:
+          base: 31000
+          rate: 4100
+        pickup_8ft:
+          base: 36000
+          rate: 4900
+        canter_14ft:
+          base: 103000
+          rate: 9800
+      evening_rush:
+        two_wheeler:
+          base: 6160
+          rate: 950
+        scooter:
+          base: 8060
+          rate: 1180
+        mini_3w:
+          base: 12320
+          rate: 1790
+        three_wheeler:
+          base: 42560
+          rate: 5490
+        tata_ace:
+          base: 44800
+          rate: 5710
+        pickup_8ft:
+          base: 52640
+          rate: 6720
+        canter_14ft:
+          base: 134400
+          rate: 13440
+      night:
+        two_wheeler:
+          base: 5500
+          rate: 850
+        scooter:
+          base: 7200
+          rate: 1050
+        mini_3w:
+          base: 11000
+          rate: 1600
+        three_wheeler:
+          base: 38000
+          rate: 4900
+        tata_ace:
+          base: 40000
+          rate: 5100
+        pickup_8ft:
+          base: 47000
+          rate: 6000
+        canter_14ft:
+          base: 120000
+          rate: 12000
+      weekend_day:
+        two_wheeler:
+          base: 5510
+          rate: 860
+        scooter:
+          base: 7130
+          rate: 1050
+        mini_3w:
+          base: 10930
+          rate: 1620
+        three_wheeler:
+          base: 27550
+          rate: 3710
+        tata_ace:
+          base: 29450
+          rate: 3900
+        pickup_8ft:
+          base: 34200
+          rate: 4660
+        canter_14ft:
+          base: 97850
+          rate: 9310
+      weekend_night:
+        two_wheeler:
+          base: 4950
+          rate: 770
+        scooter:
+          base: 6480
+          rate: 950
+        mini_3w:
+          base: 9900
+          rate: 1440
+        three_wheeler:
+          base: 34200
+          rate: 4410
+        tata_ace:
+          base: 36000
+          rate: 4590
+        pickup_8ft:
+          base: 42300
+          rate: 5400
+        canter_14ft:
+          base: 108000
+          rate: 10800
 business_corridors:
-
   hitech_to_ameerpet:
     from_zone: hitech_madhapur
     to_zone: ameerpet_core
     directional: true
     distance_km: 12
-    description: "HITEC City → Ameerpet CBD"
+    description: HITEC City → Ameerpet CBD
     pricing:
-      morning:
-        two_wheeler:   { base: 4800, rate: 650 }
-        scooter:       { base: 6200, rate: 850 }
-        mini_3w:       { base: 9500, rate: 1300 }
-        three_wheeler: { base: 24000, rate: 3200 }
-        tata_ace:      { base: 26000, rate: 3400 }
-        pickup_8ft:    { base: 30000, rate: 4000 }
-        canter_14ft:   { base: 90000, rate: 8500 }
+      early_morning:
+        two_wheeler:
+          base: 4420
+          rate: 600
+        scooter:
+          base: 5700
+          rate: 780
+        mini_3w:
+          base: 8740
+          rate: 1200
+        three_wheeler:
+          base: 22080
+          rate: 2940
+        tata_ace:
+          base: 23920
+          rate: 3130
+        pickup_8ft:
+          base: 27600
+          rate: 3680
+        canter_14ft:
+          base: 82800
+          rate: 7820
+      morning_rush:
+        two_wheeler:
+          base: 4800
+          rate: 650
+        scooter:
+          base: 6200
+          rate: 850
+        mini_3w:
+          base: 9500
+          rate: 1300
+        three_wheeler:
+          base: 24000
+          rate: 3200
+        tata_ace:
+          base: 26000
+          rate: 3400
+        pickup_8ft:
+          base: 30000
+          rate: 4000
+        canter_14ft:
+          base: 90000
+          rate: 8500
+      midday:
+        two_wheeler:
+          base: 4850
+          rate: 670
+        scooter:
+          base: 6180
+          rate: 860
+        mini_3w:
+          base: 9500
+          rate: 1330
+        three_wheeler:
+          base: 23750
+          rate: 3140
+        tata_ace:
+          base: 25650
+          rate: 3330
+        pickup_8ft:
+          base: 29450
+          rate: 3990
+        canter_14ft:
+          base: 88350
+          rate: 8360
       afternoon:
-        two_wheeler:   { base: 5100, rate: 700 }
-        scooter:       { base: 6500, rate: 900 }
-        mini_3w:       { base: 10000, rate: 1400 }
-        three_wheeler: { base: 25000, rate: 3300 }
-        tata_ace:      { base: 27000, rate: 3500 }
-        pickup_8ft:    { base: 31000, rate: 4200 }
-        canter_14ft:   { base: 93000, rate: 8800 }
-      evening:
-        two_wheeler:   { base: 4800, rate: 650 }
-        scooter:       { base: 6200, rate: 850 }
-        mini_3w:       { base: 9500, rate: 1300 }
-        three_wheeler: { base: 34000, rate: 4200 }
-        tata_ace:      { base: 36000, rate: 4400 }
-        pickup_8ft:    { base: 42000, rate: 5200 }
-        canter_14ft:   { base: 108000, rate: 10500 }
-
+        two_wheeler:
+          base: 5100
+          rate: 700
+        scooter:
+          base: 6500
+          rate: 900
+        mini_3w:
+          base: 10000
+          rate: 1400
+        three_wheeler:
+          base: 25000
+          rate: 3300
+        tata_ace:
+          base: 27000
+          rate: 3500
+        pickup_8ft:
+          base: 31000
+          rate: 4200
+        canter_14ft:
+          base: 93000
+          rate: 8800
+      evening_rush:
+        two_wheeler:
+          base: 5380
+          rate: 730
+        scooter:
+          base: 6940
+          rate: 950
+        mini_3w:
+          base: 10640
+          rate: 1460
+        three_wheeler:
+          base: 38080
+          rate: 4700
+        tata_ace:
+          base: 40320
+          rate: 4930
+        pickup_8ft:
+          base: 47040
+          rate: 5820
+        canter_14ft:
+          base: 120960
+          rate: 11760
+      night:
+        two_wheeler:
+          base: 4800
+          rate: 650
+        scooter:
+          base: 6200
+          rate: 850
+        mini_3w:
+          base: 9500
+          rate: 1300
+        three_wheeler:
+          base: 34000
+          rate: 4200
+        tata_ace:
+          base: 36000
+          rate: 4400
+        pickup_8ft:
+          base: 42000
+          rate: 5200
+        canter_14ft:
+          base: 108000
+          rate: 10500
+      weekend_day:
+        two_wheeler:
+          base: 4850
+          rate: 670
+        scooter:
+          base: 6180
+          rate: 860
+        mini_3w:
+          base: 9500
+          rate: 1330
+        three_wheeler:
+          base: 23750
+          rate: 3140
+        tata_ace:
+          base: 25650
+          rate: 3330
+        pickup_8ft:
+          base: 29450
+          rate: 3990
+        canter_14ft:
+          base: 88350
+          rate: 8360
+      weekend_night:
+        two_wheeler:
+          base: 4320
+          rate: 590
+        scooter:
+          base: 5580
+          rate: 770
+        mini_3w:
+          base: 8550
+          rate: 1170
+        three_wheeler:
+          base: 30600
+          rate: 3780
+        tata_ace:
+          base: 32400
+          rate: 3960
+        pickup_8ft:
+          base: 37800
+          rate: 4680
+        canter_14ft:
+          base: 97200
+          rate: 9450
   secunderabad_to_ameerpet:
     from_zone: secunderabad_cbd
     to_zone: ameerpet_core
     directional: false
     distance_km: 8
-    description: "Secunderabad ↔ Ameerpet (Twin City Link)"
+    description: Secunderabad ↔ Ameerpet (Twin City Link)
     pricing:
-      morning:
-        two_wheeler:   { base: 4200, rate: 600 }
-        scooter:       { base: 5500, rate: 800 }
-        mini_3w:       { base: 8500, rate: 1200 }
-        three_wheeler: { base: 21000, rate: 2900 }
-        tata_ace:      { base: 23000, rate: 3100 }
-        pickup_8ft:    { base: 27000, rate: 3600 }
-        canter_14ft:   { base: 82000, rate: 7800 }
+      early_morning:
+        two_wheeler:
+          base: 3860
+          rate: 550
+        scooter:
+          base: 5060
+          rate: 740
+        mini_3w:
+          base: 7820
+          rate: 1100
+        three_wheeler:
+          base: 19320
+          rate: 2670
+        tata_ace:
+          base: 21160
+          rate: 2850
+        pickup_8ft:
+          base: 24840
+          rate: 3310
+        canter_14ft:
+          base: 75440
+          rate: 7180
+      morning_rush:
+        two_wheeler:
+          base: 4200
+          rate: 600
+        scooter:
+          base: 5500
+          rate: 800
+        mini_3w:
+          base: 8500
+          rate: 1200
+        three_wheeler:
+          base: 21000
+          rate: 2900
+        tata_ace:
+          base: 23000
+          rate: 3100
+        pickup_8ft:
+          base: 27000
+          rate: 3600
+        canter_14ft:
+          base: 82000
+          rate: 7800
+      midday:
+        two_wheeler:
+          base: 4280
+          rate: 620
+        scooter:
+          base: 5510
+          rate: 810
+        mini_3w:
+          base: 8550
+          rate: 1240
+        three_wheeler:
+          base: 20900
+          rate: 2850
+        tata_ace:
+          base: 22800
+          rate: 3040
+        pickup_8ft:
+          base: 26600
+          rate: 3610
+        canter_14ft:
+          base: 80750
+          rate: 7600
       afternoon:
-        two_wheeler:   { base: 4500, rate: 650 }
-        scooter:       { base: 5800, rate: 850 }
-        mini_3w:       { base: 9000, rate: 1300 }
-        three_wheeler: { base: 22000, rate: 3000 }
-        tata_ace:      { base: 24000, rate: 3200 }
-        pickup_8ft:    { base: 28000, rate: 3800 }
-        canter_14ft:   { base: 85000, rate: 8000 }
-      evening:
-        two_wheeler:   { base: 4200, rate: 600 }
-        scooter:       { base: 5500, rate: 800 }
-        mini_3w:       { base: 8500, rate: 1200 }
-        three_wheeler: { base: 31000, rate: 3900 }
-        tata_ace:      { base: 33000, rate: 4100 }
-        pickup_8ft:    { base: 38000, rate: 4800 }
-        canter_14ft:   { base: 100000, rate: 9800 }
-
-# =============================================================================
-# OLD CITY CORRIDORS (Congestion Premium)
-# =============================================================================
-# Routes to/from Charminar area - narrow roads, congestion
-
+        two_wheeler:
+          base: 4500
+          rate: 650
+        scooter:
+          base: 5800
+          rate: 850
+        mini_3w:
+          base: 9000
+          rate: 1300
+        three_wheeler:
+          base: 22000
+          rate: 3000
+        tata_ace:
+          base: 24000
+          rate: 3200
+        pickup_8ft:
+          base: 28000
+          rate: 3800
+        canter_14ft:
+          base: 85000
+          rate: 8000
+      evening_rush:
+        two_wheeler:
+          base: 4700
+          rate: 670
+        scooter:
+          base: 6160
+          rate: 900
+        mini_3w:
+          base: 9520
+          rate: 1340
+        three_wheeler:
+          base: 34720
+          rate: 4370
+        tata_ace:
+          base: 36960
+          rate: 4590
+        pickup_8ft:
+          base: 42560
+          rate: 5380
+        canter_14ft:
+          base: 112000
+          rate: 10980
+      night:
+        two_wheeler:
+          base: 4200
+          rate: 600
+        scooter:
+          base: 5500
+          rate: 800
+        mini_3w:
+          base: 8500
+          rate: 1200
+        three_wheeler:
+          base: 31000
+          rate: 3900
+        tata_ace:
+          base: 33000
+          rate: 4100
+        pickup_8ft:
+          base: 38000
+          rate: 4800
+        canter_14ft:
+          base: 100000
+          rate: 9800
+      weekend_day:
+        two_wheeler:
+          base: 4280
+          rate: 620
+        scooter:
+          base: 5510
+          rate: 810
+        mini_3w:
+          base: 8550
+          rate: 1240
+        three_wheeler:
+          base: 20900
+          rate: 2850
+        tata_ace:
+          base: 22800
+          rate: 3040
+        pickup_8ft:
+          base: 26600
+          rate: 3610
+        canter_14ft:
+          base: 80750
+          rate: 7600
+      weekend_night:
+        two_wheeler:
+          base: 3780
+          rate: 540
+        scooter:
+          base: 4950
+          rate: 720
+        mini_3w:
+          base: 7650
+          rate: 1080
+        three_wheeler:
+          base: 27900
+          rate: 3510
+        tata_ace:
+          base: 29700
+          rate: 3690
+        pickup_8ft:
+          base: 34200
+          rate: 4320
+        canter_14ft:
+          base: 90000
+          rate: 8820
 old_city_corridors:
-
   lb_nagar_to_tcs_synergy:
     from_zone: lb_nagar_east
     to_zone: tcs_synergy
     directional: true
     distance_km: 10
-    description: "LB Nagar → TCS Synergy Park (Route 3, actual ~10km)"
+    description: LB Nagar → TCS Synergy Park (Route 3, actual ~10km)
     pricing:
-      morning:
-        two_wheeler:   { base: 7500, rate: 2200 }
-        scooter:       { base: 10000, rate: 2700 }
-        mini_3w:       { base: 11000, rate: 3200 }
-        three_wheeler: { base: 28000, rate: 6700 }
-        tata_ace:      { base: 30000, rate: 7100 }
-        pickup_8ft:    { base: 33000, rate: 7600 }
-        canter_14ft:   { base: 95000, rate: 18500 }
+      early_morning:
+        two_wheeler:
+          base: 6900
+          rate: 2020
+        scooter:
+          base: 9200
+          rate: 2480
+        mini_3w:
+          base: 10120
+          rate: 2940
+        three_wheeler:
+          base: 25760
+          rate: 6160
+        tata_ace:
+          base: 27600
+          rate: 6530
+        pickup_8ft:
+          base: 30360
+          rate: 6990
+        canter_14ft:
+          base: 87400
+          rate: 17020
+      morning_rush:
+        two_wheeler:
+          base: 7500
+          rate: 2200
+        scooter:
+          base: 10000
+          rate: 2700
+        mini_3w:
+          base: 11000
+          rate: 3200
+        three_wheeler:
+          base: 28000
+          rate: 6700
+        tata_ace:
+          base: 30000
+          rate: 7100
+        pickup_8ft:
+          base: 33000
+          rate: 7600
+        canter_14ft:
+          base: 95000
+          rate: 18500
+      midday:
+        two_wheeler:
+          base: 7600
+          rate: 2190
+        scooter:
+          base: 9980
+          rate: 2660
+        mini_3w:
+          base: 10930
+          rate: 3140
+        three_wheeler:
+          base: 28500
+          rate: 6650
+        tata_ace:
+          base: 29450
+          rate: 7030
+        pickup_8ft:
+          base: 36100
+          rate: 7790
+        canter_14ft:
+          base: 90250
+          rate: 17580
       afternoon:
-        two_wheeler:   { base: 8000, rate: 2300 }
-        scooter:       { base: 10500, rate: 2800 }
-        mini_3w:       { base: 11500, rate: 3300 }
-        three_wheeler: { base: 30000, rate: 7000 }
-        tata_ace:      { base: 31000, rate: 7400 }
-        pickup_8ft:    { base: 38000, rate: 8200 }
-        canter_14ft:   { base: 95000, rate: 18500 }
-      evening:
-        two_wheeler:   { base: 7500, rate: 2200 }
-        scooter:       { base: 10000, rate: 2700 }
-        mini_3w:       { base: 11000, rate: 3200 }
-        three_wheeler: { base: 38000, rate: 8500 }
-        tata_ace:      { base: 40000, rate: 8900 }
-        pickup_8ft:    { base: 46000, rate: 9500 }
-        canter_14ft:   { base: 115000, rate: 20000 }
-
+        two_wheeler:
+          base: 8000
+          rate: 2300
+        scooter:
+          base: 10500
+          rate: 2800
+        mini_3w:
+          base: 11500
+          rate: 3300
+        three_wheeler:
+          base: 30000
+          rate: 7000
+        tata_ace:
+          base: 31000
+          rate: 7400
+        pickup_8ft:
+          base: 38000
+          rate: 8200
+        canter_14ft:
+          base: 95000
+          rate: 18500
+      evening_rush:
+        two_wheeler:
+          base: 8400
+          rate: 2460
+        scooter:
+          base: 11200
+          rate: 3020
+        mini_3w:
+          base: 12320
+          rate: 3580
+        three_wheeler:
+          base: 42560
+          rate: 9520
+        tata_ace:
+          base: 44800
+          rate: 9970
+        pickup_8ft:
+          base: 51520
+          rate: 10640
+        canter_14ft:
+          base: 128800
+          rate: 22400
+      night:
+        two_wheeler:
+          base: 7500
+          rate: 2200
+        scooter:
+          base: 10000
+          rate: 2700
+        mini_3w:
+          base: 11000
+          rate: 3200
+        three_wheeler:
+          base: 38000
+          rate: 8500
+        tata_ace:
+          base: 40000
+          rate: 8900
+        pickup_8ft:
+          base: 46000
+          rate: 9500
+        canter_14ft:
+          base: 115000
+          rate: 20000
+      weekend_day:
+        two_wheeler:
+          base: 7600
+          rate: 2190
+        scooter:
+          base: 9980
+          rate: 2660
+        mini_3w:
+          base: 10930
+          rate: 3140
+        three_wheeler:
+          base: 28500
+          rate: 6650
+        tata_ace:
+          base: 29450
+          rate: 7030
+        pickup_8ft:
+          base: 36100
+          rate: 7790
+        canter_14ft:
+          base: 90250
+          rate: 17580
+      weekend_night:
+        two_wheeler:
+          base: 6750
+          rate: 1980
+        scooter:
+          base: 9000
+          rate: 2430
+        mini_3w:
+          base: 9900
+          rate: 2880
+        three_wheeler:
+          base: 34200
+          rate: 7650
+        tata_ace:
+          base: 36000
+          rate: 8010
+        pickup_8ft:
+          base: 41400
+          rate: 8550
+        canter_14ft:
+          base: 103500
+          rate: 18000
   hitech_to_old_city:
     from_zone: hitech_madhapur
     to_zone: old_city
     directional: true
     distance_km: 20
-    description: "HITEC City → Charminar"
+    description: HITEC City → Charminar
     pricing:
-      morning:
-        two_wheeler:   { base: 5500, rate: 800 }
-        scooter:       { base: 7200, rate: 1000 }
-        mini_3w:       { base: 11000, rate: 1500 }
-        three_wheeler: { base: 28000, rate: 3600 }
-        tata_ace:      { base: 30000, rate: 3800 }
-        pickup_8ft:    { base: 35000, rate: 4500 }
-        canter_14ft:   { base: 100000, rate: 9000 }
+      early_morning:
+        two_wheeler:
+          base: 5060
+          rate: 740
+        scooter:
+          base: 6620
+          rate: 920
+        mini_3w:
+          base: 10120
+          rate: 1380
+        three_wheeler:
+          base: 25760
+          rate: 3310
+        tata_ace:
+          base: 27600
+          rate: 3500
+        pickup_8ft:
+          base: 32200
+          rate: 4140
+        canter_14ft:
+          base: 92000
+          rate: 8280
+      morning_rush:
+        two_wheeler:
+          base: 5500
+          rate: 800
+        scooter:
+          base: 7200
+          rate: 1000
+        mini_3w:
+          base: 11000
+          rate: 1500
+        three_wheeler:
+          base: 28000
+          rate: 3600
+        tata_ace:
+          base: 30000
+          rate: 3800
+        pickup_8ft:
+          base: 35000
+          rate: 4500
+        canter_14ft:
+          base: 100000
+          rate: 9000
+      midday:
+        two_wheeler:
+          base: 5700
+          rate: 810
+        scooter:
+          base: 7320
+          rate: 1000
+        mini_3w:
+          base: 11400
+          rate: 1520
+        three_wheeler:
+          base: 28500
+          rate: 3610
+        tata_ace:
+          base: 30400
+          rate: 3800
+        pickup_8ft:
+          base: 35150
+          rate: 4470
+        canter_14ft:
+          base: 99750
+          rate: 9030
       afternoon:
-        two_wheeler:   { base: 6000, rate: 850 }
-        scooter:       { base: 7700, rate: 1050 }
-        mini_3w:       { base: 12000, rate: 1600 }
-        three_wheeler: { base: 30000, rate: 3800 }
-        tata_ace:      { base: 32000, rate: 4000 }
-        pickup_8ft:    { base: 37000, rate: 4700 }
-        canter_14ft:   { base: 105000, rate: 9500 }
-      evening:
-        two_wheeler:   { base: 5500, rate: 800 }
-        scooter:       { base: 7200, rate: 1000 }
-        mini_3w:       { base: 11000, rate: 1500 }
-        three_wheeler: { base: 38000, rate: 4600 }
-        tata_ace:      { base: 40000, rate: 4800 }
-        pickup_8ft:    { base: 47000, rate: 5700 }
-        canter_14ft:   { base: 120000, rate: 11500 }
-
+        two_wheeler:
+          base: 6000
+          rate: 850
+        scooter:
+          base: 7700
+          rate: 1050
+        mini_3w:
+          base: 12000
+          rate: 1600
+        three_wheeler:
+          base: 30000
+          rate: 3800
+        tata_ace:
+          base: 32000
+          rate: 4000
+        pickup_8ft:
+          base: 37000
+          rate: 4700
+        canter_14ft:
+          base: 105000
+          rate: 9500
+      evening_rush:
+        two_wheeler:
+          base: 6160
+          rate: 900
+        scooter:
+          base: 8060
+          rate: 1120
+        mini_3w:
+          base: 12320
+          rate: 1680
+        three_wheeler:
+          base: 42560
+          rate: 5150
+        tata_ace:
+          base: 44800
+          rate: 5380
+        pickup_8ft:
+          base: 52640
+          rate: 6380
+        canter_14ft:
+          base: 134400
+          rate: 12880
+      night:
+        two_wheeler:
+          base: 5500
+          rate: 800
+        scooter:
+          base: 7200
+          rate: 1000
+        mini_3w:
+          base: 11000
+          rate: 1500
+        three_wheeler:
+          base: 38000
+          rate: 4600
+        tata_ace:
+          base: 40000
+          rate: 4800
+        pickup_8ft:
+          base: 47000
+          rate: 5700
+        canter_14ft:
+          base: 120000
+          rate: 11500
+      weekend_day:
+        two_wheeler:
+          base: 5700
+          rate: 810
+        scooter:
+          base: 7320
+          rate: 1000
+        mini_3w:
+          base: 11400
+          rate: 1520
+        three_wheeler:
+          base: 28500
+          rate: 3610
+        tata_ace:
+          base: 30400
+          rate: 3800
+        pickup_8ft:
+          base: 35150
+          rate: 4470
+        canter_14ft:
+          base: 99750
+          rate: 9030
+      weekend_night:
+        two_wheeler:
+          base: 4950
+          rate: 720
+        scooter:
+          base: 6480
+          rate: 900
+        mini_3w:
+          base: 9900
+          rate: 1350
+        three_wheeler:
+          base: 34200
+          rate: 4140
+        tata_ace:
+          base: 36000
+          rate: 4320
+        pickup_8ft:
+          base: 42300
+          rate: 5130
+        canter_14ft:
+          base: 108000
+          rate: 10350
   ameerpet_to_old_city:
     from_zone: ameerpet_core
     to_zone: old_city
     directional: true
     distance_km: 10
-    description: "Ameerpet → Charminar"
+    description: Ameerpet → Charminar
     pricing:
-      morning:
-        two_wheeler:   { base: 4500, rate: 650 }
-        scooter:       { base: 6000, rate: 850 }
-        mini_3w:       { base: 9000, rate: 1300 }
-        three_wheeler: { base: 23000, rate: 3100 }
-        tata_ace:      { base: 25000, rate: 3300 }
-        pickup_8ft:    { base: 29000, rate: 3900 }
-        canter_14ft:   { base: 88000, rate: 8200 }
+      early_morning:
+        two_wheeler:
+          base: 4140
+          rate: 600
+        scooter:
+          base: 5520
+          rate: 780
+        mini_3w:
+          base: 8280
+          rate: 1200
+        three_wheeler:
+          base: 21160
+          rate: 2850
+        tata_ace:
+          base: 23000
+          rate: 3040
+        pickup_8ft:
+          base: 26680
+          rate: 3590
+        canter_14ft:
+          base: 80960
+          rate: 7540
+      morning_rush:
+        two_wheeler:
+          base: 4500
+          rate: 650
+        scooter:
+          base: 6000
+          rate: 850
+        mini_3w:
+          base: 9000
+          rate: 1300
+        three_wheeler:
+          base: 23000
+          rate: 3100
+        tata_ace:
+          base: 25000
+          rate: 3300
+        pickup_8ft:
+          base: 29000
+          rate: 3900
+        canter_14ft:
+          base: 88000
+          rate: 8200
+      midday:
+        two_wheeler:
+          base: 4560
+          rate: 670
+        scooter:
+          base: 5990
+          rate: 860
+        mini_3w:
+          base: 9030
+          rate: 1330
+        three_wheeler:
+          base: 22800
+          rate: 3040
+        tata_ace:
+          base: 24700
+          rate: 3230
+        pickup_8ft:
+          base: 28500
+          rate: 3900
+        canter_14ft:
+          base: 85500
+          rate: 8080
       afternoon:
-        two_wheeler:   { base: 4800, rate: 700 }
-        scooter:       { base: 6300, rate: 900 }
-        mini_3w:       { base: 9500, rate: 1400 }
-        three_wheeler: { base: 24000, rate: 3200 }
-        tata_ace:      { base: 26000, rate: 3400 }
-        pickup_8ft:    { base: 30000, rate: 4100 }
-        canter_14ft:   { base: 90000, rate: 8500 }
-      evening:
-        two_wheeler:   { base: 4500, rate: 650 }
-        scooter:       { base: 6000, rate: 850 }
-        mini_3w:       { base: 9000, rate: 1300 }
-        three_wheeler: { base: 33000, rate: 4100 }
-        tata_ace:      { base: 35000, rate: 4300 }
-        pickup_8ft:    { base: 40000, rate: 5100 }
-        canter_14ft:   { base: 105000, rate: 10200 }
-
+        two_wheeler:
+          base: 4800
+          rate: 700
+        scooter:
+          base: 6300
+          rate: 900
+        mini_3w:
+          base: 9500
+          rate: 1400
+        three_wheeler:
+          base: 24000
+          rate: 3200
+        tata_ace:
+          base: 26000
+          rate: 3400
+        pickup_8ft:
+          base: 30000
+          rate: 4100
+        canter_14ft:
+          base: 90000
+          rate: 8500
+      evening_rush:
+        two_wheeler:
+          base: 5040
+          rate: 730
+        scooter:
+          base: 6720
+          rate: 950
+        mini_3w:
+          base: 10080
+          rate: 1460
+        three_wheeler:
+          base: 36960
+          rate: 4590
+        tata_ace:
+          base: 39200
+          rate: 4820
+        pickup_8ft:
+          base: 44800
+          rate: 5710
+        canter_14ft:
+          base: 117600
+          rate: 11420
+      night:
+        two_wheeler:
+          base: 4500
+          rate: 650
+        scooter:
+          base: 6000
+          rate: 850
+        mini_3w:
+          base: 9000
+          rate: 1300
+        three_wheeler:
+          base: 33000
+          rate: 4100
+        tata_ace:
+          base: 35000
+          rate: 4300
+        pickup_8ft:
+          base: 40000
+          rate: 5100
+        canter_14ft:
+          base: 105000
+          rate: 10200
+      weekend_day:
+        two_wheeler:
+          base: 4560
+          rate: 670
+        scooter:
+          base: 5990
+          rate: 860
+        mini_3w:
+          base: 9030
+          rate: 1330
+        three_wheeler:
+          base: 22800
+          rate: 3040
+        tata_ace:
+          base: 24700
+          rate: 3230
+        pickup_8ft:
+          base: 28500
+          rate: 3900
+        canter_14ft:
+          base: 85500
+          rate: 8080
+      weekend_night:
+        two_wheeler:
+          base: 4050
+          rate: 590
+        scooter:
+          base: 5400
+          rate: 770
+        mini_3w:
+          base: 8100
+          rate: 1170
+        three_wheeler:
+          base: 29700
+          rate: 3690
+        tata_ace:
+          base: 31500
+          rate: 3870
+        pickup_8ft:
+          base: 36000
+          rate: 4590
+        canter_14ft:
+          base: 94500
+          rate: 9180
   secunderabad_to_old_city:
     from_zone: secunderabad_cbd
     to_zone: old_city
     directional: true
     distance_km: 8
-    description: "Secunderabad → Charminar (Railway to Old City)"
+    description: Secunderabad → Charminar (Railway to Old City)
     pricing:
-      morning:
-        two_wheeler:   { base: 4200, rate: 600 }
-        scooter:       { base: 5500, rate: 800 }
-        mini_3w:       { base: 8500, rate: 1200 }
-        three_wheeler: { base: 21000, rate: 2900 }
-        tata_ace:      { base: 23000, rate: 3100 }
-        pickup_8ft:    { base: 27000, rate: 3600 }
-        canter_14ft:   { base: 82000, rate: 7800 }
+      early_morning:
+        two_wheeler:
+          base: 3860
+          rate: 550
+        scooter:
+          base: 5060
+          rate: 740
+        mini_3w:
+          base: 7820
+          rate: 1100
+        three_wheeler:
+          base: 19320
+          rate: 2670
+        tata_ace:
+          base: 21160
+          rate: 2850
+        pickup_8ft:
+          base: 24840
+          rate: 3310
+        canter_14ft:
+          base: 75440
+          rate: 7180
+      morning_rush:
+        two_wheeler:
+          base: 4200
+          rate: 600
+        scooter:
+          base: 5500
+          rate: 800
+        mini_3w:
+          base: 8500
+          rate: 1200
+        three_wheeler:
+          base: 21000
+          rate: 2900
+        tata_ace:
+          base: 23000
+          rate: 3100
+        pickup_8ft:
+          base: 27000
+          rate: 3600
+        canter_14ft:
+          base: 82000
+          rate: 7800
+      midday:
+        two_wheeler:
+          base: 4280
+          rate: 620
+        scooter:
+          base: 5510
+          rate: 810
+        mini_3w:
+          base: 8550
+          rate: 1240
+        three_wheeler:
+          base: 20900
+          rate: 2850
+        tata_ace:
+          base: 22800
+          rate: 3040
+        pickup_8ft:
+          base: 26600
+          rate: 3610
+        canter_14ft:
+          base: 80750
+          rate: 7600
       afternoon:
-        two_wheeler:   { base: 4500, rate: 650 }
-        scooter:       { base: 5800, rate: 850 }
-        mini_3w:       { base: 9000, rate: 1300 }
-        three_wheeler: { base: 22000, rate: 3000 }
-        tata_ace:      { base: 24000, rate: 3200 }
-        pickup_8ft:    { base: 28000, rate: 3800 }
-        canter_14ft:   { base: 85000, rate: 8000 }
-      evening:
-        two_wheeler:   { base: 4200, rate: 600 }
-        scooter:       { base: 5500, rate: 800 }
-        mini_3w:       { base: 8500, rate: 1200 }
-        three_wheeler: { base: 31000, rate: 3900 }
-        tata_ace:      { base: 33000, rate: 4100 }
-        pickup_8ft:    { base: 38000, rate: 4800 }
-        canter_14ft:   { base: 100000, rate: 9800 }
-
-# =============================================================================
-# AIRPORT CORRIDORS (Premium Routes)
-# =============================================================================
-# Routes to/from Shamshabad Airport - premium pricing
-
+        two_wheeler:
+          base: 4500
+          rate: 650
+        scooter:
+          base: 5800
+          rate: 850
+        mini_3w:
+          base: 9000
+          rate: 1300
+        three_wheeler:
+          base: 22000
+          rate: 3000
+        tata_ace:
+          base: 24000
+          rate: 3200
+        pickup_8ft:
+          base: 28000
+          rate: 3800
+        canter_14ft:
+          base: 85000
+          rate: 8000
+      evening_rush:
+        two_wheeler:
+          base: 4700
+          rate: 670
+        scooter:
+          base: 6160
+          rate: 900
+        mini_3w:
+          base: 9520
+          rate: 1340
+        three_wheeler:
+          base: 34720
+          rate: 4370
+        tata_ace:
+          base: 36960
+          rate: 4590
+        pickup_8ft:
+          base: 42560
+          rate: 5380
+        canter_14ft:
+          base: 112000
+          rate: 10980
+      night:
+        two_wheeler:
+          base: 4200
+          rate: 600
+        scooter:
+          base: 5500
+          rate: 800
+        mini_3w:
+          base: 8500
+          rate: 1200
+        three_wheeler:
+          base: 31000
+          rate: 3900
+        tata_ace:
+          base: 33000
+          rate: 4100
+        pickup_8ft:
+          base: 38000
+          rate: 4800
+        canter_14ft:
+          base: 100000
+          rate: 9800
+      weekend_day:
+        two_wheeler:
+          base: 4280
+          rate: 620
+        scooter:
+          base: 5510
+          rate: 810
+        mini_3w:
+          base: 8550
+          rate: 1240
+        three_wheeler:
+          base: 20900
+          rate: 2850
+        tata_ace:
+          base: 22800
+          rate: 3040
+        pickup_8ft:
+          base: 26600
+          rate: 3610
+        canter_14ft:
+          base: 80750
+          rate: 7600
+      weekend_night:
+        two_wheeler:
+          base: 3780
+          rate: 540
+        scooter:
+          base: 4950
+          rate: 720
+        mini_3w:
+          base: 7650
+          rate: 1080
+        three_wheeler:
+          base: 27900
+          rate: 3510
+        tata_ace:
+          base: 29700
+          rate: 3690
+        pickup_8ft:
+          base: 34200
+          rate: 4320
+        canter_14ft:
+          base: 90000
+          rate: 8820
 airport_corridors:
-
   airport_to_hitech:
     from_zone: shamshabad
     to_zone: hitech_madhapur
     directional: false
     distance_km: 30
-    description: "Airport ↔ HITEC City (Premium Business)"
+    description: Airport ↔ HITEC City (Premium Business)
     pricing:
-      morning:
-        two_wheeler:   { base: 8000, rate: 1000 }
-        scooter:       { base: 10500, rate: 1300 }
-        mini_3w:       { base: 16000, rate: 2000 }
-        three_wheeler: { base: 40000, rate: 4800 }
-        tata_ace:      { base: 42000, rate: 5000 }
-        pickup_8ft:    { base: 50000, rate: 6000 }
-        canter_14ft:   { base: 140000, rate: 12000 }
+      early_morning:
+        two_wheeler:
+          base: 7360
+          rate: 920
+        scooter:
+          base: 9660
+          rate: 1200
+        mini_3w:
+          base: 14720
+          rate: 1840
+        three_wheeler:
+          base: 36800
+          rate: 4420
+        tata_ace:
+          base: 38640
+          rate: 4600
+        pickup_8ft:
+          base: 46000
+          rate: 5520
+        canter_14ft:
+          base: 128800
+          rate: 11040
+      morning_rush:
+        two_wheeler:
+          base: 8000
+          rate: 1000
+        scooter:
+          base: 10500
+          rate: 1300
+        mini_3w:
+          base: 16000
+          rate: 2000
+        three_wheeler:
+          base: 40000
+          rate: 4800
+        tata_ace:
+          base: 42000
+          rate: 5000
+        pickup_8ft:
+          base: 50000
+          rate: 6000
+        canter_14ft:
+          base: 140000
+          rate: 12000
+      midday:
+        two_wheeler:
+          base: 8080
+          rate: 1000
+        scooter:
+          base: 10450
+          rate: 1280
+        mini_3w:
+          base: 16150
+          rate: 2000
+        three_wheeler:
+          base: 39900
+          rate: 4750
+        tata_ace:
+          base: 41800
+          rate: 4940
+        pickup_8ft:
+          base: 49400
+          rate: 5890
+        canter_14ft:
+          base: 137750
+          rate: 11880
       afternoon:
-        two_wheeler:   { base: 8500, rate: 1050 }
-        scooter:       { base: 11000, rate: 1350 }
-        mini_3w:       { base: 17000, rate: 2100 }
-        three_wheeler: { base: 42000, rate: 5000 }
-        tata_ace:      { base: 44000, rate: 5200 }
-        pickup_8ft:    { base: 52000, rate: 6200 }
-        canter_14ft:   { base: 145000, rate: 12500 }
-      evening:
-        two_wheeler:   { base: 8000, rate: 1000 }
-        scooter:       { base: 10500, rate: 1300 }
-        mini_3w:       { base: 16000, rate: 2000 }
-        three_wheeler: { base: 52000, rate: 6000 }
-        tata_ace:      { base: 54000, rate: 6200 }
-        pickup_8ft:    { base: 64000, rate: 7500 }
-        canter_14ft:   { base: 165000, rate: 15000 }
-
+        two_wheeler:
+          base: 8500
+          rate: 1050
+        scooter:
+          base: 11000
+          rate: 1350
+        mini_3w:
+          base: 17000
+          rate: 2100
+        three_wheeler:
+          base: 42000
+          rate: 5000
+        tata_ace:
+          base: 44000
+          rate: 5200
+        pickup_8ft:
+          base: 52000
+          rate: 6200
+        canter_14ft:
+          base: 145000
+          rate: 12500
+      evening_rush:
+        two_wheeler:
+          base: 8960
+          rate: 1120
+        scooter:
+          base: 11760
+          rate: 1460
+        mini_3w:
+          base: 17920
+          rate: 2240
+        three_wheeler:
+          base: 58240
+          rate: 6720
+        tata_ace:
+          base: 60480
+          rate: 6940
+        pickup_8ft:
+          base: 71680
+          rate: 8400
+        canter_14ft:
+          base: 184800
+          rate: 16800
+      night:
+        two_wheeler:
+          base: 8000
+          rate: 1000
+        scooter:
+          base: 10500
+          rate: 1300
+        mini_3w:
+          base: 16000
+          rate: 2000
+        three_wheeler:
+          base: 52000
+          rate: 6000
+        tata_ace:
+          base: 54000
+          rate: 6200
+        pickup_8ft:
+          base: 64000
+          rate: 7500
+        canter_14ft:
+          base: 165000
+          rate: 15000
+      weekend_day:
+        two_wheeler:
+          base: 8080
+          rate: 1000
+        scooter:
+          base: 10450
+          rate: 1280
+        mini_3w:
+          base: 16150
+          rate: 2000
+        three_wheeler:
+          base: 39900
+          rate: 4750
+        tata_ace:
+          base: 41800
+          rate: 4940
+        pickup_8ft:
+          base: 49400
+          rate: 5890
+        canter_14ft:
+          base: 137750
+          rate: 11880
+      weekend_night:
+        two_wheeler:
+          base: 7200
+          rate: 900
+        scooter:
+          base: 9450
+          rate: 1170
+        mini_3w:
+          base: 14400
+          rate: 1800
+        three_wheeler:
+          base: 46800
+          rate: 5400
+        tata_ace:
+          base: 48600
+          rate: 5580
+        pickup_8ft:
+          base: 57600
+          rate: 6750
+        canter_14ft:
+          base: 148500
+          rate: 13500
   airport_to_fin_district:
     from_zone: shamshabad
     to_zone: fin_district
     directional: false
     distance_km: 25
-    description: "Airport ↔ Financial District"
+    description: Airport ↔ Financial District
     pricing:
-      morning:
-        two_wheeler:   { base: 7500, rate: 950 }
-        scooter:       { base: 9800, rate: 1200 }
-        mini_3w:       { base: 15000, rate: 1850 }
-        three_wheeler: { base: 38000, rate: 4500 }
-        tata_ace:      { base: 40000, rate: 4700 }
-        pickup_8ft:    { base: 47000, rate: 5600 }
-        canter_14ft:   { base: 132000, rate: 11000 }
+      early_morning:
+        two_wheeler:
+          base: 6900
+          rate: 870
+        scooter:
+          base: 9020
+          rate: 1100
+        mini_3w:
+          base: 13800
+          rate: 1700
+        three_wheeler:
+          base: 34960
+          rate: 4140
+        tata_ace:
+          base: 36800
+          rate: 4320
+        pickup_8ft:
+          base: 43240
+          rate: 5150
+        canter_14ft:
+          base: 121440
+          rate: 10120
+      morning_rush:
+        two_wheeler:
+          base: 7500
+          rate: 950
+        scooter:
+          base: 9800
+          rate: 1200
+        mini_3w:
+          base: 15000
+          rate: 1850
+        three_wheeler:
+          base: 38000
+          rate: 4500
+        tata_ace:
+          base: 40000
+          rate: 4700
+        pickup_8ft:
+          base: 47000
+          rate: 5600
+        canter_14ft:
+          base: 132000
+          rate: 11000
+      midday:
+        two_wheeler:
+          base: 7600
+          rate: 950
+        scooter:
+          base: 9790
+          rate: 1190
+        mini_3w:
+          base: 15200
+          rate: 1850
+        three_wheeler:
+          base: 38000
+          rate: 4470
+        tata_ace:
+          base: 39900
+          rate: 4660
+        pickup_8ft:
+          base: 46550
+          rate: 5510
+        canter_14ft:
+          base: 130150
+          rate: 10930
       afternoon:
-        two_wheeler:   { base: 8000, rate: 1000 }
-        scooter:       { base: 10300, rate: 1250 }
-        mini_3w:       { base: 16000, rate: 1950 }
-        three_wheeler: { base: 40000, rate: 4700 }
-        tata_ace:      { base: 42000, rate: 4900 }
-        pickup_8ft:    { base: 49000, rate: 5800 }
-        canter_14ft:   { base: 137000, rate: 11500 }
-      evening:
-        two_wheeler:   { base: 7500, rate: 950 }
-        scooter:       { base: 9800, rate: 1200 }
-        mini_3w:       { base: 15000, rate: 1850 }
-        three_wheeler: { base: 50000, rate: 5700 }
-        tata_ace:      { base: 52000, rate: 5900 }
-        pickup_8ft:    { base: 61000, rate: 7100 }
-        canter_14ft:   { base: 158000, rate: 14000 }
-
+        two_wheeler:
+          base: 8000
+          rate: 1000
+        scooter:
+          base: 10300
+          rate: 1250
+        mini_3w:
+          base: 16000
+          rate: 1950
+        three_wheeler:
+          base: 40000
+          rate: 4700
+        tata_ace:
+          base: 42000
+          rate: 4900
+        pickup_8ft:
+          base: 49000
+          rate: 5800
+        canter_14ft:
+          base: 137000
+          rate: 11500
+      evening_rush:
+        two_wheeler:
+          base: 8400
+          rate: 1060
+        scooter:
+          base: 10980
+          rate: 1340
+        mini_3w:
+          base: 16800
+          rate: 2070
+        three_wheeler:
+          base: 56000
+          rate: 6380
+        tata_ace:
+          base: 58240
+          rate: 6610
+        pickup_8ft:
+          base: 68320
+          rate: 7950
+        canter_14ft:
+          base: 176960
+          rate: 15680
+      night:
+        two_wheeler:
+          base: 7500
+          rate: 950
+        scooter:
+          base: 9800
+          rate: 1200
+        mini_3w:
+          base: 15000
+          rate: 1850
+        three_wheeler:
+          base: 50000
+          rate: 5700
+        tata_ace:
+          base: 52000
+          rate: 5900
+        pickup_8ft:
+          base: 61000
+          rate: 7100
+        canter_14ft:
+          base: 158000
+          rate: 14000
+      weekend_day:
+        two_wheeler:
+          base: 7600
+          rate: 950
+        scooter:
+          base: 9790
+          rate: 1190
+        mini_3w:
+          base: 15200
+          rate: 1850
+        three_wheeler:
+          base: 38000
+          rate: 4470
+        tata_ace:
+          base: 39900
+          rate: 4660
+        pickup_8ft:
+          base: 46550
+          rate: 5510
+        canter_14ft:
+          base: 130150
+          rate: 10930
+      weekend_night:
+        two_wheeler:
+          base: 6750
+          rate: 860
+        scooter:
+          base: 8820
+          rate: 1080
+        mini_3w:
+          base: 13500
+          rate: 1670
+        three_wheeler:
+          base: 45000
+          rate: 5130
+        tata_ace:
+          base: 46800
+          rate: 5310
+        pickup_8ft:
+          base: 54900
+          rate: 6390
+        canter_14ft:
+          base: 142200
+          rate: 12600
   airport_to_banjara:
     from_zone: shamshabad
     to_zone: banjara_hills
     directional: false
     distance_km: 28
-    description: "Airport ↔ Banjara Hills (Premium Residential)"
+    description: Airport ↔ Banjara Hills (Premium Residential)
     pricing:
-      morning:
-        two_wheeler:   { base: 8500, rate: 1050 }
-        scooter:       { base: 11000, rate: 1350 }
-        mini_3w:       { base: 17000, rate: 2100 }
-        three_wheeler: { base: 42000, rate: 5000 }
-        tata_ace:      { base: 44000, rate: 5200 }
-        pickup_8ft:    { base: 52000, rate: 6200 }
-        canter_14ft:   { base: 145000, rate: 12500 }
+      early_morning:
+        two_wheeler:
+          base: 7820
+          rate: 970
+        scooter:
+          base: 10120
+          rate: 1240
+        mini_3w:
+          base: 15640
+          rate: 1930
+        three_wheeler:
+          base: 38640
+          rate: 4600
+        tata_ace:
+          base: 40480
+          rate: 4780
+        pickup_8ft:
+          base: 47840
+          rate: 5700
+        canter_14ft:
+          base: 133400
+          rate: 11500
+      morning_rush:
+        two_wheeler:
+          base: 8500
+          rate: 1050
+        scooter:
+          base: 11000
+          rate: 1350
+        mini_3w:
+          base: 17000
+          rate: 2100
+        three_wheeler:
+          base: 42000
+          rate: 5000
+        tata_ace:
+          base: 44000
+          rate: 5200
+        pickup_8ft:
+          base: 52000
+          rate: 6200
+        canter_14ft:
+          base: 145000
+          rate: 12500
+      midday:
+        two_wheeler:
+          base: 8550
+          rate: 1050
+        scooter:
+          base: 10930
+          rate: 1330
+        mini_3w:
+          base: 17100
+          rate: 2090
+        three_wheeler:
+          base: 41800
+          rate: 4940
+        tata_ace:
+          base: 43700
+          rate: 5130
+        pickup_8ft:
+          base: 51300
+          rate: 6080
+        canter_14ft:
+          base: 142500
+          rate: 12350
       afternoon:
-        two_wheeler:   { base: 9000, rate: 1100 }
-        scooter:       { base: 11500, rate: 1400 }
-        mini_3w:       { base: 18000, rate: 2200 }
-        three_wheeler: { base: 44000, rate: 5200 }
-        tata_ace:      { base: 46000, rate: 5400 }
-        pickup_8ft:    { base: 54000, rate: 6400 }
-        canter_14ft:   { base: 150000, rate: 13000 }
-      evening:
-        two_wheeler:   { base: 8500, rate: 1050 }
-        scooter:       { base: 11000, rate: 1350 }
-        mini_3w:       { base: 17000, rate: 2100 }
-        three_wheeler: { base: 54000, rate: 6200 }
-        tata_ace:      { base: 56000, rate: 6400 }
-        pickup_8ft:    { base: 66000, rate: 7700 }
-        canter_14ft:   { base: 170000, rate: 15500 }
-
+        two_wheeler:
+          base: 9000
+          rate: 1100
+        scooter:
+          base: 11500
+          rate: 1400
+        mini_3w:
+          base: 18000
+          rate: 2200
+        three_wheeler:
+          base: 44000
+          rate: 5200
+        tata_ace:
+          base: 46000
+          rate: 5400
+        pickup_8ft:
+          base: 54000
+          rate: 6400
+        canter_14ft:
+          base: 150000
+          rate: 13000
+      evening_rush:
+        two_wheeler:
+          base: 9520
+          rate: 1180
+        scooter:
+          base: 12320
+          rate: 1510
+        mini_3w:
+          base: 19040
+          rate: 2350
+        three_wheeler:
+          base: 60480
+          rate: 6940
+        tata_ace:
+          base: 62720
+          rate: 7170
+        pickup_8ft:
+          base: 73920
+          rate: 8620
+        canter_14ft:
+          base: 190400
+          rate: 17360
+      night:
+        two_wheeler:
+          base: 8500
+          rate: 1050
+        scooter:
+          base: 11000
+          rate: 1350
+        mini_3w:
+          base: 17000
+          rate: 2100
+        three_wheeler:
+          base: 54000
+          rate: 6200
+        tata_ace:
+          base: 56000
+          rate: 6400
+        pickup_8ft:
+          base: 66000
+          rate: 7700
+        canter_14ft:
+          base: 170000
+          rate: 15500
+      weekend_day:
+        two_wheeler:
+          base: 8550
+          rate: 1050
+        scooter:
+          base: 10930
+          rate: 1330
+        mini_3w:
+          base: 17100
+          rate: 2090
+        three_wheeler:
+          base: 41800
+          rate: 4940
+        tata_ace:
+          base: 43700
+          rate: 5130
+        pickup_8ft:
+          base: 51300
+          rate: 6080
+        canter_14ft:
+          base: 142500
+          rate: 12350
+      weekend_night:
+        two_wheeler:
+          base: 7650
+          rate: 950
+        scooter:
+          base: 9900
+          rate: 1220
+        mini_3w:
+          base: 15300
+          rate: 1890
+        three_wheeler:
+          base: 48600
+          rate: 5580
+        tata_ace:
+          base: 50400
+          rate: 5760
+        pickup_8ft:
+          base: 59400
+          rate: 6930
+        canter_14ft:
+          base: 153000
+          rate: 13950
   airport_to_secunderabad:
     from_zone: shamshabad
     to_zone: secunderabad_cbd
     directional: false
     distance_km: 35
-    description: "Airport ↔ Secunderabad (Railway Hub)"
+    description: Airport ↔ Secunderabad (Railway Hub)
     pricing:
-      morning:
-        two_wheeler:   { base: 9000, rate: 1100 }
-        scooter:       { base: 11700, rate: 1400 }
-        mini_3w:       { base: 18000, rate: 2200 }
-        three_wheeler: { base: 45000, rate: 5300 }
-        tata_ace:      { base: 47000, rate: 5500 }
-        pickup_8ft:    { base: 55000, rate: 6500 }
-        canter_14ft:   { base: 155000, rate: 13500 }
+      early_morning:
+        two_wheeler:
+          base: 8280
+          rate: 1010
+        scooter:
+          base: 10760
+          rate: 1290
+        mini_3w:
+          base: 16560
+          rate: 2020
+        three_wheeler:
+          base: 41400
+          rate: 4880
+        tata_ace:
+          base: 43240
+          rate: 5060
+        pickup_8ft:
+          base: 50600
+          rate: 5980
+        canter_14ft:
+          base: 142600
+          rate: 12420
+      morning_rush:
+        two_wheeler:
+          base: 9000
+          rate: 1100
+        scooter:
+          base: 11700
+          rate: 1400
+        mini_3w:
+          base: 18000
+          rate: 2200
+        three_wheeler:
+          base: 45000
+          rate: 5300
+        tata_ace:
+          base: 47000
+          rate: 5500
+        pickup_8ft:
+          base: 55000
+          rate: 6500
+        canter_14ft:
+          base: 155000
+          rate: 13500
+      midday:
+        two_wheeler:
+          base: 9030
+          rate: 1090
+        scooter:
+          base: 11590
+          rate: 1380
+        mini_3w:
+          base: 18050
+          rate: 2190
+        three_wheeler:
+          base: 44650
+          rate: 5230
+        tata_ace:
+          base: 46550
+          rate: 5420
+        pickup_8ft:
+          base: 54150
+          rate: 6370
+        canter_14ft:
+          base: 152000
+          rate: 13300
       afternoon:
-        two_wheeler:   { base: 9500, rate: 1150 }
-        scooter:       { base: 12200, rate: 1450 }
-        mini_3w:       { base: 19000, rate: 2300 }
-        three_wheeler: { base: 47000, rate: 5500 }
-        tata_ace:      { base: 49000, rate: 5700 }
-        pickup_8ft:    { base: 57000, rate: 6700 }
-        canter_14ft:   { base: 160000, rate: 14000 }
-      evening:
-        two_wheeler:   { base: 9000, rate: 1100 }
-        scooter:       { base: 11700, rate: 1400 }
-        mini_3w:       { base: 18000, rate: 2200 }
-        three_wheeler: { base: 57000, rate: 6500 }
-        tata_ace:      { base: 59000, rate: 6700 }
-        pickup_8ft:    { base: 69000, rate: 8000 }
-        canter_14ft:   { base: 180000, rate: 16500 }
-
-# =============================================================================
-# INDUSTRIAL CORRIDORS
-# =============================================================================
-# Routes to/from industrial zones
-
+        two_wheeler:
+          base: 9500
+          rate: 1150
+        scooter:
+          base: 12200
+          rate: 1450
+        mini_3w:
+          base: 19000
+          rate: 2300
+        three_wheeler:
+          base: 47000
+          rate: 5500
+        tata_ace:
+          base: 49000
+          rate: 5700
+        pickup_8ft:
+          base: 57000
+          rate: 6700
+        canter_14ft:
+          base: 160000
+          rate: 14000
+      evening_rush:
+        two_wheeler:
+          base: 10080
+          rate: 1230
+        scooter:
+          base: 13100
+          rate: 1570
+        mini_3w:
+          base: 20160
+          rate: 2460
+        three_wheeler:
+          base: 63840
+          rate: 7280
+        tata_ace:
+          base: 66080
+          rate: 7500
+        pickup_8ft:
+          base: 77280
+          rate: 8960
+        canter_14ft:
+          base: 201600
+          rate: 18480
+      night:
+        two_wheeler:
+          base: 9000
+          rate: 1100
+        scooter:
+          base: 11700
+          rate: 1400
+        mini_3w:
+          base: 18000
+          rate: 2200
+        three_wheeler:
+          base: 57000
+          rate: 6500
+        tata_ace:
+          base: 59000
+          rate: 6700
+        pickup_8ft:
+          base: 69000
+          rate: 8000
+        canter_14ft:
+          base: 180000
+          rate: 16500
+      weekend_day:
+        two_wheeler:
+          base: 9030
+          rate: 1090
+        scooter:
+          base: 11590
+          rate: 1380
+        mini_3w:
+          base: 18050
+          rate: 2190
+        three_wheeler:
+          base: 44650
+          rate: 5230
+        tata_ace:
+          base: 46550
+          rate: 5420
+        pickup_8ft:
+          base: 54150
+          rate: 6370
+        canter_14ft:
+          base: 152000
+          rate: 13300
+      weekend_night:
+        two_wheeler:
+          base: 8100
+          rate: 990
+        scooter:
+          base: 10530
+          rate: 1260
+        mini_3w:
+          base: 16200
+          rate: 1980
+        three_wheeler:
+          base: 51300
+          rate: 5850
+        tata_ace:
+          base: 53100
+          rate: 6030
+        pickup_8ft:
+          base: 62100
+          rate: 7200
+        canter_14ft:
+          base: 162000
+          rate: 14850
 industrial_corridors:
-
   patancheru_to_hitech:
     from_zone: patancheru
     to_zone: hitech_madhapur
     directional: false
     distance_km: 25
-    description: "Patancheru Industrial ↔ HITEC City"
+    description: Patancheru Industrial ↔ HITEC City
     pricing:
-      morning:
-        two_wheeler:   { base: 5500, rate: 800 }
-        scooter:       { base: 7200, rate: 1000 }
-        mini_3w:       { base: 11000, rate: 1500 }
-        three_wheeler: { base: 28000, rate: 3600 }
-        tata_ace:      { base: 30000, rate: 3800 }
-        pickup_8ft:    { base: 35000, rate: 4500 }
-        canter_14ft:   { base: 100000, rate: 9000 }
+      early_morning:
+        two_wheeler:
+          base: 5060
+          rate: 740
+        scooter:
+          base: 6620
+          rate: 920
+        mini_3w:
+          base: 10120
+          rate: 1380
+        three_wheeler:
+          base: 25760
+          rate: 3310
+        tata_ace:
+          base: 27600
+          rate: 3500
+        pickup_8ft:
+          base: 32200
+          rate: 4140
+        canter_14ft:
+          base: 92000
+          rate: 8280
+      morning_rush:
+        two_wheeler:
+          base: 5500
+          rate: 800
+        scooter:
+          base: 7200
+          rate: 1000
+        mini_3w:
+          base: 11000
+          rate: 1500
+        three_wheeler:
+          base: 28000
+          rate: 3600
+        tata_ace:
+          base: 30000
+          rate: 3800
+        pickup_8ft:
+          base: 35000
+          rate: 4500
+        canter_14ft:
+          base: 100000
+          rate: 9000
+      midday:
+        two_wheeler:
+          base: 5510
+          rate: 810
+        scooter:
+          base: 7130
+          rate: 1000
+        mini_3w:
+          base: 10930
+          rate: 1520
+        three_wheeler:
+          base: 27550
+          rate: 3520
+        tata_ace:
+          base: 29450
+          rate: 3710
+        pickup_8ft:
+          base: 34200
+          rate: 4470
+        canter_14ft:
+          base: 97850
+          rate: 8840
       afternoon:
-        two_wheeler:   { base: 5800, rate: 850 }
-        scooter:       { base: 7500, rate: 1050 }
-        mini_3w:       { base: 11500, rate: 1600 }
-        three_wheeler: { base: 29000, rate: 3700 }
-        tata_ace:      { base: 31000, rate: 3900 }
-        pickup_8ft:    { base: 36000, rate: 4700 }
-        canter_14ft:   { base: 103000, rate: 9300 }
-      evening:
-        two_wheeler:   { base: 5500, rate: 800 }
-        scooter:       { base: 7200, rate: 1000 }
-        mini_3w:       { base: 11000, rate: 1500 }
-        three_wheeler: { base: 38000, rate: 4600 }
-        tata_ace:      { base: 40000, rate: 4800 }
-        pickup_8ft:    { base: 47000, rate: 5700 }
-        canter_14ft:   { base: 120000, rate: 11500 }
-
+        two_wheeler:
+          base: 5800
+          rate: 850
+        scooter:
+          base: 7500
+          rate: 1050
+        mini_3w:
+          base: 11500
+          rate: 1600
+        three_wheeler:
+          base: 29000
+          rate: 3700
+        tata_ace:
+          base: 31000
+          rate: 3900
+        pickup_8ft:
+          base: 36000
+          rate: 4700
+        canter_14ft:
+          base: 103000
+          rate: 9300
+      evening_rush:
+        two_wheeler:
+          base: 6160
+          rate: 900
+        scooter:
+          base: 8060
+          rate: 1120
+        mini_3w:
+          base: 12320
+          rate: 1680
+        three_wheeler:
+          base: 42560
+          rate: 5150
+        tata_ace:
+          base: 44800
+          rate: 5380
+        pickup_8ft:
+          base: 52640
+          rate: 6380
+        canter_14ft:
+          base: 134400
+          rate: 12880
+      night:
+        two_wheeler:
+          base: 5500
+          rate: 800
+        scooter:
+          base: 7200
+          rate: 1000
+        mini_3w:
+          base: 11000
+          rate: 1500
+        three_wheeler:
+          base: 38000
+          rate: 4600
+        tata_ace:
+          base: 40000
+          rate: 4800
+        pickup_8ft:
+          base: 47000
+          rate: 5700
+        canter_14ft:
+          base: 120000
+          rate: 11500
+      weekend_day:
+        two_wheeler:
+          base: 5510
+          rate: 810
+        scooter:
+          base: 7130
+          rate: 1000
+        mini_3w:
+          base: 10930
+          rate: 1520
+        three_wheeler:
+          base: 27550
+          rate: 3520
+        tata_ace:
+          base: 29450
+          rate: 3710
+        pickup_8ft:
+          base: 34200
+          rate: 4470
+        canter_14ft:
+          base: 97850
+          rate: 8840
+      weekend_night:
+        two_wheeler:
+          base: 4950
+          rate: 720
+        scooter:
+          base: 6480
+          rate: 900
+        mini_3w:
+          base: 9900
+          rate: 1350
+        three_wheeler:
+          base: 34200
+          rate: 4140
+        tata_ace:
+          base: 36000
+          rate: 4320
+        pickup_8ft:
+          base: 42300
+          rate: 5130
+        canter_14ft:
+          base: 108000
+          rate: 10350
   jeedimetla_to_ameerpet:
     from_zone: jeedimetla
     to_zone: ameerpet_core
     directional: false
     distance_km: 12
-    description: "Jeedimetla Industrial ↔ Ameerpet"
+    description: Jeedimetla Industrial ↔ Ameerpet
     pricing:
-      morning:
-        two_wheeler:   { base: 4500, rate: 650 }
-        scooter:       { base: 6000, rate: 850 }
-        mini_3w:       { base: 9000, rate: 1300 }
-        three_wheeler: { base: 23000, rate: 3100 }
-        tata_ace:      { base: 25000, rate: 3300 }
-        pickup_8ft:    { base: 29000, rate: 3900 }
-        canter_14ft:   { base: 88000, rate: 8200 }
+      early_morning:
+        two_wheeler:
+          base: 4140
+          rate: 600
+        scooter:
+          base: 5520
+          rate: 780
+        mini_3w:
+          base: 8280
+          rate: 1200
+        three_wheeler:
+          base: 21160
+          rate: 2850
+        tata_ace:
+          base: 23000
+          rate: 3040
+        pickup_8ft:
+          base: 26680
+          rate: 3590
+        canter_14ft:
+          base: 80960
+          rate: 7540
+      morning_rush:
+        two_wheeler:
+          base: 4500
+          rate: 650
+        scooter:
+          base: 6000
+          rate: 850
+        mini_3w:
+          base: 9000
+          rate: 1300
+        three_wheeler:
+          base: 23000
+          rate: 3100
+        tata_ace:
+          base: 25000
+          rate: 3300
+        pickup_8ft:
+          base: 29000
+          rate: 3900
+        canter_14ft:
+          base: 88000
+          rate: 8200
+      midday:
+        two_wheeler:
+          base: 4560
+          rate: 670
+        scooter:
+          base: 5990
+          rate: 860
+        mini_3w:
+          base: 9030
+          rate: 1330
+        three_wheeler:
+          base: 22800
+          rate: 3040
+        tata_ace:
+          base: 24700
+          rate: 3230
+        pickup_8ft:
+          base: 28500
+          rate: 3900
+        canter_14ft:
+          base: 85500
+          rate: 8080
       afternoon:
-        two_wheeler:   { base: 4800, rate: 700 }
-        scooter:       { base: 6300, rate: 900 }
-        mini_3w:       { base: 9500, rate: 1400 }
-        three_wheeler: { base: 24000, rate: 3200 }
-        tata_ace:      { base: 26000, rate: 3400 }
-        pickup_8ft:    { base: 30000, rate: 4100 }
-        canter_14ft:   { base: 90000, rate: 8500 }
-      evening:
-        two_wheeler:   { base: 4500, rate: 650 }
-        scooter:       { base: 6000, rate: 850 }
-        mini_3w:       { base: 9000, rate: 1300 }
-        three_wheeler: { base: 33000, rate: 4100 }
-        tata_ace:      { base: 35000, rate: 4300 }
-        pickup_8ft:    { base: 40000, rate: 5100 }
-        canter_14ft:   { base: 105000, rate: 10200 }
-
+        two_wheeler:
+          base: 4800
+          rate: 700
+        scooter:
+          base: 6300
+          rate: 900
+        mini_3w:
+          base: 9500
+          rate: 1400
+        three_wheeler:
+          base: 24000
+          rate: 3200
+        tata_ace:
+          base: 26000
+          rate: 3400
+        pickup_8ft:
+          base: 30000
+          rate: 4100
+        canter_14ft:
+          base: 90000
+          rate: 8500
+      evening_rush:
+        two_wheeler:
+          base: 5040
+          rate: 730
+        scooter:
+          base: 6720
+          rate: 950
+        mini_3w:
+          base: 10080
+          rate: 1460
+        three_wheeler:
+          base: 36960
+          rate: 4590
+        tata_ace:
+          base: 39200
+          rate: 4820
+        pickup_8ft:
+          base: 44800
+          rate: 5710
+        canter_14ft:
+          base: 117600
+          rate: 11420
+      night:
+        two_wheeler:
+          base: 4500
+          rate: 650
+        scooter:
+          base: 6000
+          rate: 850
+        mini_3w:
+          base: 9000
+          rate: 1300
+        three_wheeler:
+          base: 33000
+          rate: 4100
+        tata_ace:
+          base: 35000
+          rate: 4300
+        pickup_8ft:
+          base: 40000
+          rate: 5100
+        canter_14ft:
+          base: 105000
+          rate: 10200
+      weekend_day:
+        two_wheeler:
+          base: 4560
+          rate: 670
+        scooter:
+          base: 5990
+          rate: 860
+        mini_3w:
+          base: 9030
+          rate: 1330
+        three_wheeler:
+          base: 22800
+          rate: 3040
+        tata_ace:
+          base: 24700
+          rate: 3230
+        pickup_8ft:
+          base: 28500
+          rate: 3900
+        canter_14ft:
+          base: 85500
+          rate: 8080
+      weekend_night:
+        two_wheeler:
+          base: 4050
+          rate: 590
+        scooter:
+          base: 5400
+          rate: 770
+        mini_3w:
+          base: 8100
+          rate: 1170
+        three_wheeler:
+          base: 29700
+          rate: 3690
+        tata_ace:
+          base: 31500
+          rate: 3870
+        pickup_8ft:
+          base: 36000
+          rate: 4590
+        canter_14ft:
+          base: 94500
+          rate: 9180
   nacharam_to_hitech:
     from_zone: nacharam
     to_zone: hitech_madhapur
     directional: false
     distance_km: 18
-    description: "Nacharam Industrial ↔ HITEC City"
+    description: Nacharam Industrial ↔ HITEC City
     pricing:
-      morning:
-        two_wheeler:   { base: 5000, rate: 750 }
-        scooter:       { base: 6500, rate: 950 }
-        mini_3w:       { base: 10000, rate: 1400 }
-        three_wheeler: { base: 25000, rate: 3300 }
-        tata_ace:      { base: 27000, rate: 3500 }
-        pickup_8ft:    { base: 32000, rate: 4200 }
-        canter_14ft:   { base: 95000, rate: 8700 }
+      early_morning:
+        two_wheeler:
+          base: 4600
+          rate: 690
+        scooter:
+          base: 5980
+          rate: 870
+        mini_3w:
+          base: 9200
+          rate: 1290
+        three_wheeler:
+          base: 23000
+          rate: 3040
+        tata_ace:
+          base: 24840
+          rate: 3220
+        pickup_8ft:
+          base: 29440
+          rate: 3860
+        canter_14ft:
+          base: 87400
+          rate: 8000
+      morning_rush:
+        two_wheeler:
+          base: 5000
+          rate: 750
+        scooter:
+          base: 6500
+          rate: 950
+        mini_3w:
+          base: 10000
+          rate: 1400
+        three_wheeler:
+          base: 25000
+          rate: 3300
+        tata_ace:
+          base: 27000
+          rate: 3500
+        pickup_8ft:
+          base: 32000
+          rate: 4200
+        canter_14ft:
+          base: 95000
+          rate: 8700
+      midday:
+        two_wheeler:
+          base: 5040
+          rate: 760
+        scooter:
+          base: 6460
+          rate: 950
+        mini_3w:
+          base: 9980
+          rate: 1430
+        three_wheeler:
+          base: 24700
+          rate: 3230
+        tata_ace:
+          base: 26600
+          rate: 3420
+        pickup_8ft:
+          base: 31350
+          rate: 4180
+        canter_14ft:
+          base: 93100
+          rate: 8550
       afternoon:
-        two_wheeler:   { base: 5300, rate: 800 }
-        scooter:       { base: 6800, rate: 1000 }
-        mini_3w:       { base: 10500, rate: 1500 }
-        three_wheeler: { base: 26000, rate: 3400 }
-        tata_ace:      { base: 28000, rate: 3600 }
-        pickup_8ft:    { base: 33000, rate: 4400 }
-        canter_14ft:   { base: 98000, rate: 9000 }
-      evening:
-        two_wheeler:   { base: 5000, rate: 750 }
-        scooter:       { base: 6500, rate: 950 }
-        mini_3w:       { base: 10000, rate: 1400 }
-        three_wheeler: { base: 35000, rate: 4300 }
-        tata_ace:      { base: 37000, rate: 4500 }
-        pickup_8ft:    { base: 44000, rate: 5400 }
-        canter_14ft:   { base: 113000, rate: 10800 }
-
-# =============================================================================
-# END OF CORRIDORS
-# =============================================================================
-# Total Priority Corridors: 25+
-# Coverage: Morning Rush (7), Business (5), Old City (5), Airport (4), Industrial (4)
-# =============================================================================
+        two_wheeler:
+          base: 5300
+          rate: 800
+        scooter:
+          base: 6800
+          rate: 1000
+        mini_3w:
+          base: 10500
+          rate: 1500
+        three_wheeler:
+          base: 26000
+          rate: 3400
+        tata_ace:
+          base: 28000
+          rate: 3600
+        pickup_8ft:
+          base: 33000
+          rate: 4400
+        canter_14ft:
+          base: 98000
+          rate: 9000
+      evening_rush:
+        two_wheeler:
+          base: 5600
+          rate: 840
+        scooter:
+          base: 7280
+          rate: 1060
+        mini_3w:
+          base: 11200
+          rate: 1570
+        three_wheeler:
+          base: 39200
+          rate: 4820
+        tata_ace:
+          base: 41440
+          rate: 5040
+        pickup_8ft:
+          base: 49280
+          rate: 6050
+        canter_14ft:
+          base: 126560
+          rate: 12100
+      night:
+        two_wheeler:
+          base: 5000
+          rate: 750
+        scooter:
+          base: 6500
+          rate: 950
+        mini_3w:
+          base: 10000
+          rate: 1400
+        three_wheeler:
+          base: 35000
+          rate: 4300
+        tata_ace:
+          base: 37000
+          rate: 4500
+        pickup_8ft:
+          base: 44000
+          rate: 5400
+        canter_14ft:
+          base: 113000
+          rate: 10800
+      weekend_day:
+        two_wheeler:
+          base: 5040
+          rate: 760
+        scooter:
+          base: 6460
+          rate: 950
+        mini_3w:
+          base: 9980
+          rate: 1430
+        three_wheeler:
+          base: 24700
+          rate: 3230
+        tata_ace:
+          base: 26600
+          rate: 3420
+        pickup_8ft:
+          base: 31350
+          rate: 4180
+        canter_14ft:
+          base: 93100
+          rate: 8550
+      weekend_night:
+        two_wheeler:
+          base: 4500
+          rate: 680
+        scooter:
+          base: 5850
+          rate: 860
+        mini_3w:
+          base: 9000
+          rate: 1260
+        three_wheeler:
+          base: 31500
+          rate: 3870
+        tata_ace:
+          base: 33300
+          rate: 4050
+        pickup_8ft:
+          base: 39600
+          rate: 4860
+        canter_14ft:
+          base: 101700
+          rate: 9720

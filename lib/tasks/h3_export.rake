@@ -25,7 +25,7 @@ namespace :zones do
 
     city_folder = CITY_FOLDER_MAP[city_code.downcase] || city_code.downcase
     vehicle_types = RoutePricing::VehicleCategories::ALL_VEHICLES
-    time_bands = %w[morning afternoon evening]
+    time_bands = %w[early_morning morning_rush midday afternoon evening_rush night weekend_day weekend_night]
 
     # Load vehicle defaults for fallback pricing
     defaults_path = Rails.root.join('config', 'zones', city_folder, 'vehicle_defaults.yml')

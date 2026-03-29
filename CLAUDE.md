@@ -44,10 +44,13 @@
 - MID: mini_3w, three_wheeler, three_wheeler_ev, tata_ace, pickup_8ft
 - HEAVY: eeco, tata_407, canter_14ft
 
-## Time Bands
+## Time Bands (8 granular bands)
 
-- morning: 6:00-12:00, afternoon: 12:00-18:00, evening: 18:00-6:00
+- **Weekday:** early_morning (5-8), morning_rush (8-11), midday (11-14), afternoon (14-17), evening_rush (17-21), night (21-5)
+- **Weekend:** weekend_day (8-20), weekend_night (20-8)
 - MUST use city timezone (e.g., Asia/Kolkata)
+- Porter calibration is anchored to: morning_rush (9 AM), afternoon (3 PM), night (11 PM)
+- ONLY 8 bands are used — legacy 3-band (morning, afternoon, evening) is fully removed
 
 ## Config File Structure
 

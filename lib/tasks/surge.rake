@@ -40,7 +40,7 @@ namespace :surge do
     ]
 
     created = 0
-    time_bands = [nil, 'morning', 'afternoon', 'evening']
+    time_bands = [nil, 'early_morning', 'morning_rush', 'midday', 'afternoon', 'evening_rush', 'night', 'weekend_day', 'weekend_night']
 
     sample_points.each do |point|
       h3_r9 = H3.from_geo_coordinates([point[:lat], point[:lng]], 9).to_s(16)
@@ -57,8 +57,10 @@ namespace :surge do
         time_bands.each do |band|
           # Evening surge is higher
           band_boost = case band
-                       when 'evening' then 1.2
-                       when 'morning' then 1.1
+                       when 'evening_rush' then 1.2
+                       when 'night' then 1.15
+                       when 'morning_rush' then 1.1
+                       when 'early_morning' then 1.05
                        else 1.0
                        end
 
@@ -110,7 +112,7 @@ namespace :surge do
     summary.each { |k, v| puts "  #{k}: #{v}" }
 
     # Per time band
-    %w[morning afternoon evening].each do |band|
+    %w[early_morning morning_rush midday afternoon evening_rush night weekend_day weekend_night].each do |band|
       band_summary = resolver.city_surge_summary(time_band: band)
       if band_summary[:total_hexes] > 0
         puts "\n  #{band}:"

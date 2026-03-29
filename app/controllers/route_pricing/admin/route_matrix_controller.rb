@@ -291,9 +291,6 @@ module RoutePricing
         'night'         => { time: '23:00', day: :wednesday },
         'weekend_day'   => { time: '14:00', day: :saturday },
         'weekend_night' => { time: '22:00', day: :saturday },
-        # Legacy 3-band compat
-        'morning'       => { time: '09:30', day: :wednesday },
-        'evening'       => { time: '23:00', day: :wednesday },
       }.freeze
 
       def band_to_quote_time(band)

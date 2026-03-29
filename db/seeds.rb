@@ -807,12 +807,12 @@ zones.each do |zone|
   rate_table = ZONE_SPECIFIC_RATES[zone.zone_code] || GLOBAL_TIME_RATES
   is_zone_specific = ZONE_SPECIFIC_RATES.key?(zone.zone_code)
 
-  rate_table[:morning].each do |vehicle_type, vals|
+  (rate_table[:morning_rush] || rate_table[:morning]).each do |vehicle_type, vals|
     zvp = ZoneVehiclePricing.create!(zone: zone, city_code: 'hyd', vehicle_type: vehicle_type,
       base_fare_paise: vals[:base], min_fare_paise: vals[:base], base_distance_m: 1000, per_km_rate_paise: vals[:rate], active: true)
     
     # Create time-specific overrides
-    [:morning, :afternoon, :evening].each do |band|
+    [:early_morning, :morning_rush, :midday, :afternoon, :evening_rush, :night, :weekend_day, :weekend_night].each do |band|
       r = rate_table[band][vehicle_type] || vals
       ZoneVehicleTimePricing.create!(zone_vehicle_pricing: zvp, time_band: band,
         base_fare_paise: r[:base], min_fare_paise: r[:base], per_km_rate_paise: r[:rate], active: true)

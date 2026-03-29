@@ -5,7 +5,12 @@ class H3SupplyDensity < ApplicationRecord
 
   validates :h3_index_r7, :city_code, :time_band, presence: true
   validates :h3_index_r7, uniqueness: { scope: [:city_code, :time_band] }
-  validates :time_band, inclusion: { in: %w[morning afternoon evening] }
+  VALID_TIME_BANDS = %w[
+    early_morning morning_rush midday afternoon evening_rush night
+    weekend_day weekend_night
+  ].freeze
+
+  validates :time_band, inclusion: { in: VALID_TIME_BANDS }
   validates :avg_pickup_distance_m, numericality: { only_integer: true, greater_than: 0 }
   validates :estimated_driver_count, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 

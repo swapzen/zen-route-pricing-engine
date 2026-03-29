@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_18_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_30_000005) do
   create_schema "crdb_internal"
 
   create_table "active_storage_attachments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -99,6 +99,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_18_120000) do
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable"
     t.index ["file_type"], name: "index_attachments_on_file_type"
     t.unique_constraint ["attachable_type", "attachable_id", "position"], name: "index_attachments_on_attachable_and_position"
+  end
+
+  create_table "backhaul_probabilities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "zone_id", null: false
+    t.string "time_band", null: false
+    t.float "return_probability", default: 0.5, null: false
+    t.bigint "avg_return_distance_m", default: 0
+    t.bigint "sample_size", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["zone_id"], name: "index_backhaul_probabilities_on_zone_id"
+    t.unique_constraint ["zone_id", "time_band"], name: "index_backhaul_probabilities_on_zone_id_and_time_band"
   end
 
   create_table "blocked_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -378,6 +390,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_18_120000) do
     t.index ["phash", "user_id"], name: "index_image_hashes_on_phash_and_user_id"
     t.index ["phash"], name: "index_image_hashes_on_phash"
     t.index ["user_id"], name: "index_image_hashes_on_user_id"
+  end
+
+  create_table "inter_zone_configs", id: :bigint, default: -> { "unique_rowid()" }, force: :cascade do |t|
+    t.string "city_code", null: false
+    t.float "origin_weight", default: 0.6, null: false
+    t.float "destination_weight", default: 0.4, null: false
+    t.jsonb "type_adjustments", default: {}
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["city_code", "active"], name: "index_inter_zone_configs_on_city_code_and_active"
   end
 
   create_table "invoices", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -982,6 +1005,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_18_120000) do
     t.datetime "reviewed_at"
     t.string "rejection_reason"
     t.text "change_summary"
+    t.jsonb "weather_multipliers"
+    t.float "max_backhaul_premium", default: 0.2
+    t.bigint "waiting_per_min_rate_paise", default: 0
+    t.bigint "free_waiting_minutes", default: 10
     t.index ["approval_status"], name: "index_pricing_configs_on_approval_status"
     t.index ["city_code", "vehicle_type", "active", "effective_from"], name: "idx_pricing_configs_current"
     t.index ["vendor_vehicle_code", "city_code"], name: "index_pricing_configs_on_vendor_code_and_city"
@@ -1164,6 +1191,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_18_120000) do
     t.string "pickup_h3_r7"
     t.string "drop_h3_r7"
     t.float "h3_surge_multiplier", default: 1.0
+    t.jsonb "route_segments_json"
+    t.string "weather_condition"
+    t.float "weather_multiplier", default: 1.0
+    t.float "backhaul_multiplier", default: 1.0
+    t.bigint "estimated_waiting_charge_paise", default: 0
+    t.float "cancellation_risk_multiplier", default: 1.0
     t.index ["city_code", "drop_h3_r8"], name: "idx_quotes_drop_h3"
     t.index ["city_code", "pickup_h3_r8"], name: "idx_quotes_pickup_h3"
     t.index ["city_code"], name: "index_pricing_quotes_on_city_code"
@@ -1684,6 +1717,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_18_120000) do
     t.datetime "updated_at", null: false
     t.string "time_band"
     t.bigint "per_min_rate_paise", default: 0
+    t.boolean "auto_generated", default: false
     t.index ["from_zone_id"], name: "index_zone_pair_vehicle_pricings_on_from_zone_id"
     t.index ["to_zone_id"], name: "index_zone_pair_vehicle_pricings_on_to_zone_id"
     t.unique_constraint ["city_code", "from_zone_id", "to_zone_id", "vehicle_type", "time_band"], name: "idx_zpvp_routing_with_time_band"
@@ -1740,6 +1774,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_18_120000) do
   add_foreign_key "address_contacts", "locations"
   add_foreign_key "admin_coin_overrides", "users"
   add_foreign_key "admins", "zones"
+  add_foreign_key "backhaul_probabilities", "zones"
   add_foreign_key "blocked_users", "users", column: "blocked_id"
   add_foreign_key "blocked_users", "users", column: "blocker_id"
   add_foreign_key "coin_earning_rules", "users"

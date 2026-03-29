@@ -15,6 +15,24 @@ module RoutePricing
           @api_key = ENV['GOOGLE_MAPS_API_KEY']
         end
 
+        # Google Directions API — returns step-by-step route with per-step distances
+        # Used for route-segment pricing (Phase 1)
+        def get_directions(pickup_lat:, pickup_lng:, drop_lat:, drop_lng:)
+          strategy = ENV['ROUTE_PROVIDER_STRATEGY'] || 'google'
+
+          if strategy == 'local' || strategy == 'haversine'
+            return haversine_fallback(pickup_lat, pickup_lng, drop_lat, drop_lng)
+          end
+
+          begin
+            response = call_directions_api(pickup_lat, pickup_lng, drop_lat, drop_lng)
+            parse_directions_response(response)
+          rescue StandardError => e
+            Rails.logger.warn("Google Directions API failed: #{e.message}. Falling back to Haversine.")
+            haversine_fallback(pickup_lat, pickup_lng, drop_lat, drop_lng)
+          end
+        end
+
         def get_route(pickup_lat:, pickup_lng:, drop_lat:, drop_lng:)
           # Check environment strategy
           strategy = ENV['ROUTE_PROVIDER_STRATEGY'] || 'google'
@@ -86,6 +104,70 @@ module RoutePricing
             duration_in_traffic_s: duration_in_traffic_s,
             traffic_model: 'best_guess',
             provider: 'google'
+          }
+        end
+
+        def call_directions_api(pickup_lat, pickup_lng, drop_lat, drop_lng)
+          uri = URI('https://maps.googleapis.com/maps/api/directions/json')
+          params = {
+            origin: "#{pickup_lat},#{pickup_lng}",
+            destination: "#{drop_lat},#{drop_lng}",
+            departure_time: 'now',
+            traffic_model: 'best_guess',
+            key: @api_key
+          }
+          uri.query = URI.encode_www_form(params)
+
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = true
+          http.open_timeout = 10
+          http.read_timeout = 10
+
+          if Rails.env.development? || Rails.env.test?
+            http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+          else
+            http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+          end
+
+          request = Net::HTTP::Get.new(uri)
+          response = http.request(request)
+
+          raise "Directions API request failed: #{response.code}" unless response.is_a?(Net::HTTPSuccess)
+
+          JSON.parse(response.body)
+        end
+
+        def parse_directions_response(response)
+          raise "Directions API returned status: #{response['status']}" if response['status'] != 'OK'
+
+          route = response.dig('routes', 0)
+          raise "No route found" unless route
+
+          leg = route.dig('legs', 0)
+          raise "No leg found" unless leg
+
+          distance_m = leg.dig('distance', 'value')
+          duration_s = leg.dig('duration', 'value')
+          duration_in_traffic_s = leg.dig('duration_in_traffic', 'value')
+
+          steps = (leg['steps'] || []).map do |step|
+            {
+              start_lat: step.dig('start_location', 'lat'),
+              start_lng: step.dig('start_location', 'lng'),
+              end_lat: step.dig('end_location', 'lat'),
+              end_lng: step.dig('end_location', 'lng'),
+              distance_m: step.dig('distance', 'value'),
+              duration_s: step.dig('duration', 'value')
+            }
+          end
+
+          {
+            distance_m: distance_m,
+            duration_s: duration_s,
+            duration_in_traffic_s: duration_in_traffic_s,
+            traffic_model: 'best_guess',
+            provider: 'google',
+            steps: steps
           }
         end
 

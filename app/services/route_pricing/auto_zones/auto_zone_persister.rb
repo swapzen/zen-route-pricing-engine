@@ -10,7 +10,7 @@ module RoutePricing
       # - Idempotent: removes previous auto-zones of same version first
 
       VEHICLE_TYPES = RoutePricing::VehicleCategories::ALL_VEHICLES
-      TIME_BANDS = %w[morning afternoon evening].freeze
+      TIME_BANDS = %w[early_morning morning_rush midday afternoon evening_rush night weekend_day weekend_night].freeze
 
       # Priority offset: auto-zones get lower priority than manual zones
       AUTO_ZONE_PRIORITY_OFFSET = -10

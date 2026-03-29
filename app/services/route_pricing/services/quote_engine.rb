@@ -32,15 +32,36 @@ module RoutePricing
         config = PricingConfig.current_version(city_code, vehicle_type)
         return { error: 'Config not found for city/vehicle combination', code: 404 } unless config
 
-        # 2. Resolve route
-        route_data = @route_resolver.resolve(
-          pickup_lat: pickup_lat,
-          pickup_lng: pickup_lng,
-          drop_lat: drop_lat,
-          drop_lng: drop_lng,
-          city_code: city_code,
-          vehicle_type: vehicle_type
-        )
+        # 2. Resolve route (use Directions API for segment pricing if enabled)
+        route_segments = nil
+        segment_pricing_enabled = PricingRolloutFlag.enabled?('route_segment_pricing', city_code: city_code)
+
+        if segment_pricing_enabled
+          route_data = @route_resolver.resolve_with_segments(
+            pickup_lat: pickup_lat,
+            pickup_lng: pickup_lng,
+            drop_lat: drop_lat,
+            drop_lng: drop_lng,
+            city_code: city_code,
+            vehicle_type: vehicle_type
+          )
+
+          # Segment the route into zone-based segments
+          if route_data[:steps].present?
+            segmenter = RouteZoneSegmenter.new(city_code: city_code)
+            route_segments = segmenter.segment_route(steps: route_data[:steps])
+            route_segments = route_segments.map { |s| { zone: s.zone, distance_m: s.distance_m, start_point: s.start_point, end_point: s.end_point } }
+          end
+        else
+          route_data = @route_resolver.resolve(
+            pickup_lat: pickup_lat,
+            pickup_lng: pickup_lng,
+            drop_lat: drop_lat,
+            drop_lng: drop_lng,
+            city_code: city_code,
+            vehicle_type: vehicle_type
+          )
+        end
 
         # 3. Calculate price (pass coordinates for zone multiplier + quote_time for v3.0)
         calculator = PriceCalculator.new(config: config)
@@ -54,10 +75,18 @@ module RoutePricing
           drop_lng: drop_lng,
           item_value_paise: item_value_paise,
           quote_time: quote_time,
-          weight_kg: weight_kg
+          weight_kg: weight_kg,
+          route_segments: route_segments
         )
         pricing_version = "v#{config.version}"
-        validity_minutes = config.try(:quote_validity_minutes) || 10
+
+        # Dynamic quote validity: higher surge = shorter validity window
+        combined_surge = pricing_result.dig(:breakdown, :combined_surge) || 1.0
+        validity_minutes = case
+                           when combined_surge > 1.3 then 5
+                           when combined_surge > 1.1 then 8
+                           else config.try(:quote_validity_minutes) || 15
+                           end
         valid_until = Time.current + validity_minutes.minutes
 
         # 3b. Vendor payout prediction (two-sided pricing)
@@ -85,6 +114,7 @@ module RoutePricing
         # 4. Persist quote
         vendor_attrs = build_vendor_quote_attrs(pricing_result[:final_price_paise], vendor_prediction)
         h3_attrs = build_h3_quote_attrs(pickup_h3_r8, drop_h3_r8, pickup_h3_r7, drop_h3_r7, pricing_result)
+        extra_attrs = build_extra_quote_attrs(pricing_result, route_segments)
         quote = PricingQuote.create!(
           request_id: request_id,
           city_code: city_code,
@@ -110,7 +140,8 @@ module RoutePricing
           is_scheduled: pricing_result.dig(:breakdown, :scheduled_discount).present?,
           scheduled_for: quote_time > Time.current ? quote_time : nil,
           **vendor_attrs,
-          **h3_attrs
+          **h3_attrs,
+          **extra_attrs
         )
 
         # 5. Return formatted response
@@ -145,6 +176,9 @@ module RoutePricing
 
         # 5b. Shadow model scoring (non-blocking)
         run_shadow_model(quote, pricing_result, city_code, vehicle_type)
+
+        # 5c. Demand tracking (fire-and-forget)
+        track_demand(city_code, pickup_h3_r7)
 
         # Cache the result for H3-based quote caching
         if quote_cache_key
@@ -217,7 +251,14 @@ module RoutePricing
           )
 
           pricing_version = "v#{config.version}"
-          validity_minutes = config.try(:quote_validity_minutes) || 10
+
+          # Dynamic quote validity: higher surge = shorter validity window
+          multi_combined_surge = pricing_result.dig(:breakdown, :combined_surge) || 1.0
+          validity_minutes = case
+                             when multi_combined_surge > 1.3 then 5
+                             when multi_combined_surge > 1.1 then 8
+                             else config.try(:quote_validity_minutes) || 15
+                             end
           valid_until = Time.current + validity_minutes.minutes
 
           # Vendor payout prediction (two-sided pricing)
@@ -393,7 +434,7 @@ module RoutePricing
           vehicle_type: vehicle_type,
           distance_m: distance_m,
           duration_in_traffic_s: duration_in_traffic_s,
-          time_band: time_band || 'morning',
+          time_band: time_band || RoutePricing::Services::TimeBandResolver.current_band,
           pickup_lat: pickup_lat,
           pickup_lng: pickup_lng
         )
@@ -469,6 +510,48 @@ module RoutePricing
         )
       rescue StandardError => e
         Rails.logger.warn("Shadow model scoring failed: #{e.message}")
+      end
+
+      # Build extra quote attributes for new pricing phases
+      # Only includes columns that exist on the table (safe if migrations haven't run)
+      def build_extra_quote_attrs(pricing_result, route_segments)
+        attrs = {}
+        breakdown = pricing_result[:breakdown] || {}
+
+        if PricingQuote.column_names.include?('route_segments_json') && route_segments.present?
+          attrs[:route_segments_json] = route_segments
+        end
+
+        if PricingQuote.column_names.include?('weather_condition')
+          attrs[:weather_condition] = breakdown[:weather_condition]
+        end
+
+        if PricingQuote.column_names.include?('weather_multiplier')
+          attrs[:weather_multiplier] = breakdown[:weather_multiplier] || 1.0
+        end
+
+        if PricingQuote.column_names.include?('backhaul_multiplier')
+          attrs[:backhaul_multiplier] = breakdown[:backhaul_multiplier] || 1.0
+        end
+
+        if PricingQuote.column_names.include?('estimated_waiting_charge_paise')
+          attrs[:estimated_waiting_charge_paise] = breakdown[:waiting_charge] || 0
+        end
+
+        if PricingQuote.column_names.include?('cancellation_risk_multiplier')
+          attrs[:cancellation_risk_multiplier] = breakdown[:cancellation_risk_multiplier] || 1.0
+        end
+
+        attrs
+      end
+
+      # Track demand signal for H3 cell (fire-and-forget)
+      def track_demand(city_code, pickup_h3_r7)
+        return unless pickup_h3_r7.present?
+
+        DemandTracker.new(city_code: city_code).record_quote(h3_r7: pickup_h3_r7)
+      rescue StandardError => e
+        Rails.logger.debug("Demand tracking failed: #{e.message}")
       end
 
       # Build vendor-related attributes for PricingQuote.create!

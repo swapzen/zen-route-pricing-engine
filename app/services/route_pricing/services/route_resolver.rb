@@ -14,6 +14,56 @@ module RoutePricing
         @cache_key_builder = Keys::CacheKeyBuilder.new
       end
 
+      # Resolve route with step-by-step directions for segment pricing
+      # Falls back to standard resolve (Distance Matrix) if Directions fails
+      def resolve_with_segments(pickup_lat:, pickup_lng:, drop_lat:, drop_lng:, city_code:, vehicle_type:)
+        pickup_norm = @normalizer.normalize(pickup_lat, pickup_lng)
+        drop_norm = @normalizer.normalize(drop_lat, drop_lng)
+
+        cache_key = @cache_key_builder.build_route_key(
+          version: 'rs',
+          city_code: city_code,
+          vehicle_type: vehicle_type,
+          pickup_norm: pickup_norm,
+          drop_norm: drop_norm
+        )
+
+        cached_data = Rails.cache.read(cache_key)
+        if cached_data
+          result = cached_data.is_a?(String) ? JSON.parse(cached_data, symbolize_names: true) : cached_data
+          result[:cache_hit] = true
+          return result.merge(pickup_norm: pickup_norm, drop_norm: drop_norm, cache_key: cache_key)
+        end
+
+        route_data = Timeout.timeout(PROVIDER_TIMEOUT) do
+          @provider.get_directions(
+            pickup_lat: pickup_norm[:lat],
+            pickup_lng: pickup_norm[:lng],
+            drop_lat: drop_norm[:lat],
+            drop_lng: drop_norm[:lng]
+          )
+        end
+
+        Rails.cache.write(cache_key, route_data, expires_in: CACHE_TTL)
+
+        route_data.merge(
+          pickup_norm: pickup_norm,
+          drop_norm: drop_norm,
+          cache_key: cache_key,
+          cache_hit: false
+        )
+      rescue StandardError => e
+        Rails.logger.warn("resolve_with_segments failed: #{e.message}. Falling back to resolve.")
+        resolve(
+          pickup_lat: pickup_lat,
+          pickup_lng: pickup_lng,
+          drop_lat: drop_lat,
+          drop_lng: drop_lng,
+          city_code: city_code,
+          vehicle_type: vehicle_type
+        )
+      end
+
       def resolve(pickup_lat:, pickup_lng:, drop_lat:, drop_lng:, city_code:, vehicle_type:)
         # Normalize coordinates
         pickup_norm = @normalizer.normalize(pickup_lat, pickup_lng)

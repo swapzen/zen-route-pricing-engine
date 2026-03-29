@@ -11,7 +11,7 @@ class ZonePairVehiclePricing < ApplicationRecord
     # Check exact directive match with time_band support
     # Index: idx_zpvp_routing_with_time_band [city_code, from_zone_id, to_zone_id, vehicle_type, time_band]
     # Note: city_code is case-insensitive
-    # time_band can be nil (for backward compatibility) or one of: 'morning', 'afternoon', 'evening'
+    # time_band can be nil (for backward compatibility) or one of the 8 granular bands
     
     # Try exact match with time_band first
     override = where(city_code: city_code.to_s.downcase)

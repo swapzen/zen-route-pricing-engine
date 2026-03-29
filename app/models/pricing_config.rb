@@ -143,11 +143,10 @@ class PricingConfig < ApplicationRecord
   # ================================================================
 
   def time_band(hour)
-    case hour
-    when 6...12  then :morning
-    when 12...18 then :afternoon
-    else              :evening  # 18-6 (includes night)
-    end
+    # Delegate to TimeBandResolver for consistent 8-band resolution
+    # Build a synthetic time for the given hour (weekday Wednesday)
+    t = Time.current.in_time_zone(timezone).change(hour: hour, min: 30)
+    RoutePricing::Services::TimeBandResolver.resolve(t).to_sym
   end
 
   def distance_category(distance_km)
@@ -172,15 +171,24 @@ class PricingConfig < ApplicationRecord
   end
 
   def small_vehicle_multipliers
-    { morning: 0.98, afternoon: 1.02, evening: 1.00 }  # Near neutral for small
+    {
+      early_morning: 0.95, morning_rush: 0.98, midday: 1.00, afternoon: 1.02,
+      evening_rush: 1.05, night: 1.00, weekend_day: 0.98, weekend_night: 0.97
+    }
   end
 
   def mid_truck_multipliers
-    { morning: 0.98, afternoon: 1.05, evening: 1.15 }  # Reduced from 1.45
+    {
+      early_morning: 0.95, morning_rush: 0.98, midday: 1.02, afternoon: 1.05,
+      evening_rush: 1.15, night: 1.10, weekend_day: 1.00, weekend_night: 1.05
+    }
   end
 
   def heavy_truck_multipliers
-    { morning: 1.00, afternoon: 1.05, evening: 1.10 }  # Reduced from 1.25
+    {
+      early_morning: 0.97, morning_rush: 1.00, midday: 1.02, afternoon: 1.05,
+      evening_rush: 1.10, night: 1.08, weekend_day: 1.00, weekend_night: 1.03
+    }
   end
 
   def distance_scaler(category)
