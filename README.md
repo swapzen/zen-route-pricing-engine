@@ -13,7 +13,26 @@ Calculates competitive delivery costs for SwapZen's marketplace using H3 hexagon
 - CockroachDB running on port 26257 (shared with swapzen-api)
 - Redis running on port 6379
 - Google Maps API Key (Distance Matrix + Directions + Weather APIs enabled)
+- `libpq` (for `pg_dump` used by `structure.sql`): `brew install libpq && brew link --force libpq`
 - swapzen-api migrations already applied (owns the `zones` table)
+
+### CockroachDB Setup
+
+CockroachDB data is stored in `swapzen-api/cockroachdb-store/` (git-ignored). Start it before running any Rails commands:
+
+```bash
+cd ../swapzen-api
+./scripts/cockroachdb.sh start    # Start CockroachDB
+./scripts/cockroachdb.sh stop     # Stop
+./scripts/cockroachdb.sh status   # Check status + databases
+./scripts/cockroachdb.sh console  # Open SQL shell
+```
+
+### structure.sql
+
+This repo uses `structure.sql` (raw SQL) instead of `schema.rb` because CockroachDB has GEOGRAPHY columns that Ruby DSL can't represent. It auto-updates when:
+- You run `db:migrate` **in this repo**
+- You run `db:migrate` **in swapzen-api** (auto-syncs via `db:sync_structure_sql` rake task)
 
 ---
 
