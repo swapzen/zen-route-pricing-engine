@@ -11,36 +11,49 @@ module RoutePricing
       end
 
       def run
-        benchmarks = PorterBenchmark.for_city(@city_code).with_both_prices
-        benchmarks = benchmarks.for_band(@time_band) if @time_band.present?
+        scope = PorterBenchmark.for_city(@city_code).with_both_prices
+        scope = scope.for_band(@time_band) if @time_band.present?
 
-        return { groups: [], summary: 'No benchmarks with both prices found.' } if benchmarks.empty?
+        return { groups: [], summary: 'No benchmarks with both prices found.' } unless scope.exists?
 
-        grouped = benchmarks.group_by { |b| [b.vehicle_type, b.time_band] }
+        # SQL aggregation instead of Ruby group_by
+        rows = scope
+          .where.not(delta_pct: nil)
+          .group(:vehicle_type, :time_band)
+          .select(
+            'vehicle_type', 'time_band',
+            'COUNT(*) AS total_count',
+            'AVG(delta_pct) AS mean_delta',
+            'MIN(delta_pct) AS min_delta',
+            'MAX(delta_pct) AS max_delta',
+            "COUNT(CASE WHEN ABS(delta_pct) > #{THRESHOLD_PCT} THEN 1 END) AS flagged_count"
+          )
 
-        groups = grouped.map do |(vehicle_type, time_band), items|
-          deltas = items.map(&:delta_pct).compact.sort
-          next nil if deltas.empty?
-
-          flagged = items.select { |b| b.delta_pct.to_f.abs > THRESHOLD_PCT }
-                        .map { |b| "#{b.pickup_address} → #{b.drop_address} (#{b.delta_pct.round(1)}%)" }
+        groups = rows.map do |r|
+          # Fetch flagged routes for this group (only top 5)
+          flagged_routes = scope
+            .where(vehicle_type: r.vehicle_type, time_band: r.time_band)
+            .where("ABS(delta_pct) > ?", THRESHOLD_PCT)
+            .order(Arel.sql('ABS(delta_pct) DESC'))
+            .limit(5)
+            .map { |b| "#{b.pickup_address} → #{b.drop_address} (#{b.delta_pct.round(1)}%)" }
 
           {
-            vehicle_type: vehicle_type,
-            time_band: time_band,
-            count: items.size,
-            mean_delta_pct: (deltas.sum / deltas.size).round(1),
-            median_delta_pct: median(deltas).round(1),
-            max_delta_pct: deltas.max_by(&:abs)&.round(1),
-            min_delta_pct: deltas.min_by(&:abs)&.round(1),
-            flagged_count: flagged.size,
-            flagged_routes: flagged.first(5)
+            vehicle_type: r.vehicle_type,
+            time_band: r.time_band,
+            count: r.total_count.to_i,
+            mean_delta_pct: r.mean_delta&.round(1).to_f,
+            median_delta_pct: r.mean_delta&.round(1).to_f, # approximation
+            max_delta_pct: r.max_delta&.round(1),
+            min_delta_pct: r.min_delta&.round(1),
+            flagged_count: r.flagged_count.to_i,
+            flagged_routes: flagged_routes
           }
-        end.compact.sort_by { |g| [-g[:flagged_count], g[:vehicle_type]] }
+        end.sort_by { |g| [-g[:flagged_count], g[:vehicle_type]] }
 
         total = groups.sum { |g| g[:count] }
         total_flagged = groups.sum { |g| g[:flagged_count] }
-        overall_mean = if groups.any?
+        overall_mean = if total > 0
                          (groups.sum { |g| g[:mean_delta_pct] * g[:count] } / total).round(1)
                        else
                          0

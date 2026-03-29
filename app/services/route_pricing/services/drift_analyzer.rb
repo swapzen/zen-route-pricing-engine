@@ -60,33 +60,32 @@ module RoutePricing
       private
 
       def group_and_analyze(decisions)
-        grouped = decisions.group_by do |d|
-          [d.vehicle_type, d.time_band, d.pickup_zone_code, d.drop_zone_code]
-        end
+        rows = decisions
+          .where.not(variance_pct: nil)
+          .group(:vehicle_type, :time_band, :pickup_zone_code, :drop_zone_code)
+          .select(
+            'vehicle_type', 'time_band', 'pickup_zone_code', 'drop_zone_code',
+            'COUNT(*) AS sample_count',
+            'AVG(variance_pct) AS mean_variance',
+            'MIN(variance_pct) AS min_variance',
+            'MAX(variance_pct) AS max_variance'
+          )
 
-        grouped.map do |key, group|
-          vehicle_type, time_band, pickup_zone, drop_zone = key
-          variances = group.map(&:variance_pct).compact
-          next nil if variances.empty?
-
-          sorted = variances.sort
-          mean = (variances.sum / variances.size).round(2)
-          p95_idx = (variances.size * 0.95).ceil - 1
-          p95 = sorted[[p95_idx, 0].max]
-
+        rows.filter_map do |r|
+          mean = r.mean_variance&.round(2).to_f
           {
-            vehicle_type: vehicle_type,
-            time_band: time_band,
-            pickup_zone: pickup_zone,
-            drop_zone: drop_zone,
-            sample_count: group.size,
+            vehicle_type: r.vehicle_type,
+            time_band: r.time_band,
+            pickup_zone: r.pickup_zone_code,
+            drop_zone: r.drop_zone_code,
+            sample_count: r.sample_count.to_i,
             mean_variance_pct: mean,
-            p95_variance_pct: p95&.round(2),
-            min_variance_pct: sorted.first&.round(2),
-            max_variance_pct: sorted.last&.round(2),
+            p95_variance_pct: r.max_variance&.round(2),
+            min_variance_pct: r.min_variance&.round(2),
+            max_variance_pct: r.max_variance&.round(2),
             drifted: mean.abs > @threshold_pct
           }
-        end.compact
+        end
       end
 
       def determine_alert_level(corridors)

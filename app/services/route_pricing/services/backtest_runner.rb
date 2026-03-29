@@ -30,13 +30,17 @@ module RoutePricing
 
         replay_details = []
         deltas = []
+        batch_size = 25
 
-        quotes.each do |quote|
+        quotes.each_with_index do |quote, idx|
           replay = replay_quote(quote, candidate_config, baseline_config)
           replay_details << replay
           deltas << replay[:delta_pct] if replay[:delta_pct]
 
-          @backtest.update!(completed_replays: replay_details.size)
+          # Batch progress updates every 25 quotes to reduce DB writes
+          if ((idx + 1) % batch_size).zero? || idx == quotes.size - 1
+            @backtest.update!(completed_replays: replay_details.size)
+          end
         end
 
         results = aggregate_results(deltas, replay_details, quotes)
