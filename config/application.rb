@@ -41,6 +41,10 @@ module ZenRoutePricingEngine
     # and swapzen-api owns the canonical schema anyway.
     config.active_record.dump_schema_after_migration = false
 
+    # Use structure.sql instead of schema.rb — CockroachDB has GEOGRAPHY columns
+    # and custom types that the Ruby schema dumper cannot serialize
+    config.active_record.schema_format = :sql
+
     # Only loads a smaller set of middleware suitable for API only apps.
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.

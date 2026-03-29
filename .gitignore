@@ -16,6 +16,7 @@ storage/
 *.sqlite3
 *.sqlite3-journal
 *.sqlite3-*
+db/schema.rb
 
 # Bootsnap cache
 tmp/cache/bootsnap/
