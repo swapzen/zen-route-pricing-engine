@@ -16,105 +16,35 @@
 # =============================================================================
 
 namespace :zones do
-  desc "Sync zone configuration from YAML to database (zones + pricing + corridors)"
+  desc "Sync zone configuration from YAML to database (delegates to H3ZoneConfigLoader)"
   task sync: :environment do
     city = ENV['city'] || 'hyd'
-    dry_run = ENV['dry'] == 'true'
     force = ENV['force'] == 'true'
-    
-    puts "=" * 80
-    puts "🗺️  ZONE SYNC: #{city.upcase}"
-    puts "   Mode: #{force ? 'FORCE (overwrite)' : 'NORMAL (preserve edits)'}"
-    puts "=" * 80
-    
-    loader = ZoneConfigLoader.new(city)
-    
-    if dry_run
-      puts "\n📋 DRY RUN MODE (no changes will be made)\n"
-      result = loader.dry_run
-      
-      if result[:success] == false
-        puts "❌ Error: #{result[:error]}"
-        exit 1
-      end
-      
-      puts "City: #{result[:city_code]}"
-      puts "Total zones in YAML: #{result[:total_zones_in_yaml]}"
-      puts "Existing zones in DB: #{result[:existing_zones_in_db]}"
-      puts "\n🆕 New zones to create (#{result[:new_zones].count}):"
-      result[:new_zones].first(10).each { |z| puts "   - #{z}" }
-      puts "   ... and #{result[:new_zones].count - 10} more" if result[:new_zones].count > 10
-      puts "\n🔄 Zones to update (#{result[:zones_to_update].count}):"
-      result[:zones_to_update].first(10).each { |z| puts "   - #{z}" }
-      puts "   ... and #{result[:zones_to_update].count - 10} more" if result[:zones_to_update].count > 10
-      puts "\n⚠️  In DB but not in YAML (#{result[:in_db_not_in_yaml].count}):"
-      result[:in_db_not_in_yaml].each { |z| puts "   - #{z}" }
-      puts "\n📁 Pricing files: #{result[:pricing_files].count}"
-      result[:pricing_files].each { |f| puts "   - #{f}" }
-      puts "\n📁 Corridor files: #{result[:corridor_files].count}"
-      result[:corridor_files].each { |f| puts "   - #{f}" }
-      puts "\n🧪 Validation:"
-      puts "   Errors: #{result.dig(:validation, :errors)&.count || 0}"
-      puts "   Warnings: #{result.dig(:validation, :warnings)&.count || 0}"
 
-      if result.dig(:validation, :errors)&.any?
-        puts "\n❌ Validation errors:"
-        result[:validation][:errors].each { |e| puts "   - #{e}" }
-      end
+    puts "=" * 80
+    puts "DEPRECATION: zones:sync now delegates to H3ZoneConfigLoader."
+    puts "Prefer: rails \"zones:h3_sync[#{city}]\"" + (force ? " FORCE_PRICING=true" : "")
+    puts "=" * 80
 
-      if result.dig(:validation, :warnings)&.any?
-        puts "\n⚠️  Validation warnings:"
-        result[:validation][:warnings].each { |w| puts "   - #{w}" }
+    loader = H3ZoneConfigLoader.new(city)
+    result = loader.sync!(force_pricing: force)
+
+    if result[:success]
+      stats = result[:stats]
+      puts "\nSync complete!"
+      stats.each do |key, value|
+        next if key == :errors
+        puts "  #{key}: #{value}"
+      end
+      if stats[:errors]&.any?
+        puts "\nErrors:"
+        stats[:errors].each { |e| puts "  #{e[:zone_code]}: #{e[:error]}" }
       end
     else
-      puts "\n🔄 Syncing zones, pricing & corridors...\n"
-      result = loader.sync!(force_pricing: force)
-      
-      if result[:success]
-        s = result[:stats]
-        puts "\n✅ Sync completed successfully!"
-        puts "\n📍 ZONES:"
-        puts "   Created: #{s[:zones_created]}"
-        puts "   Updated: #{s[:zones_updated]}"
-        puts "   Skipped: #{s[:zones_skipped]}"
-        puts "\n💰 ZONE PRICING:"
-        puts "   Zone pricings created: #{s[:zone_pricings_created]}"
-        puts "   Zone pricings updated: #{s[:zone_pricings_updated]}"
-        puts "   Time pricings created: #{s[:time_pricings_created]}"
-        puts "\n🛤️  CORRIDORS:"
-        puts "   Created: #{s[:corridors_created]}"
-        puts "   Updated: #{s[:corridors_updated]}"
-        puts "   Deactivated (stale): #{s[:corridors_deactivated]}"
-        puts "   Conflicts skipped: #{s[:corridor_conflicts]}"
-        puts "\n🧪 VALIDATION:"
-        puts "   Errors: #{s[:validation_errors]&.count || 0}"
-        puts "   Warnings: #{s[:validation_warnings]&.count || 0}"
-        puts "\n❗ ERRORS: #{s[:errors].count}"
-
-        if s[:validation_warnings]&.any?
-          puts "\n⚠️  Validation warnings:"
-          s[:validation_warnings].each { |w| puts "   - #{w}" }
-        end
-        
-        if s[:errors].any?
-          puts "\n⚠️  Errors:"
-          s[:errors].each { |e| puts "   - #{e[:zone_code] || e[:file]}: #{e[:error]}" }
-        end
-      else
-        puts "❌ Sync failed: #{result[:error]}"
-        if result[:validation]
-          errs = result.dig(:validation, :errors) || []
-          warns = result.dig(:validation, :warnings) || []
-          puts "Validation errors: #{errs.count}"
-          errs.each { |e| puts "   - #{e}" }
-          puts "Validation warnings: #{warns.count}"
-          warns.each { |w| puts "   - #{w}" }
-        end
-        puts result[:backtrace].join("\n") if result[:backtrace]
-        exit 1
-      end
+      puts "Sync FAILED: #{result[:error]}"
+      exit 1
     end
-    
+
     puts "\n" + "=" * 80
   end
 
@@ -250,7 +180,7 @@ namespace :zones do
       next unless config
       
       # Get city code
-      city_code = ZoneConfigLoader::CITY_FILE_MAPPING.key(city) || city
+      city_code = ConfigLoaderShared::CITY_FOLDER_MAP.key(city) || city
       
       yaml_count = (config['zones'] || {}).count
       db_count = Zone.for_city(city_code).count

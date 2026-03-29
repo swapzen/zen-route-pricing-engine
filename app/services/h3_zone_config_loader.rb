@@ -18,19 +18,7 @@
 # =============================================================================
 
 class H3ZoneConfigLoader
-  VEHICLE_TYPES = RoutePricing::VehicleCategories::ALL_VEHICLES
-  TIME_BANDS = %w[
-    early_morning morning_rush midday afternoon evening_rush night
-    weekend_day weekend_night
-  ].freeze
-
-  CITY_FOLDER_MAP = {
-    'hyd' => 'hyderabad',
-    'blr' => 'bangalore',
-    'mum' => 'mumbai',
-    'del' => 'delhi',
-    'chn' => 'chennai'
-  }.freeze
+  include ConfigLoaderShared
 
   attr_reader :city_code, :stats
 
@@ -62,6 +50,7 @@ class H3ZoneConfigLoader
       seed_inter_zone_config!(vehicle_defaults) if vehicle_defaults
       seed_zone_operational_defaults!
       seed_weather_config_defaults!
+      sync_corridors!(force: force_pricing)
     end
 
     # Rebuild H3 in-memory maps + compute boundaries outside transaction
@@ -489,35 +478,11 @@ class H3ZoneConfigLoader
     }
   end
 
-  def default_priority_for_type(zone_type)
-    case zone_type
-    when 'tech_corridor'          then 20
-    when 'business_cbd'           then 18
-    when 'heritage_commercial'    then 18
-    when 'premium_residential'    then 16
-    when 'airport_logistics'      then 15
-    when 'traditional_commercial' then 14
-    when 'industrial'             then 12
-    when 'residential_dense'      then 10
-    when 'residential_mixed'      then 10
-    when 'residential_growth'     then 8
-    when 'outer_ring'             then 5
-    else                                10
-    end
-  end
-
-  def city_folder
-    CITY_FOLDER_MAP[city_code] || city_code
-  end
+  # default_priority_for_type, city_folder, load_vehicle_defaults
+  # are inherited from ConfigLoaderShared
 
   def load_h3_zones
     path = Rails.root.join('config', 'zones', city_folder, 'h3_zones.yml')
-    return nil unless File.exist?(path)
-    YAML.load_file(path)
-  end
-
-  def load_vehicle_defaults
-    path = Rails.root.join('config', 'zones', city_folder, 'vehicle_defaults.yml')
     return nil unless File.exist?(path)
     YAML.load_file(path)
   end

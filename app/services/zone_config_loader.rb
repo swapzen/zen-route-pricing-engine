@@ -18,20 +18,12 @@ require 'set'
 # =============================================================================
 
 class ZoneConfigLoader
+  include ConfigLoaderShared
+
   attr_reader :city_code, :config, :stats
 
-  VEHICLE_TYPES = RoutePricing::VehicleCategories::ALL_VEHICLES
-  TIME_BANDS = %w[
-    early_morning morning_rush midday afternoon evening_rush night
-    weekend_day weekend_night
-  ].freeze
-  CORRIDOR_CATEGORIES = %w[
-    morning_rush_corridors
-    business_corridors
-    old_city_corridors
-    airport_corridors
-    industrial_corridors
-  ].freeze
+  # Keep CITY_FILE_MAPPING for backward compat (zones:status task references it)
+  CITY_FILE_MAPPING = CITY_FOLDER_MAP.merge('chn' => 'chennai').freeze
 
   def initialize(city_code)
     @city_code = city_code.downcase
@@ -58,6 +50,11 @@ class ZoneConfigLoader
   # Main sync method
   # ---------------------------------------------------------------------------
   def sync!(force_pricing: false)
+    Rails.logger.warn(
+      "[DEPRECATION] ZoneConfigLoader is deprecated. Use H3ZoneConfigLoader instead: " \
+      "H3ZoneConfigLoader.new('#{city_code}').sync!(force_pricing: #{force_pricing})"
+    )
+
     return { success: false, error: "No config found for city: #{city_code}" } unless config
 
     Rails.logger.info "[ZoneConfigLoader] Starting sync for #{city_code}..."
@@ -122,19 +119,6 @@ class ZoneConfigLoader
   # ---------------------------------------------------------------------------
   # Load YAML config file
   # ---------------------------------------------------------------------------
-  CITY_FILE_MAPPING = {
-    'hyd' => 'hyderabad',
-    'blr' => 'bangalore',
-    'mum' => 'mumbai',
-    'del' => 'delhi',
-    'chn' => 'chennai',
-    'pun' => 'pune'
-  }.freeze
-
-  def city_folder
-    CITY_FILE_MAPPING[city_code] || city_code
-  end
-
   def config_dir
     Rails.root.join('config', 'zones')
   end
@@ -159,15 +143,6 @@ class ZoneConfigLoader
     YAML.load_file(config_path)
   rescue StandardError => e
     Rails.logger.error "[ZoneConfigLoader] Failed to load config: #{e.message}"
-    nil
-  end
-
-  def load_vehicle_defaults
-    defaults_path = city_config_dir.join('vehicle_defaults.yml')
-    return nil unless File.exist?(defaults_path)
-    YAML.load_file(defaults_path)
-  rescue StandardError => e
-    Rails.logger.warn "[ZoneConfigLoader] No vehicle_defaults.yml found: #{e.message}"
     nil
   end
 
@@ -309,25 +284,7 @@ class ZoneConfigLoader
     Rails.logger.error "[ZoneConfigLoader] Error syncing zone #{zone_code}: #{e.message}"
   end
 
-  # Assign default priority based on zone type.
-  # Smaller/more specific zone types get higher priority so they match first
-  # when bounding boxes overlap with larger, less specific zones.
-  def default_priority_for_zone_type(zone_type)
-    case zone_type
-    when 'tech_corridor'          then 20  # Small, specific areas (HITEC City, Fin District)
-    when 'business_cbd'           then 18  # Named business districts
-    when 'heritage_commercial'    then 18  # Small heritage zones
-    when 'premium_residential'    then 16  # Distinct premium neighborhoods
-    when 'airport_logistics'      then 15  # Specific airport area
-    when 'traditional_commercial' then 14  # Old city commercial
-    when 'industrial'             then 12  # Industrial parks
-    when 'residential_dense'      then 10  # Broader residential
-    when 'residential_mixed'      then 10  # Broader residential
-    when 'residential_growth'     then 8   # Large growth corridors (biggest areas)
-    when 'outer_ring'             then 5   # Catch-all outer areas (lowest priority)
-    else                                10
-    end
-  end
+  alias default_priority_for_zone_type default_priority_for_type
 
   # ---------------------------------------------------------------------------
   # Sync to PricingZoneMultipliers (legacy backward compatibility)
@@ -467,167 +424,7 @@ class ZoneConfigLoader
     end
   end
 
-  # ---------------------------------------------------------------------------
-  # Sync Corridors from corridors/*.yml files
-  # ---------------------------------------------------------------------------
-  def sync_corridors!(force: false)
-    return unless corridors_dir.exist?
-    @corridor_seen_keys.clear
-
-    sorted_files = Dir.glob(corridors_dir.join('*.yml')).sort_by do |file_path|
-      basename = File.basename(file_path)
-      priority =
-        if basename.start_with?('route_')
-          0
-        elsif basename == 'priority_corridors.yml'
-          1
-        else
-          2
-        end
-      [priority, basename]
-    end
-
-    sorted_files.each do |file_path|
-      sync_corridor_file(file_path, force: force)
-    end
-
-    deactivate_stale_corridors!
-  end
-
-  def sync_corridor_file(file_path, force: false)
-    data = YAML.load_file(file_path)
-    
-    # Handle both single corridor files and priority_corridors.yml with multiple categories
-    source_file = File.basename(file_path)
-
-    if CORRIDOR_CATEGORIES.any? { |category| data.key?(category) }
-      # Multi-category file (priority_corridors.yml)
-      sync_multi_corridor_file(data, force: force, source_file: source_file)
-    else
-      # Single corridor file
-      sync_single_corridor(data, force: force, source_file: source_file)
-    end
-  rescue StandardError => e
-    stats[:errors] << { file: File.basename(file_path), error: e.message }
-    Rails.logger.error "[ZoneConfigLoader] Error syncing corridor file #{file_path}: #{e.message}"
-  end
-
-  def sync_multi_corridor_file(data, force: false, source_file:)
-    CORRIDOR_CATEGORIES.each do |category|
-      corridors = data[category] || {}
-      corridors.each do |corridor_id, corridor_data|
-        next unless corridor_data.is_a?(Hash) && corridor_data['from_zone']
-        sync_single_corridor(
-          corridor_data.merge('corridor_id' => corridor_id),
-          force: force,
-          source_file: source_file
-        )
-      end
-    end
-  end
-
-  def sync_single_corridor(data, force: false, source_file:)
-    from_zone_code = data['from_zone']
-    to_zone_code = data['to_zone']
-    directional = data['directional'] != false  # Default to true
-    corridor_id = data['corridor_id'] || 'single'
-    source_label = "#{source_file}:#{corridor_id}"
-
-    return unless from_zone_code && to_zone_code
-
-    from_zone = Zone.find_by(city: city_code, zone_code: from_zone_code)
-    to_zone = Zone.find_by(city: city_code, zone_code: to_zone_code)
-
-    unless from_zone && to_zone
-      Rails.logger.warn "[ZoneConfigLoader] Zones not found for corridor: #{from_zone_code} -> #{to_zone_code}"
-      return
-    end
-
-    pricing_data = data['pricing'] || {}
-
-    VEHICLE_TYPES.each do |vehicle_type|
-      TIME_BANDS.each do |time_band|
-        rates = pricing_data.dig(time_band, vehicle_type)
-        next unless rates
-
-        sync_corridor_pricing(
-          from_zone,
-          to_zone,
-          vehicle_type,
-          time_band,
-          rates,
-          directional,
-          source_label: source_label,
-          force: force
-        )
-      end
-    end
-  end
-
-  def sync_corridor_pricing(from_zone, to_zone, vehicle_type, time_band, rates, directional, source_label:, force: false)
-    key = [city_code, from_zone.id, to_zone.id, vehicle_type, time_band]
-    existing_source = @corridor_seen_keys[key]
-    if existing_source
-      return if existing_source == source_label
-
-      stats[:corridor_conflicts] += 1
-      Rails.logger.warn(
-        "[ZoneConfigLoader] Duplicate corridor definition for #{from_zone.zone_code} -> #{to_zone.zone_code} " \
-        "(#{vehicle_type}/#{time_band}): keeping #{existing_source}, skipping #{source_label}"
-      )
-      return
-    end
-
-    @corridor_seen_keys[key] = source_label
-
-    corridor = ZonePairVehiclePricing.find_or_initialize_by(
-      city_code: city_code,
-      from_zone: from_zone,
-      to_zone: to_zone,
-      vehicle_type: vehicle_type,
-      time_band: time_band
-    )
-
-    was_new = corridor.new_record?
-
-    if was_new || force
-      corridor.assign_attributes(
-        base_fare_paise: rates['base'] || 5000,
-        per_km_rate_paise: rates['rate'] || 1000,
-        per_min_rate_paise: rates['min_rate'] || 0,
-        min_fare_paise: rates['base'] || 5000,
-        directional: directional,
-        active: true
-      )
-
-      if corridor.changed?
-        corridor.save!
-        if was_new
-          stats[:corridors_created] += 1
-          Rails.logger.info "[ZoneConfigLoader] Created corridor: #{from_zone.zone_code} -> #{to_zone.zone_code} (#{vehicle_type}/#{time_band})"
-        else
-          stats[:corridors_updated] += 1
-        end
-      end
-    end
-  end
-
-  # ---------------------------------------------------------------------------
-  # Deactivate corridors in DB that are no longer in YAML
-  # ---------------------------------------------------------------------------
-  def deactivate_stale_corridors!
-    # Only touch manual corridors — auto-generated corridors are managed by InterZoneDetector
-    active_db_corridors = ZonePairVehiclePricing.where(city_code: city_code, active: true, auto_generated: [false, nil])
-
-    active_db_corridors.find_each do |corridor|
-      key = [city_code, corridor.from_zone_id, corridor.to_zone_id, corridor.vehicle_type, corridor.time_band]
-      next if @corridor_seen_keys.key?(key)
-
-      corridor.update!(active: false)
-      stats[:corridors_deactivated] += 1
-      Rails.logger.info "[ZoneConfigLoader] Deactivated stale corridor: #{corridor.from_zone_id} -> #{corridor.to_zone_id} (#{corridor.vehicle_type}/#{corridor.time_band})"
-    end
-  end
+  # Corridor sync is now provided by ConfigLoaderShared concern.
 
   # ---------------------------------------------------------------------------
   # Logging
