@@ -98,7 +98,8 @@ module RoutePricing
         drop_lng: drop_lng,
         item_value_paise: params[:item_value_paise]&.to_i,
         request_id: params[:request_id],
-        weight_kg: params[:weight_kg]&.to_f
+        weight_kg: params[:weight_kg]&.to_f,
+        quote_time: parse_quote_time(params[:quote_time])
       )
 
       if result[:error]

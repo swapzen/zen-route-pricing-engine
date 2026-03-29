@@ -55,6 +55,7 @@ class H3ZoneConfigLoader
       yaml_zone_codes = sync_zones!(h3_config['zones'] || {}, force_pricing: force_pricing)
       deactivate_stale_zones!(yaml_zone_codes)
       seed_city_configs!(vehicle_defaults) if vehicle_defaults
+      seed_distance_slabs!(vehicle_defaults) if vehicle_defaults
       seed_inter_zone_config!(vehicle_defaults) if vehicle_defaults
     end
 
@@ -286,6 +287,40 @@ class H3ZoneConfigLoader
       pc.save!
       stats[:city_configs_created] += 1
     end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Seed PricingDistanceSlab from vehicle_defaults.yml slabs
+  # ---------------------------------------------------------------------------
+  def seed_distance_slabs!(vehicle_defaults)
+    vehicles_config = vehicle_defaults['vehicles'] || {}
+
+    vehicles_config.each do |vehicle_type, config|
+      slabs = config['slabs']
+      next unless slabs
+
+      pc = PricingConfig.find_by(city_code: city_code, vehicle_type: vehicle_type, active: true)
+      next unless pc
+
+      slabs.each do |slab|
+        min_m, max_m, rate = slab
+        max_m = 999_999 if max_m.nil?
+
+        ds = PricingDistanceSlab.find_or_initialize_by(
+          pricing_config_id: pc.id,
+          min_distance_m: min_m
+        )
+        ds.max_distance_m = max_m
+        ds.per_km_rate_paise = rate
+
+        if ds.new_record? || ds.changed?
+          ds.save!
+          stats[:distance_slabs_synced] = (stats[:distance_slabs_synced] || 0) + 1
+        end
+      end
+    end
+  rescue StandardError => e
+    Rails.logger.warn "[H3ZoneConfigLoader] Distance slab seed skipped: #{e.message}"
   end
 
   # ---------------------------------------------------------------------------

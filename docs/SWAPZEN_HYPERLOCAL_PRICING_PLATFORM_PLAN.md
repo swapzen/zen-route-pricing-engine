@@ -12,22 +12,52 @@ Build a launch-ready pricing platform for SwapZen's hyperlocal delivery business
 
 This plan is for `SwapZen hyperlocal delivery first`, not a generic logistics plus ride-hailing platform.
 
+## Current State (March 2026)
+
+The platform has been built through multiple phases and is now launch-ready:
+
+### Implemented
+
+- **H3 Zone System**: 90 zones in Hyderabad defined by H3 R7 hex cells (~740 cells)
+- **Full Pricing Coverage**: All 90 zones × 10 vehicles × 3 time bands = 2,700 time pricings
+- **Corridor Pricing**: 77 zone pairs with explicit rates for all 10 vehicles
+- **Distance Slabs**: 40 telescoping per-km rate tiers (4 per vehicle)
+- **City Defaults**: 10 PricingConfig records (one per vehicle type)
+- **Inter-Zone Formula**: Weighted 60/40 blend with 9 zone-type adjustments
+- **Two-Sided Pricing**: Vendor rate cards, margin prediction per quote
+- **Per-Minute + Dead-KM**: Time and pickup-distance components
+- **Approval Workflow**: Draft → pending → approved → rejected
+- **Drift Detection**: Auto-computed on PricingActual create
+- **Backtesting**: Replay quotes against candidate configs
+- **Control Plane**: Audit logs, feature flags, emergency freeze
+- **Market State**: Outcome tracking, pressure map by zone/vehicle/time
+- **Merchant Policies**: Floor/cap/markup/discount/fixed_rate per merchant
+- **Shadow Model**: Candidate price optimizer, model scoring per quote
+- **Admin Dashboard**: Zone map (hex grid), pricing matrix, toggle controls
+
+### Single Source of Truth
+
+```
+config/zones/hyderabad/h3_zones.yml  → zones + H3 cells + pricing
+config/zones/hyderabad/vehicle_defaults.yml  → global rates, slabs, inter-zone formula
+```
+
+Sync command: `rails zones:h3_sync[hyd]`
+
 ## Product Focus
 
-Launch scope should stay narrow:
+Launch scope stays narrow:
 
 1. Hyderabad first
 2. Hyperlocal delivery first
-3. Vehicle families first:
-   - `two_wheeler`
-   - `three_wheeler` / `mini_3w`
-   - `tata_ace` / `pickup_8ft`
-4. Product modes first:
+3. All 10 vehicle families:
+   - Small: `two_wheeler`, `scooter`
+   - Mid: `mini_3w`, `three_wheeler`, `three_wheeler_ev`, `tata_ace`, `pickup_8ft`
+   - Heavy: `eeco`, `tata_407`, `canter_14ft`
+4. Product modes:
    - instant delivery
    - scheduled delivery
    - merchant / enterprise repeat lanes
-
-Ride-hailing and broader intercity logistics should be treated as later policy families, not part of the launch engine.
 
 ## Pricing Principles
 
@@ -49,148 +79,95 @@ Competitor price is an input, not the target.
 
 ## What The Platform Must Become
 
-### 1. Deterministic Core
+### 1. Deterministic Core (DONE)
 
-Keep the current zone and corridor engine as the fallback and explainability layer.
+The zone and corridor engine serves as the fallback and explainability layer:
+- Quotes when live features are unavailable
+- Enforces safe floor and cap rules
+- Provides human-readable breakdowns
+- Supports launch before models are trusted
 
-Responsibilities:
+### 2. Market State Layer (INFRASTRUCTURE DONE)
 
-- quote when live features are unavailable,
-- enforce safe floor and cap rules,
-- provide human-readable breakdowns,
-- support launch before models are trusted.
+Real-time state by area, vehicle family, and time bucket:
+- Outcome tracking (accepted/rejected/expired)
+- Pressure map by zone
+- Next: live supply snapshots, pickup ETA, demand pressure
 
-### 2. Market State Layer
+### 3. Model Layer (INFRASTRUCTURE DONE)
 
-Add real-time state by area, vehicle family, and time bucket:
+Shadow model framework in place:
+- `pricing_model_configs` and `pricing_model_scores` tables
+- `CandidatePriceOptimizer` scores every quote
+- Next: train actual models on accumulated data
 
-- online supply
-- idle supply
-- pickup ETA
-- demand pressure
-- acceptance rate
-- cancellation rate
-- deadhead risk
-- route traffic
-- rain / event pressure
-- merchant lane behavior
+### 4. Policy Engine (DONE)
 
-### 3. Model Layer
+Merchant policies combine rules with deterministic pricing:
+- Floor, cap, markup, discount, fixed_rate per merchant
+- QuoteEngine accepts `merchant_id`
 
-Add separate models for:
+### 5. Control Plane (DONE)
 
-- expected fulfillment cost
-- courier / partner acceptance
-- booking conversion / price elasticity
-- cancellation risk
-- SLA breach risk
-- backhaul probability
-- fraud / abuse risk
-- competitor / market reference estimate
+Operators have:
+- Versioned configs with approval workflow
+- Audit trail (`pricing_change_logs`)
+- Feature flags (`pricing_rollout_flags`)
+- Emergency freeze (`pricing_emergency_freezes`)
+- Admin dashboard with zone map and pricing controls
 
-### 4. Policy Engine
+### 6. Replay And Audit (DONE)
 
-A policy engine should combine deterministic rules, market state, and model scores to choose a price from a bounded candidate ladder.
+Every quote decision is stored with:
+- Request parameters
+- Route result
+- Pricing source and breakdown
+- Drift columns (filled on actual cost)
+- Backtest replay capability
 
-### 5. Control Plane
+## Remaining Roadmap
 
-Operators need:
+### Phase 2: Time Band Expansion
+- Expand from 3 → 6 time bands
+- Day-of-week awareness (weekday vs weekend)
 
-- versioned policies
-- approval workflow
-- rollback
-- experiment controls
-- merchant overrides
-- city / vehicle rollout flags
+### Phase 3: External Factors
+- Weather-based surge
+- Fuel price indexing
+- Demand proxy from order velocity
 
-### 6. Replay And Audit
+### Phase 4: Physical Dimensions
+- Weight/volume pricing tiers
+- Toll charges
+- Multi-stop pricing
 
-Every quote decision must be replayable offline with:
+### Phase 5: Learning System
+- Feedback loop from actuals → model retraining
+- Auto-calibration when drift exceeds thresholds
+- A/B testing framework
 
-- request
-- route result
-- features
-- candidate prices
-- chosen price
-- policy version
-- reason codes
-- booking outcome
-- actual fulfillment cost
-
-## Launch Architecture
-
-### Phase A: Launch-Safe Foundation
-
-Required before launch:
-
-1. YAML sync must create quote-ready defaults
-2. Config versioning must clone child state
-3. Admin changes must be authenticated and audited
-4. One zone source of truth must drive base pricing and demand logic
-5. Scheduled pricing must use scheduled route context, not `now`
-6. Deterministic regression checks must exist
-
-### Phase B: Post-Launch Learning Loop
-
-Required within the first 4 to 8 weeks after launch:
-
-1. capture quote outcomes
-2. capture booking and dispatch outcomes
-3. capture actual vendor / partner cost
-4. capture cancellations and refunds
-5. capture city-area supply snapshots
-6. build replay dashboards
-
-### Phase C: Real-Time Optimization
-
-After enough data exists:
-
-1. shadow-score cost and conversion models
-2. compare model suggestions with live decisions
-3. activate bounded optimization by cohort
-4. keep deterministic fallback live at all times
-
-## Repo-Level Roadmap
-
-### Foundation Work
-
-1. Make `zones:sync` the real bootstrap path
-2. Remove dependence on ad hoc seed state for pricing defaults
-3. Version child records with parent pricing configs
-4. Add launch-focused documentation and operator workflow
-
-### Productization Work
-
-1. Add `quote_decisions` event log
-2. Add `booking_outcomes` event log
-3. Add `dispatch_events` event log
-4. Add `actual_costs` event log
-5. Add `policy_versions` and `experiments`
-
-### Real-Time Work
-
-1. Add area-time state snapshots
-2. Add real-time feature store inputs
-3. Add model inference hooks
-4. Add candidate-price optimization
+### Multi-City Expansion
+- Bangalore, Mumbai, Delhi
+- Per-city H3 zone definitions
+- City-specific vehicle defaults
 
 ## Launch KPIs
 
 Primary:
 
-1. quote success rate
-2. quote-to-book conversion
-3. contribution margin by vehicle and lane
-4. pickup SLA hit rate
-5. cancellation rate
+1. Quote success rate
+2. Quote-to-book conversion
+3. Contribution margin by vehicle and lane
+4. Pickup SLA hit rate
+5. Cancellation rate
 
 Secondary:
 
-1. actual cost drift vs estimated cost
-2. price volatility by area and hour
-3. courier / partner acceptance
-4. merchant repeat rate
-5. refund / complaint rate
+1. Actual cost drift vs estimated cost
+2. Price volatility by area and hour
+3. Courier / partner acceptance
+4. Merchant repeat rate
+5. Refund / complaint rate
 
 ## Non-Negotiables
 
@@ -200,13 +177,3 @@ Secondary:
 4. Every live price must have reason codes
 5. Every pricing change must be rollbackable
 6. Every experiment must have guardrails
-
-## First Implementation Slice
-
-The first implementation slice in this repo should make the launch bootstrap trustworthy:
-
-1. `zones:sync` creates current `PricingConfig` defaults from YAML vehicle defaults
-2. distance slabs are created from YAML and tied to those configs
-3. versioned config updates preserve slabs and surge rules
-
-This keeps the existing engine usable for SwapZen launch while opening the path to real-time and model-driven pricing later.
