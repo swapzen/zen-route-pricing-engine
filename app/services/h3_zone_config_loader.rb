@@ -82,11 +82,14 @@ class H3ZoneConfigLoader
   end
 
   def sync_single_zone(zone_code, data, force_pricing: false)
+    # Prefer R8 cells (non-overlapping source of truth), fall back to R7
+    h3_r8_cells = data['h3_cells_r8'] || []
     h3_cells = data['h3_cells_r7'] || []
-    return if h3_cells.empty?
+    return if h3_r8_cells.empty? && h3_cells.empty?
 
-    # Compute bbox from H3 cell coordinates
-    bbox = compute_bbox_from_h3_cells(h3_cells)
+    # Compute bbox from the most granular cells available
+    bbox_cells = h3_r8_cells.any? ? h3_r8_cells : h3_cells
+    bbox = compute_bbox_from_h3_cells(bbox_cells)
 
     zone = Zone.find_or_initialize_by(city: city_code, zone_code: zone_code)
     was_new = zone.new_record?
@@ -108,7 +111,7 @@ class H3ZoneConfigLoader
       was_new ? stats[:zones_created] += 1 : stats[:zones_updated] += 1
     end
 
-    sync_h3_mappings!(zone, h3_cells)
+    sync_h3_mappings!(zone, h3_cells, h3_r8_cells)
     sync_zone_pricing!(zone, data['pricing'] || {}, force: force_pricing)
   rescue StandardError => e
     stats[:errors] << { zone_code: zone_code, error: e.message }
@@ -118,29 +121,69 @@ class H3ZoneConfigLoader
   # ---------------------------------------------------------------------------
   # H3 mapping sync
   # ---------------------------------------------------------------------------
-  def sync_h3_mappings!(zone, h3_cells)
+  def sync_h3_mappings!(zone, h3_r7_cells, h3_r8_cells = [])
+    if h3_r8_cells.any?
+      # R8-first mode: one mapping per R8 cell (non-overlapping source of truth)
+      sync_h3_mappings_r8!(zone, h3_r8_cells)
+    else
+      # Legacy R7 mode: one mapping per R7 cell (may overlap with other zones)
+      sync_h3_mappings_r7!(zone, h3_r7_cells)
+    end
+  end
+
+  # R8 sync: creates one ZoneH3Mapping per R8 cell. No overlaps possible.
+  def sync_h3_mappings_r8!(zone, h3_r8_cells)
+    existing_r8s = ZoneH3Mapping.where(zone_id: zone.id).pluck(:h3_index_r8).compact
+    new_r8s = h3_r8_cells - existing_r8s
+    stale_r8s = existing_r8s - h3_r8_cells
+
+    # Remove stale
+    if stale_r8s.any?
+      ZoneH3Mapping.where(zone_id: zone.id, h3_index_r8: stale_r8s).delete_all
+      stats[:h3_mappings_removed] += stale_r8s.size
+    end
+
+    # Create new
+    new_r8s.each do |r8_hex|
+      r7_parent = H3.parent(r8_hex.to_i(16), 7).to_s(16) rescue nil
+
+      ZoneH3Mapping.create!(
+        zone: zone,
+        h3_index_r7: r7_parent,
+        h3_index_r8: r8_hex,
+        city_code: city_code,
+        is_boundary: false,
+        serviceable: true
+      )
+      stats[:h3_mappings_created] += 1
+    end
+
+    # Update zone's H3 index arrays
+    zone_r7s = ZoneH3Mapping.where(zone_id: zone.id).pluck(:h3_index_r7).compact.uniq
+    zone_r8s = ZoneH3Mapping.where(zone_id: zone.id).pluck(:h3_index_r8).compact.uniq
+    updates = { h3_indexes_r7: zone_r7s }
+    updates[:h3_indexes_r9] = zone_r8s if Zone.column_names.include?('h3_indexes_r9')
+    zone.update_columns(updates)
+  end
+
+  # Legacy R7 sync (kept for backward compatibility)
+  def sync_h3_mappings_r7!(zone, h3_cells)
     existing_r7s = ZoneH3Mapping.where(zone_id: zone.id).pluck(:h3_index_r7)
     new_r7s = h3_cells - existing_r7s
     stale_r7s = existing_r7s - h3_cells
 
-    # Remove stale mappings
     if stale_r7s.any?
       ZoneH3Mapping.where(zone_id: zone.id, h3_index_r7: stale_r7s).delete_all
       stats[:h3_mappings_removed] += stale_r7s.size
     end
 
-    # Create new mappings
     new_r7s.each do |r7_hex|
-      r7_int = r7_hex.to_i(16)
-      # Compute a representative R8 child
       r8_hex = begin
-        r8_children = H3.children(r7_int, 8)
-        r8_children.first&.to_s(16)
+        H3.children(r7_hex.to_i(16), 8).first&.to_s(16)
       rescue StandardError
         nil
       end
 
-      # Check boundary
       existing_other = ZoneH3Mapping.where(h3_index_r7: r7_hex, city_code: city_code)
                                      .where.not(zone_id: zone.id).exists?
 
@@ -154,7 +197,6 @@ class H3ZoneConfigLoader
       )
       stats[:h3_mappings_created] += 1
 
-      # Mark existing mappings for same R7 as boundary
       if existing_other
         ZoneH3Mapping.where(h3_index_r7: r7_hex, city_code: city_code)
                      .where.not(zone_id: zone.id)
@@ -162,7 +204,6 @@ class H3ZoneConfigLoader
       end
     end
 
-    # Update zone's H3 index arrays
     zone_r7s = ZoneH3Mapping.where(zone_id: zone.id).pluck(:h3_index_r7).uniq
     zone.update_columns(h3_indexes_r7: zone_r7s)
   end

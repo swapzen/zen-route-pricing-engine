@@ -60,36 +60,6 @@ zones:
       heavy_truck: 1.15
       default: 1.10
 
-  nagole:
-    name: "Nagole Metro Area"
-    zone_type: residential_mixed
-    active: true
-    bounds:
-      lat_min: 17.39
-      lat_max: 17.42
-      lng_min: 78.54
-      lng_max: 78.58
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
-
-  saroornagar:
-    name: "Saroornagar"
-    zone_type: residential_dense
-    active: true
-    bounds:
-      lat_min: 17.35
-      lat_max: 17.39
-      lng_min: 78.52
-      lng_max: 78.56
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.05
-      heavy_truck: 1.05
-      default: 1.02
-
   hayathnagar:
     name: "Hayathnagar"
     zone_type: residential_growth
@@ -157,36 +127,6 @@ zones:
       mid_truck: 1.05
       heavy_truck: 1.10
       default: 1.02
-
-  malakpet:
-    name: "Malakpet"
-    zone_type: residential_mixed
-    active: true
-    bounds:
-      lat_min: 17.36
-      lat_max: 17.40
-      lng_min: 78.49
-      lng_max: 78.52
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
-
-  moosarambagh:
-    name: "Moosarambagh"
-    zone_type: residential_mixed
-    active: true
-    bounds:
-      lat_min: 17.38
-      lat_max: 17.41
-      lng_min: 78.50
-      lng_max: 78.54
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
 
   # ===========================================================================
   # 3. SERILINGAMPALLY ZONE (GHMC Zone)
@@ -365,21 +305,6 @@ zones:
       heavy_truck: 1.0
       default: 1.0
 
-  yousufguda:
-    name: "Yousufguda"
-    zone_type: business_cbd
-    active: true
-    bounds:
-      lat_min: 17.42
-      lat_max: 17.45
-      lng_min: 78.44
-      lng_max: 78.47
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
-
   # ===========================================================================
   # 5. KUKATPALLY ZONE (GHMC Zone)
   # Circles: Madhapur, Alwyn Colony, Kukatpally, Moosapet
@@ -516,21 +441,6 @@ zones:
       heavy_truck: 1.0
       default: 1.0
 
-  musheerabad:
-    name: "Musheerabad"
-    zone_type: residential_mixed
-    active: true
-    bounds:
-      lat_min: 17.41
-      lat_max: 17.44
-      lng_min: 78.48
-      lng_max: 78.51
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
-
   amberpet:
     name: "Amberpet"
     zone_type: residential_dense
@@ -540,36 +450,6 @@ zones:
       lat_max: 17.41
       lng_min: 78.50
       lng_max: 78.53
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
-
-  tarnaka:
-    name: "Tarnaka"
-    zone_type: residential_mixed
-    active: true
-    bounds:
-      lat_min: 17.42
-      lat_max: 17.45
-      lng_min: 78.52
-      lng_max: 78.56
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
-
-  mettuguda:
-    name: "Mettuguda"
-    zone_type: residential_mixed
-    active: true
-    bounds:
-      lat_min: 17.43
-      lat_max: 17.46
-      lng_min: 78.52
-      lng_max: 78.55
     multipliers:
       small_vehicle: 1.0
       mid_truck: 1.0
@@ -836,36 +716,6 @@ zones:
       heavy_truck: 1.0
       default: 1.0
 
-  attapur:
-    name: "Attapur"
-    zone_type: residential_mixed
-    active: true
-    bounds:
-      lat_min: 17.36
-      lat_max: 17.39
-      lng_min: 78.42
-      lng_max: 78.45
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
-
-  bahadurpura:
-    name: "Bahadurpura"
-    zone_type: traditional_commercial
-    active: true
-    bounds:
-      lat_min: 17.35
-      lat_max: 17.38
-      lng_min: 78.45
-      lng_max: 78.48
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.05
-      heavy_truck: 1.10
-      default: 1.02
-
   falaknuma:
     name: "Falaknuma"
     zone_type: traditional_commercial
@@ -931,30 +781,15 @@ zones:
       heavy_truck: 1.0
       default: 1.0
 
-  karwan:
-    name: "Karwan"
-    zone_type: traditional_commercial
-    active: true
-    bounds:
-      lat_min: 17.36
-      lat_max: 17.39
-      lng_min: 78.43
-      lng_max: 78.46
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.05
-      heavy_truck: 1.10
-      default: 1.02
-
   mehdipatnam:
     name: "Mehdipatnam"
     zone_type: business_cbd
     active: true
     bounds:
-      lat_min: 17.38
+      lat_min: 17.36
       lat_max: 17.42
       lng_min: 78.42
-      lng_max: 78.45
+      lng_max: 78.46
     multipliers:
       small_vehicle: 1.0
       mid_truck: 1.0
@@ -970,21 +805,6 @@ zones:
       lat_max: 17.43
       lng_min: 78.44
       lng_max: 78.47
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
-
-  tcs_synergy:
-    name: "TCS Synergy Park Tech Zone"
-    zone_type: tech_corridor
-    active: true
-    bounds:
-      lat_min: 17.37
-      lat_max: 17.39
-      lng_min: 78.47
-      lng_max: 78.49
     multipliers:
       small_vehicle: 1.0
       mid_truck: 1.0
@@ -1010,21 +830,6 @@ zones:
       mid_truck: 0.95
       heavy_truck: 0.95
       default: 0.95
-
-  chintal:
-    name: "Chintal"
-    zone_type: residential_mixed
-    active: true
-    bounds:
-      lat_min: 17.49
-      lat_max: 17.52
-      lng_min: 78.45
-      lng_max: 78.49
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
 
   jeedimetla:
     name: "Jeedimetla Industrial"
@@ -1187,12 +992,12 @@ zones:
       heavy_truck: 1.05
       default: 1.05
 
-  nampally:
+  nampally_abids:
     name: "Nampally Abids"
     zone_type: business_cbd
     active: true
     bounds:
-      lat_min: 17.38
+      lat_min: 17.37
       lat_max: 17.41
       lng_min: 78.46
       lng_max: 78.49
@@ -1216,21 +1021,6 @@ zones:
       mid_truck: 1.05
       heavy_truck: 1.05
       default: 1.02
-
-  tolichowki:
-    name: "Tolichowki Rethibowli"
-    zone_type: residential_mixed
-    active: true
-    bounds:
-      lat_min: 17.39
-      lat_max: 17.42
-      lng_min: 78.42
-      lng_max: 78.45
-    multipliers:
-      small_vehicle: 1.0
-      mid_truck: 1.0
-      heavy_truck: 1.0
-      default: 1.0
 
   erragadda:
     name: "Erragadda ESI"

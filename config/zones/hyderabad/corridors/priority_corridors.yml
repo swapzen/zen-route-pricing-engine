@@ -1651,12 +1651,12 @@ business_corridors:
           base: 90000
           rate: 8820
 old_city_corridors:
-  lb_nagar_to_tcs_synergy:
+  lb_nagar_to_abids:
     from_zone: lb_nagar_east
-    to_zone: tcs_synergy
+    to_zone: nampally_abids
     directional: true
     distance_km: 10
-    description: LB Nagar → TCS Synergy Park (Route 3, actual ~10km)
+    description: LB Nagar → Nampally Abids (Route 3, actual ~10km)
     pricing:
       early_morning:
         two_wheeler:

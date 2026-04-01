@@ -3,8 +3,10 @@
 class ZoneH3Mapping < ApplicationRecord
   belongs_to :zone
 
-  validates :h3_index_r7, :city_code, presence: true
-  validates :h3_index_r7, uniqueness: { scope: :zone_id }
+  validates :city_code, presence: true
+  validates :h3_index_r7, presence: true, unless: -> { h3_index_r8.present? }
+  # R8 cells are the unique key when present (non-overlapping source of truth)
+  validates :h3_index_r8, uniqueness: { scope: :zone_id }, allow_nil: true
 
   scope :for_city, ->(city_code) { where(city_code: city_code) }
   scope :for_r7, ->(h3_index) { where(h3_index_r7: h3_index) }

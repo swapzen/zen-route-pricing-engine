@@ -40,17 +40,16 @@ module RoutePricing
       end
 
       # Build in-memory hash maps for a city from the database.
-      # R7 map: loaded directly from DB mappings (one R7 hex -> zone_id).
-      # R8 map: expanded from R7 by computing all R8 children per R7 cell.
-      #   Each R7 hex has ~7 R8 children, all mapped to the same zone.
-      #   For boundary R7 cells (multiple zones), the highest-priority zone wins.
+      # R8 map: loaded directly from DB zone_h3_mappings (h3_index_r8 column).
+      #   Each R8 cell maps to exactly one zone — no overlaps by construction.
+      # R7 map: derived from R8 — for each R7 parent, pick the zone with most R8 children.
+      #   Used as fallback when R8 lookup misses (point near cell boundary).
       # Returns { r8: count, r7: count } of loaded entries.
       def self.build_city_map(city_code)
         city_code = city_code.to_s.downcase
 
-        r7_map = {}
-        # Track zone priority for R7 boundary disambiguation
-        r7_zone_priority = {}
+        r8_map = {}
+        r7_zone_counts = Hash.new { |h, k| h[k] = Hash.new(0) } # r7_hex → { zone_id → count }
 
         scope = ZoneH3Mapping.for_city(city_code).includes(:zone)
         scope = scope.where(serviceable: true) if ZoneH3Mapping.column_names.include?('serviceable')
@@ -59,31 +58,31 @@ module RoutePricing
           zone = mapping.zone
           next unless zone&.active?
 
-          # R7 map: keep highest priority zone for boundary cells
-          if mapping.h3_index_r7.present?
+          # Primary: R8 direct lookup (no overlap possible)
+          if mapping.h3_index_r8.present?
+            r8_map[mapping.h3_index_r8] = zone.id
+            # Track R7 parent for fallback map
+            r7_parent = H3.parent(mapping.h3_index_r8.to_i(16), FALLBACK_RESOLUTION).to_s(16)
+            r7_zone_counts[r7_parent][zone.id] += 1
+          elsif mapping.h3_index_r7.present?
+            # Legacy R7-only mappings: expand to R8 children
             r7_hex = mapping.h3_index_r7
-            zone_priority = zone.priority || 0
-
-            existing_priority = r7_zone_priority[r7_hex]
-            if existing_priority.nil? || zone_priority > existing_priority
-              r7_map[r7_hex] = zone.id
-              r7_zone_priority[r7_hex] = zone_priority
+            begin
+              H3.children(r7_hex.to_i(16), PRIMARY_RESOLUTION).each do |r8_int|
+                r8_key = r8_int.to_s(16)
+                r8_map[r8_key] ||= zone.id  # first-write wins (no overwrite)
+              end
+            rescue StandardError => e
+              Rails.logger.debug("H3ZoneResolver: R8 expansion failed for #{r7_hex}: #{e.message}")
             end
+            r7_zone_counts[r7_hex][zone.id] += 7  # approximate
           end
         end
 
-        # Expand R7 map to R8: compute all R8 children for each R7 cell
-        r8_map = {}
-        r7_map.each do |r7_hex, zone_id|
-          r7_int = r7_hex.to_i(16)
-          begin
-            r8_children = H3.children(r7_int, PRIMARY_RESOLUTION)
-            r8_children.each do |r8_int|
-              r8_map[r8_int.to_s(16)] = zone_id
-            end
-          rescue StandardError => e
-            Rails.logger.debug("H3ZoneResolver: R8 expansion failed for #{r7_hex}: #{e.message}")
-          end
+        # R7 fallback: for each R7 parent, pick the zone with most R8 children
+        r7_map = {}
+        r7_zone_counts.each do |r7_hex, counts|
+          r7_map[r7_hex] = counts.max_by(&:last).first
         end
 
         @@mutex.synchronize do

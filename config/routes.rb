@@ -96,6 +96,14 @@ Rails.application.routes.draw do
       # Provider health (circuit breaker status)
       get 'provider_health', to: 'provider_health#show'
 
+      # Recalibration optimizer
+      post 'recalibration/optimize', to: 'recalibration#optimize'
+      post 'recalibration/simulate', to: 'recalibration#simulate'
+      post 'recalibration/snapshots', to: 'recalibration#create_snapshot'
+      get 'recalibration/snapshots', to: 'recalibration#list_snapshots'
+      post 'recalibration/snapshots/:id/restore', to: 'recalibration#restore_snapshot'
+      get 'recalibration/snapshots/:id/compare', to: 'recalibration#compare_snapshot'
+
       # Zone toggle
       patch 'zones/:id/toggle', to: 'zones#toggle'
 
