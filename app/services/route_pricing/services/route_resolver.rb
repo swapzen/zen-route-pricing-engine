@@ -97,13 +97,19 @@ module RoutePricing
         end
 
         # Cache miss - call provider with circuit breaker + timeout guard
-        route_data = call_provider_with_breaker(city_code) do
-          @provider.get_route(
-            pickup_lat: pickup_norm[:lat],
-            pickup_lng: pickup_norm[:lng],
-            drop_lat: drop_norm[:lat],
-            drop_lng: drop_norm[:lng]
-          )
+        # Falls back to haversine distance estimate if provider/circuit fails
+        route_data = begin
+          call_provider_with_breaker(city_code) do
+            @provider.get_route(
+              pickup_lat: pickup_norm[:lat],
+              pickup_lng: pickup_norm[:lng],
+              drop_lat: drop_norm[:lat],
+              drop_lng: drop_norm[:lng]
+            )
+          end
+        rescue StandardError => e
+          Rails.logger.warn("[ROUTE_FALLBACK] Provider failed (#{e.message}), using haversine estimate")
+          haversine_fallback(pickup_norm[:lat], pickup_norm[:lng], drop_norm[:lat], drop_norm[:lng])
         end
 
         # Cache result using Rails.cache (handles connection pooling)
@@ -124,6 +130,27 @@ module RoutePricing
       end
 
       private
+
+      # Haversine distance estimate when Google Maps is unavailable.
+      # Applies 1.3x road factor (straight-line → actual driving distance in Indian cities).
+      def haversine_fallback(lat1, lng1, lat2, lng2)
+        r = 6_371_000 # Earth radius meters
+        dlat = (lat2 - lat1) * Math::PI / 180
+        dlng = (lng2 - lng1) * Math::PI / 180
+        a = Math.sin(dlat / 2)**2 +
+            Math.cos(lat1 * Math::PI / 180) * Math.cos(lat2 * Math::PI / 180) *
+            Math.sin(dlng / 2)**2
+        straight_line_m = 2 * r * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        road_distance_m = (straight_line_m * 1.3).round  # 30% road factor
+        estimated_duration_s = (road_distance_m / 8.33).round  # ~30 km/h avg speed
+
+        {
+          distance_m: road_distance_m,
+          duration_s: estimated_duration_s,
+          duration_in_traffic_s: (estimated_duration_s * 1.2).round,  # 20% traffic buffer
+          provider: 'haversine_fallback'
+        }
+      end
 
       def call_provider_with_breaker(_city_code)
         Timeout.timeout(PROVIDER_TIMEOUT) do

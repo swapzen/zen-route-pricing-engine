@@ -84,8 +84,14 @@ module RoutePricing
           per_min_rate_paise: global_config&.per_min_rate_paise || 0
         }
 
-        # 3. Check for Inter-Zone Formula (when both zones exist and are different)
+        # 3. TIER 1: Corridor-specific pricing (highest priority for cross-zone routes)
         if pickup_zone && drop_zone && pickup_zone.id != drop_zone.id
+          corridor_result = find_corridor_pricing(
+            pickup_zone, drop_zone, vehicle_type, time_band, defaults
+          )
+          return corridor_result if corridor_result
+
+          # 3b. TIER 2: Inter-Zone Formula (weighted average of zone rates)
           inter_zone_result = calculate_inter_zone_pricing(
             pickup_zone, drop_zone, vehicle_type, time_band, defaults, inter_zone_config
           )
@@ -106,7 +112,6 @@ module RoutePricing
             if time_band.present?
               time_pricing = zone_pricing.time_pricings.detect { |tp| tp.active && tp.time_band == time_band }
               if time_pricing
-                # Zone-specific time-band rates are pre-calibrated, so bypass zone multipliers
                 zone_pricing_configs = extract_zone_pricing_configs(pickup_zone, drop_zone)
                 zone_min = reference_zone&.try(:min_fare_overrides)&.dig(vehicle_type)
                 return Result.new(
@@ -118,9 +123,8 @@ module RoutePricing
                   pricing_mode: zone_slabs.present? ? :zone_slab : :slab,
                   zone_info: defaults[:zone_info],
                   zone_slabs: zone_slabs,
-                  # Zone-specific rates are pre-calibrated, so set zone_multiplier to 1.0
                   fuel_surcharge_pct: zone_pricing_configs[:fuel_surcharge_pct],
-                  zone_multiplier: 1.0,  # Explicitly set to 1.0 to prevent double-counting
+                  zone_multiplier: reference_zone&.zone_multiplier || 1.0,
                   special_location_surcharge: zone_pricing_configs[:special_location_surcharge],
                   oda_config: zone_pricing_configs[:oda_config],
                   per_min_rate_paise: time_pricing.per_min_rate_paise || 0
@@ -129,7 +133,6 @@ module RoutePricing
             end
 
             # 4b. Fallback to base zone pricing (time-neutral)
-            # Zone-specific rates are pre-calibrated, so bypass zone multipliers
             zone_pricing_configs = extract_zone_pricing_configs(pickup_zone, drop_zone)
             zone_min = reference_zone&.try(:min_fare_overrides)&.dig(vehicle_type)
             return Result.new(
@@ -141,9 +144,8 @@ module RoutePricing
               pricing_mode: zone_slabs.present? ? :zone_slab : :slab,
               zone_info: defaults[:zone_info],
               zone_slabs: zone_slabs,
-              # Zone-specific rates are pre-calibrated, so set zone_multiplier to 1.0
               fuel_surcharge_pct: zone_pricing_configs[:fuel_surcharge_pct],
-              zone_multiplier: 1.0,  # Explicitly set to 1.0 to prevent double-counting
+              zone_multiplier: reference_zone&.zone_multiplier || 1.0,
               special_location_surcharge: zone_pricing_configs[:special_location_surcharge],
               oda_config: zone_pricing_configs[:oda_config],
               per_min_rate_paise: zone_pricing.per_min_rate_paise || 0
@@ -159,7 +161,59 @@ module RoutePricing
       private
 
       # =========================================================================
-      # INTER-ZONE FORMULA
+      # TIER 1: CORRIDOR PRICING (Zone-pair-specific overrides)
+      # =========================================================================
+      # Looks up ZonePairVehiclePricing for a specific origin-destination zone pair.
+      # Supports directional corridors (A→B may differ from B→A) and time-band overrides.
+      def find_corridor_pricing(pickup_zone, drop_zone, vehicle_type, time_band, defaults)
+        # Try directional match first (from_zone → to_zone), then reverse
+        corridor = ZonePairVehiclePricing
+          .where(from_zone_id: pickup_zone.id, to_zone_id: drop_zone.id,
+                 vehicle_type: vehicle_type, active: true, time_band: nil)
+          .first
+
+        # Try reverse direction if no directional match and corridor is non-directional
+        corridor ||= ZonePairVehiclePricing
+          .where(from_zone_id: drop_zone.id, to_zone_id: pickup_zone.id,
+                 vehicle_type: vehicle_type, active: true, time_band: nil,
+                 directional: [false, nil])
+          .first
+
+        return nil unless corridor
+
+        # Check for time-band-specific override on this corridor
+        base_fare = corridor.base_fare_paise
+        per_km_rate = corridor.per_km_rate_paise
+
+        if time_band.present?
+          time_override = corridor.time_pricings&.detect { |tp| tp.active && tp.time_band == time_band }
+          if time_override
+            base_fare = time_override.base_fare_paise
+            per_km_rate = time_override.per_km_rate_paise
+          end
+        end
+
+        zone_pricing_configs = extract_zone_pricing_configs(pickup_zone, drop_zone)
+
+        Result.new(
+          base_fare_paise: base_fare,
+          min_fare_paise: corridor.min_fare_paise || defaults[:min_fare_paise],
+          per_km_rate_paise: per_km_rate,
+          base_distance_m: corridor.base_distance_m || defaults[:base_distance_m],
+          source: :corridor_override,
+          pricing_mode: :slab,
+          zone_info: defaults[:zone_info],
+          zone_slabs: nil,
+          fuel_surcharge_pct: zone_pricing_configs[:fuel_surcharge_pct],
+          zone_multiplier: zone_pricing_configs[:zone_multiplier],
+          special_location_surcharge: zone_pricing_configs[:special_location_surcharge],
+          oda_config: zone_pricing_configs[:oda_config],
+          per_min_rate_paise: corridor.per_min_rate_paise || 0
+        )
+      end
+
+      # =========================================================================
+      # TIER 2: INTER-ZONE FORMULA
       # =========================================================================
       # Calculates pricing for zone pairs without explicit corridors
       # Uses weighted average of origin and destination zone rates

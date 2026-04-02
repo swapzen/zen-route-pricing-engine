@@ -16,16 +16,17 @@ module RoutePricing
         pickup_h3_r7 = h3_indices[:pickup_h3_r7]
         drop_h3_r7 = h3_indices[:drop_h3_r7]
 
-        # 0b. H3-aware quote cache: all points within the same hex pair share a cache entry
+        # 0b. H3-aware pricing cache: cache the PRICING RESULT (price + breakdown)
+        # but NOT the quote_id — each request must create its own PricingQuote for audit.
         time_bucket = (Time.current.to_i / 7200)
         local_time = quote_time.in_time_zone('Asia/Kolkata')
         time_band_for_cache = RoutePricing::Services::TimeBandResolver.resolve(local_time)
 
-        quote_cache_key = nil
+        pricing_cache_key = nil
+        cached_pricing = nil
         if pickup_h3_r8 && drop_h3_r8
-          quote_cache_key = "qp:#{city_code}:#{pickup_h3_r8}:#{drop_h3_r8}:#{vehicle_type}:#{time_band_for_cache}:#{time_bucket}"
-          cached_result = Rails.cache.read(quote_cache_key)
-          return cached_result if cached_result
+          pricing_cache_key = "qp:#{city_code}:#{pickup_h3_r8}:#{drop_h3_r8}:#{vehicle_type}:#{time_band_for_cache}:#{time_bucket}"
+          cached_pricing = Rails.cache.read(pricing_cache_key)
         end
 
         # 1. Fetch current config
@@ -61,6 +62,17 @@ module RoutePricing
             city_code: city_code,
             vehicle_type: vehicle_type
           )
+        end
+
+        # 2b. Validate route data — abort early if Google Maps failed
+        if route_data.nil?
+          return { error: 'Route resolution failed: no data returned', code: 502 }
+        end
+        if route_data[:error]
+          return { error: "Route resolution failed: #{route_data[:error]}", code: 502 }
+        end
+        if route_data[:distance_m].nil? || route_data[:distance_m] <= 0
+          return { error: 'Route resolution failed: invalid distance', code: 502 }
         end
 
         # 3. Calculate price (pass coordinates for zone multiplier + quote_time for v3.0)
@@ -180,9 +192,18 @@ module RoutePricing
         # 5c. Demand tracking (fire-and-forget)
         track_demand(city_code, pickup_h3_r7)
 
-        # Cache the result for H3-based quote caching
-        if quote_cache_key
-          Rails.cache.write(quote_cache_key, result, expires_in: 2.hours)
+        # Cache the PRICING data (not quote_id) for H3-based caching
+        if pricing_cache_key
+          Rails.cache.write(pricing_cache_key, {
+            price_paise: quote.price_paise,
+            distance_m: route_data[:distance_m],
+            duration_s: route_data[:duration_s],
+            duration_in_traffic_s: route_data[:duration_in_traffic_s],
+            pricing_version: pricing_version,
+            confidence: quote.price_confidence,
+            provider: route_data[:provider],
+            breakdown: pricing_result[:breakdown]
+          }, expires_in: 2.hours)
         end
 
         result
@@ -210,6 +231,17 @@ module RoutePricing
           vehicle_type: 'multi'
         )
 
+        # 1b. Validate route data — abort early if Google Maps failed
+        if route_data.nil?
+          return { error: 'Route resolution failed: no data returned', code: 502 }
+        end
+        if route_data[:error]
+          return { error: "Route resolution failed: #{route_data[:error]}", code: 502 }
+        end
+        if route_data[:distance_m].nil? || route_data[:distance_m] <= 0
+          return { error: 'Route resolution failed: invalid distance', code: 502 }
+        end
+
         quotes = []
         errors = []
 
@@ -222,7 +254,6 @@ module RoutePricing
           .where(city_code: city_code.to_s.downcase, active: true, effective_until: nil)
           .where('effective_from <= ?', Time.current)
           .where(vehicle_type: vehicle_types)
-          .includes(:pricing_distance_slabs)
           .order(version: :desc)
           .to_a
           .group_by(&:vehicle_type)
@@ -363,23 +394,39 @@ module RoutePricing
             quote_time: quote_time,
             weight_kg: weight_kg
           )
-          raise ActiveRecord::Rollback, outbound[:error] if outbound[:error]
+
+          if outbound[:error]
+            raise ActiveRecord::Rollback, outbound[:error]
+          end
 
           # 2. Return quote (B -> A), default +2h if no return time specified
           return_time = return_quote_time || (quote_time + 2.hours)
-          return_result = create_quote(
-            city_code: city_code,
-            vehicle_type: vehicle_type,
-            pickup_lat: drop_lat,
-            pickup_lng: drop_lng,
-            drop_lat: pickup_lat,
-            drop_lng: pickup_lng,
-            item_value_paise: item_value_paise,
-            request_id: request_id,
-            quote_time: return_time,
-            weight_kg: weight_kg
-          )
-          raise ActiveRecord::Rollback, return_result[:error] if return_result[:error]
+          begin
+            return_result = create_quote(
+              city_code: city_code,
+              vehicle_type: vehicle_type,
+              pickup_lat: drop_lat,
+              pickup_lng: drop_lng,
+              drop_lat: pickup_lat,
+              drop_lng: pickup_lng,
+              item_value_paise: item_value_paise,
+              request_id: request_id,
+              quote_time: return_time,
+              weight_kg: weight_kg
+            )
+
+            if return_result[:error]
+              # Return quote failed — destroy the outbound quote to prevent orphans
+              PricingQuote.find_by(id: outbound[:quote_id])&.destroy
+              raise ActiveRecord::Rollback, return_result[:error]
+            end
+          rescue ActiveRecord::Rollback
+            raise # re-raise Rollback so transaction rolls back
+          rescue StandardError => e
+            # Return quote raised an exception — clean up outbound quote
+            PricingQuote.find_by(id: outbound[:quote_id])&.destroy
+            raise e
+          end
 
           # 3. Link quotes atomically
           outbound_quote = PricingQuote.find(outbound[:quote_id])

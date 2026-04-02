@@ -433,8 +433,8 @@ global_time_rates:
       base: 144450
       rate: 5310
 inter_zone_formula:
-  origin_weight: 0.6
-  destination_weight: 0.4
+  origin_weight: 0.4
+  destination_weight: 0.6
   type_adjustments:
     residential_dense_to_tech_corridor:
       early_morning: 1.03
