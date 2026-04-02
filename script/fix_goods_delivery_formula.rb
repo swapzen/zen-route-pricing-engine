@@ -5,8 +5,8 @@
 # =============================================================================
 # Fixes 3 DB-level issues:
 #   1. Set per_min_rate_paise = 0 (goods delivery doesn't charge per-minute travel)
-#   2. Reverse distance slabs to INCREASING pattern (matching Porter/Uncle market)
-#   3. Seed vendor rate cards for Porter Hyderabad (10 vehicles)
+#   2. Reverse distance slabs to INCREASING pattern (matching competitor market)
+#   3. Seed vendor rate cards for competitor benchmark Hyderabad (10 vehicles)
 #
 # Run: bundle exec ruby script/fix_goods_delivery_formula.rb
 # =============================================================================
@@ -71,8 +71,8 @@ end
 puts "\n--- FIX 2: Updating distance slabs to INCREASING pattern ---"
 
 # Vehicle slab definitions: [base_fare, free_dist_m, slab1_rate, slab2_rate, break_km]
-# Time-band adjustments derived from Porter's actual time-of-day pricing.
-# Porter charges significant evening premiums for commercial vehicles (30%+)
+# Time-band adjustments derived from competitor's actual time-of-day pricing.
+# Competitor charges significant evening premiums for commercial vehicles (30%+)
 # but little/no premium for small vehicles.
 # Bands tested: morning_rush (9AM), afternoon (3PM), night (11PM)
 TIME_BAND_ADJUSTMENTS = {
@@ -88,9 +88,9 @@ TIME_BAND_ADJUSTMENTS = {
   'canter_14ft'      => { 'early_morning' => 0.92, 'morning_rush' => 1.00, 'midday' => 0.98, 'afternoon' => 0.99, 'evening_rush' => 1.08, 'night' => 1.11, 'weekend_day' => 0.95, 'weekend_night' => 0.95 }
 }.freeze
 
-# Rates derived from Porter Hyderabad morning benchmark prices:
-# - Base fare matches Porter's minimum booking price (1km trip)
-# - Slab rates derived by solving against Porter prices at 4.4km and 18.8km
+# Rates derived from competitor Hyderabad morning benchmark prices:
+# - Base fare matches competitor's minimum booking price (1km trip)
+# - Slab rates derived by solving against competitor prices at 4.4km and 18.8km
 # - Pattern: high base + moderate per-km (goods delivery model)
 SLAB_CONFIG = {
   'two_wheeler'      => { base: 5100,   free_m: 1000, rate1: 800,  rate2: 1200, break_km: 5 },
@@ -189,7 +189,7 @@ SLAB_CONFIG.each do |vehicle_type, cfg|
     puts "  #{vehicle_type} ZVP: set #{zvp_ids.size} records to base=#{target_base}"
 
     # Set ZoneVehicleTimePricing with time-band adjustments
-    # Porter charges different rates by time of day — commercial vehicles get evening premium
+    # Competitor charges different rates by time of day — commercial vehicles get evening premium
     band_mults = TIME_BAND_ADJUSTMENTS[vehicle_type] || {}
     total_zvtp = 0
     band_mults.each do |band, mult|
@@ -205,15 +205,15 @@ SLAB_CONFIG.each do |vehicle_type, cfg|
 end
 
 # =============================================================================
-# FIX 3: Seed vendor rate cards for Porter Hyderabad
+# FIX 3: Seed vendor rate cards for competitor benchmark Hyderabad
 # =============================================================================
-# These are Porter's approximate rates based on market research.
+# These are competitor's approximate rates based on market research.
 # Used by VendorPayoutCalculator for the unit economics guardrail.
 # per_min_rate_paise = 0 for goods delivery (consistent with Fix 1).
 # =============================================================================
 puts "\n--- FIX 3: Seeding vendor rate cards ---"
 
-# Vendor (Porter) rate cards — represents driver payout (~70-75% of customer price)
+# Vendor rate cards — represents driver payout (~70-75% of customer price)
 # Used by VendorPayoutCalculator for unit economics guardrail in production.
 # In calibration mode, guardrail is skipped, so these don't affect test results.
 VENDOR_RATES = {
@@ -229,10 +229,10 @@ VENDOR_RATES = {
   'canter_14ft'      => { base: 112400, per_km: 3500, min_fare: 112400, free_km_m: 2000 }
 }.freeze
 
-# Deactivate existing Porter rate cards for hyd
+# Deactivate existing vendor rate cards for hyd
 deactivated = VendorRateCard.where(vendor_code: 'porter', city_code: CITY_CODE, active: true)
                             .update_all(active: false)
-puts "  Deactivated #{deactivated} existing Porter rate cards"
+puts "  Deactivated #{deactivated} existing vendor rate cards"
 
 created = 0
 VENDOR_RATES.each do |vehicle_type, rates|
@@ -254,7 +254,7 @@ VENDOR_RATES.each do |vehicle_type, rates|
   )
   created += 1
 end
-puts "  Created #{created} Porter rate cards"
+puts "  Created #{created} vendor rate cards"
 
 # =============================================================================
 # CLEAR REDIS CACHE
@@ -282,7 +282,7 @@ puts "\n" + "=" * 70
 puts "DONE! Summary:"
 puts "  Fix 1: per_min_rate_paise set to 0 (no travel-time charges)"
 puts "  Fix 2: Distance slabs reversed to INCREASING pattern"
-puts "  Fix 3: #{created} Porter vendor rate cards seeded"
+puts "  Fix 3: #{created} vendor rate cards seeded"
 puts "  Cache: Cleared"
 puts ""
 puts "Next: Run calibration test:"

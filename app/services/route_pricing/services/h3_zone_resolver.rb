@@ -9,7 +9,7 @@ module RoutePricing
 
       @@city_maps = {}
       @@map_loaded_at = {}
-      @@mutex = Mutex.new
+      @@mutex = Monitor.new
 
       def initialize(city_code)
         @city_code = city_code.to_s.downcase
@@ -95,6 +95,7 @@ module RoutePricing
       end
 
       # Clear in-memory cache for a city (or all cities if nil).
+      # Also writes a version key to Rails.cache so other processes detect the change.
       def self.invalidate!(city_code = nil)
         @@mutex.synchronize do
           if city_code
@@ -102,9 +103,16 @@ module RoutePricing
             @@city_maps.delete("#{cc}_r8")
             @@city_maps.delete("#{cc}_r7")
             @@map_loaded_at.delete(cc)
+            Rails.cache.write("h3_map_version:#{cc}", Time.current.to_f)
           else
+            # Capture known city codes before clearing
+            known_cities = @@map_loaded_at.keys.dup
             @@city_maps = {}
             @@map_loaded_at = {}
+            # Invalidate all known cities in distributed cache
+            known_cities.each do |cc|
+              Rails.cache.write("h3_map_version:#{cc}", Time.current.to_f)
+            end
           end
         end
       end
@@ -113,23 +121,33 @@ module RoutePricing
 
       def city_map_r8
         ensure_loaded!
-        @@city_maps["#{@city_code}_r8"] || {}
+        @@mutex.synchronize { @@city_maps["#{@city_code}_r8"] || {} }
       end
 
       def city_map_r7
         ensure_loaded!
-        @@city_maps["#{@city_code}_r7"] || {}
+        @@mutex.synchronize { @@city_maps["#{@city_code}_r7"] || {} }
       end
 
       def ensure_loaded!
         if stale?
-          self.class.build_city_map(@city_code)
+          @@mutex.synchronize do
+            # Double-check after acquiring lock (another thread may have rebuilt)
+            return unless stale?
+            self.class.build_city_map(@city_code)
+          end
         end
       end
 
       def stale?
-        loaded_at = @@map_loaded_at[@city_code]
-        loaded_at.nil? || (Time.current - loaded_at) > CACHE_TTL
+        @@mutex.synchronize do
+          loaded_at = @@map_loaded_at[@city_code]
+          return true if loaded_at.nil? || (Time.current - loaded_at) > CACHE_TTL
+
+          # Check distributed cache: another process may have invalidated
+          distributed_version = Rails.cache.read("h3_map_version:#{@city_code}")
+          distributed_version.present? && distributed_version.to_f > loaded_at.to_f
+        end
       end
 
       def h3_available?

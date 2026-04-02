@@ -10,21 +10,25 @@ class PricingRolloutFlag < ApplicationRecord
   scope :global, -> { where(city_code: nil) }
 
   def self.enabled?(flag_name, city_code: nil)
-    # Check city-specific flag first, then global
-    flag = find_by(flag_name: flag_name, city_code: city_code) ||
-           find_by(flag_name: flag_name, city_code: nil)
+    cache_key = "rollout_flag:#{flag_name}:#{city_code}"
+    Rails.cache.fetch(cache_key, expires_in: 60.seconds) do
+      # Check city-specific flag first, then global
+      flag = find_by(flag_name: flag_name, city_code: city_code) ||
+             find_by(flag_name: flag_name, city_code: nil)
 
-    return false unless flag&.enabled
+      next false unless flag&.enabled
 
-    # If rollout_pct < 100, probabilistic check
-    return true if flag.rollout_pct >= 100
+      # If rollout_pct < 100, probabilistic check
+      next true if flag.rollout_pct >= 100
 
-    rand(100) < flag.rollout_pct
+      rand(100) < flag.rollout_pct
+    end
   end
 
   def self.set!(flag_name, enabled:, city_code: nil, rollout_pct: 100)
     flag = find_or_initialize_by(flag_name: flag_name, city_code: city_code)
     flag.update!(enabled: enabled, rollout_pct: rollout_pct)
+    Rails.cache.delete("rollout_flag:#{flag_name}:#{city_code}")
     flag
   end
 end

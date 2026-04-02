@@ -9,6 +9,8 @@ module RoutePricing
       pickup_lng = BigDecimal(params[:pickup_lng].to_s)
       drop_lat = BigDecimal(params[:drop_lat].to_s)
       drop_lng = BigDecimal(params[:drop_lng].to_s)
+      validate_coordinates!(pickup_lat, pickup_lng, drop_lat, drop_lng)
+      validate_vehicle_and_city!
 
       # Call quote engine
       engine = RoutePricing::Services::QuoteEngine.new
@@ -51,6 +53,8 @@ module RoutePricing
       pickup_lng = BigDecimal(params[:pickup_lng].to_s)
       drop_lat = BigDecimal(params[:drop_lat].to_s)
       drop_lng = BigDecimal(params[:drop_lng].to_s)
+      validate_coordinates!(pickup_lat, pickup_lng, drop_lat, drop_lng)
+      validate_vehicle_and_city!
 
       quote_time = parse_quote_time(params[:quote_time])
       return_quote_time = params[:return_quote_time].present? ? parse_quote_time(params[:return_quote_time]) : nil
@@ -88,6 +92,8 @@ module RoutePricing
       pickup_lng = BigDecimal(params[:pickup_lng].to_s)
       drop_lat = BigDecimal(params[:drop_lat].to_s)
       drop_lng = BigDecimal(params[:drop_lng].to_s)
+      validate_coordinates!(pickup_lat, pickup_lng, drop_lat, drop_lng)
+      validate_vehicle_and_city!(skip_vehicle: true)
 
       engine = RoutePricing::Services::QuoteEngine.new
       result = engine.create_multi_quote(
@@ -198,12 +204,36 @@ module RoutePricing
 
     private
 
+    def validate_vehicle_and_city!(skip_vehicle: false)
+      unless skip_vehicle
+        valid_vehicles = %w[two_wheeler scooter mini_3w three_wheeler three_wheeler_ev tata_ace pickup_8ft eeco tata_407 canter_14ft]
+        raise ArgumentError, "Invalid vehicle_type: #{params[:vehicle_type]}" unless valid_vehicles.include?(params[:vehicle_type])
+      end
+      raise ArgumentError, "city_code is required" if params[:city_code].blank?
+    end
+
     def parse_quote_time(value)
       return Time.current unless value.present?
 
       Time.zone.parse(value)
     rescue ArgumentError
       raise ArgumentError, "Invalid quote_time format: #{value}"
+    end
+
+    def validate_coordinates!(pickup_lat, pickup_lng, drop_lat, drop_lng)
+      [pickup_lat, drop_lat].each do |lat|
+        raise ArgumentError, "Latitude out of range (#{lat})" unless lat.between?(6.0, 37.0)  # India bounds
+      end
+      [pickup_lng, drop_lng].each do |lng|
+        raise ArgumentError, "Longitude out of range (#{lng})" unless lng.between?(68.0, 98.0)  # India bounds
+      end
+
+      if pickup_lat == drop_lat && pickup_lng == drop_lng
+        raise ArgumentError, "Pickup and drop locations cannot be the same"
+      end
+
+      approx_distance_km = Math.sqrt(((pickup_lat - drop_lat) * 111)**2 + ((pickup_lng - drop_lng) * 85)**2)
+      raise ArgumentError, "Distance too large for intra-city delivery (#{approx_distance_km.round}km)" if approx_distance_km > 100
     end
   end
 end

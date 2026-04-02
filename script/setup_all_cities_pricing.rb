@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 # Script to set up pricing configurations for all cities and vehicle types
-# Based on Porter benchmark data and existing HYD configurations
+# Based on competitor benchmark data and existing HYD configurations
 
 puts "=" * 100
 puts "🚀 SETTING UP PRICING CONFIGS FOR ALL CITIES"
 puts "=" * 100
 
-# Vehicle types from seeds.rb (Porter-aligned)
+# Vehicle types from seeds.rb (benchmark-aligned)
 VEHICLE_TYPES = {
   'two_wheeler' => {
     vendor_code: '2W',

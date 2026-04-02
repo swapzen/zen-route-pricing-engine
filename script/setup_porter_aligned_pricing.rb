@@ -1,26 +1,26 @@
 # frozen_string_literal: true
 #
-# Porter-Aligned Zone Pricing Setup
-# Sets up pricing based on actual Porter market data patterns
+# Benchmark-Aligned Zone Pricing Setup
+# Sets up pricing based on actual competitor market data patterns
 
 puts "=" * 100
-puts "🎯 PORTER-ALIGNED ZONE PRICING SETUP"
+puts "🎯 BENCHMARK-ALIGNED ZONE PRICING SETUP"
 puts "=" * 100
 
 VEHICLE_TYPES = %w[two_wheeler scooter mini_3w three_wheeler tata_ace pickup_8ft canter_14ft].freeze
 TIME_BANDS = %w[early_morning morning_rush midday afternoon evening_rush night weekend_day weekend_night].freeze
 
 # ============================================================================
-# PORTER PRICE PATTERNS (extracted from benchmark data)
+# COMPETITOR PRICE PATTERNS (extracted from benchmark data)
 # ============================================================================
-# 
-# Key insights from Porter data:
+#
+# Key insights from competitor data:
 # 1. Base fare varies by zone type (tech ~₹40, CBD ~₹50, residential ~₹45)
 # 2. Per-km rate varies by distance (higher for short, lower for long)
 # 3. Evening premium: small vehicles ~same, heavy vehicles +40-70%
 # 4. Afternoon: slight premium for small vehicles, similar for heavy
 #
-# Target: SwapZen = Porter × [0.97, 1.15] = [-3%, +15%]
+# Target: SwapZen = Benchmark × [0.97, 1.15] = [-3%, +15%]
 # ============================================================================
 
 # Zone type pricing templates
@@ -197,10 +197,10 @@ def create_corridor(from_code, to_code, pricing, description)
 end
 
 # Key corridors based on test routes
-# These are calibrated to match Porter prices for specific route distances
+# These are calibrated to match competitor prices for specific route distances
 
 # Route 3: lb_nagar_east → tcs_synergy (32.6km long)
-# Porter 2W: ₹291 → base + 32.6*rate = 29100
+# Benchmark 2W: ₹291 → base + 32.6*rate = 29100
 create_corridor('lb_nagar_east', 'tcs_synergy', {
   'two_wheeler' => [5000, 750],      # 5000 + 32.6*750 = 29450 ≈ ₹295
   'scooter' => [7000, 900],          # ~₹365
@@ -212,7 +212,7 @@ create_corridor('lb_nagar_east', 'tcs_synergy', {
 }, "Long commute route")
 
 # Route 4: fin_district → ameerpet_core (15.9km medium)
-# Porter 2W: ₹188 morning
+# Benchmark 2W: ₹188 morning
 create_corridor('fin_district', 'ameerpet_core', {
   'two_wheeler' => [4000, 900],      # 4000 + 15.9*900 = 18310 ≈ ₹183
   'scooter' => [5500, 1100],         # ~₹230
@@ -224,7 +224,7 @@ create_corridor('fin_district', 'ameerpet_core', {
 }, "Tech to CBD commute")
 
 # Route 6: ameerpet_core → jntu_kukatpally (via Nexus, 10.2km)
-# Porter 2W: ₹102
+# Benchmark 2W: ₹102
 create_corridor('ameerpet_core', 'jntu_kukatpally', {
   'two_wheeler' => [3500, 650],      # 3500 + 10.2*650 = 10130 ≈ ₹101
   'scooter' => [5000, 800],          # ~₹132
@@ -236,7 +236,7 @@ create_corridor('ameerpet_core', 'jntu_kukatpally', {
 }, "CBD to residential")
 
 # Route 7: jntu_kukatpally → old_city (24.6km long)
-# Porter 2W: ₹219
+# Benchmark 2W: ₹219
 create_corridor('jntu_kukatpally', 'old_city', {
   'two_wheeler' => [4000, 700],      # 4000 + 24.6*700 = 21220 ≈ ₹212
   'scooter' => [5500, 900],          # ~₹277
@@ -248,7 +248,7 @@ create_corridor('jntu_kukatpally', 'old_city', {
 }, "Residential to Old City")
 
 # Route 8: vanasthali → old_city (13.2km medium)
-# Porter 2W: ₹129
+# Benchmark 2W: ₹129
 create_corridor('vanasthali', 'old_city', {
   'two_wheeler' => [3500, 700],      # 3500 + 13.2*700 = 12740 ≈ ₹127
   'scooter' => [5000, 900],          # ~₹169
@@ -260,7 +260,7 @@ create_corridor('vanasthali', 'old_city', {
 }, "South residential to Old City")
 
 # Route 9: hitech_madhapur → fin_district (4.9km micro, actual ~6.5km)
-# Porter 2W: ₹64 (very competitive micro pricing)
+# Benchmark 2W: ₹64 (very competitive micro pricing)
 create_corridor('hitech_madhapur', 'fin_district', {
   'two_wheeler' => [3000, 500],      # 3000 + 6.5*500 = 6250 ≈ ₹63
   'scooter' => [4500, 650],          # ~₹87

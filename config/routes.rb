@@ -88,10 +88,10 @@ Rails.application.routes.draw do
       get 'route_matrix/calibration_routes', to: 'route_matrix#calibration_routes'
       post 'route_matrix/generate_quote', to: 'route_matrix#generate_quote'
 
-      # Porter benchmarks
-      get 'porter_benchmarks', to: 'porter_benchmarks#index'
-      post 'porter_benchmarks/bulk_save', to: 'porter_benchmarks#bulk_save'
-      post 'porter_benchmarks/recalibrate', to: 'porter_benchmarks#recalibrate'
+      # Competitor benchmarks
+      get 'competitor_benchmarks', to: 'competitor_benchmarks#index'
+      post 'competitor_benchmarks/bulk_save', to: 'competitor_benchmarks#bulk_save'
+      post 'competitor_benchmarks/recalibrate', to: 'competitor_benchmarks#recalibrate'
 
       # Provider health (circuit breaker status)
       get 'provider_health', to: 'provider_health#show'

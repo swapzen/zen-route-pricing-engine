@@ -13,7 +13,7 @@ puts "Industry-standard patterns from Cogoport/ShipX"
 puts "=" * 70
 
 # Zone pricing configurations based on zone type and market characteristics
-# Hyderabad-specific tuning based on Porter benchmark analysis
+# Hyderabad-specific tuning based on competitor benchmark analysis
 ZONE_CONFIGS = {
   # Tech Corridors - Competitive pricing (high volume, many providers)
   'hitech_madhapur' => {
@@ -168,4 +168,4 @@ oda_zones = Zone.active.where(is_oda: true).count rescue 0
 puts "Total active zones: #{Zone.active.count}"
 puts "Tech corridor zones: #{tech_zones}"
 puts "ODA zones: #{oda_zones}"
-puts "\nNote: FSC set to 0% during Porter calibration. Enable later for production."
+puts "\nNote: FSC set to 0% during benchmark calibration. Enable later for production."

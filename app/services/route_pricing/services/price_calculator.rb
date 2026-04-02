@@ -5,10 +5,10 @@ module RoutePricing
     class PriceCalculator
       # Traffic multiplier curve parameters
       TRAFFIC_CURVE_EXPONENT = 0.8
-      TRAFFIC_MAX_MULTIPLIER = 1.2  # Cap at +20% for traffic (was 1.5 for pilot)
+      TRAFFIC_MAX_MULTIPLIER = 1.5  # Cap at +50% for traffic
       
       # Unit economics guardrail
-      MIN_TARGET_MARGIN_PCT = 5.0  # Minimum 5% margin required
+      MIN_TARGET_MARGIN_PCT = 12.0  # Minimum 12% margin (covers PG 2% + GST 0.4% + support ₹3 + insurance ₹3 + bad debt 2% + ops 3%)
 
       # Multiplicative cap: total product of all stacking multipliers cannot exceed this
       MAX_TOTAL_MULTIPLICATIVE_EFFECT = 2.5
@@ -17,7 +17,7 @@ module RoutePricing
       # INDUSTRY-STANDARD PRICING COMPONENTS (Cogoport/ShipX patterns)
       # =====================================================================
       # FSC: Fuel Surcharge - applied as % of base fare (industry: 5-15%)
-      FUEL_SURCHARGE_PCT = 0.0  # Set to 0 during Porter calibration, enable later
+      FUEL_SURCHARGE_PCT = 0.0  # Set to 0 during benchmark calibration, enable later
       
       # SLS: Special Location Surcharge multipliers by zone type
       # Maps zone_type to pricing premium multiplier
@@ -43,7 +43,7 @@ module RoutePricing
 
       def calculate(distance_m:, pickup_lat: nil, pickup_lng: nil, drop_lat: nil, drop_lng: nil,
                     item_value_paise: nil, duration_in_traffic_s: nil, duration_s: nil, quote_time: Time.current,
-                    weight_kg: nil, route_segments: nil)
+                    weight_kg: nil, route_segments: nil, estimated_loading_min: nil, additional_stops: nil)
         
         # Step 0: Determine time band (using city timezone for consistency)
         # IMPORTANT: Convert to city timezone to avoid UTC vs local time mismatch.
@@ -66,7 +66,7 @@ module RoutePricing
         Rails.logger.info("Pricing Source: #{zone_pricing.source} | Zone Info: #{zone_pricing.zone_info}")
 
         # Step 1: Base fare (from resolved pricing)
-        base_fare = [zone_pricing.base_fare_paise, zone_pricing.min_fare_paise].max
+        base_fare = zone_pricing.base_fare_paise.to_i
 
         # Step 2: Chargeable distance
         # Use resolved base_distance (defaults to config if not overridden)
@@ -94,7 +94,7 @@ module RoutePricing
 
         # Step 3b: Time component (per-minute pricing)
         per_min_rate = zone_pricing.per_min_rate_paise || 0
-        time_component = if per_min_rate > 0 && duration_in_traffic_s.to_i > 0
+        time_component = if per_min_rate > 0 && duration_in_traffic_s.present? && duration_in_traffic_s > 0
                            (duration_in_traffic_s / 60.0) * per_min_rate
                          else
                            0
@@ -106,13 +106,23 @@ module RoutePricing
         # Step 3d: Waiting/loading charge (Phase 5)
         waiting_charge = calculate_waiting_charge(zone_pricing.zone_info)
 
+        # Step 3e: Explicit loading time charge (goods delivery: loading time at pickup)
+        # Separate from zone-type-based waiting estimate — uses actual estimated loading time
+        loading_charge = 0
+        if @config.respond_to?(:waiting_per_min_rate_paise) && @config.waiting_per_min_rate_paise.to_i > 0
+          free_minutes = @config.respond_to?(:free_waiting_minutes) ? @config.free_waiting_minutes.to_i : 10
+          actual_loading_min = [estimated_loading_min.to_i, 0].max
+          chargeable_loading = [actual_loading_min - free_minutes, 0].max
+          loading_charge = chargeable_loading * @config.waiting_per_min_rate_paise.to_i
+        end
+
         # Step 4: Raw subtotal
         # Distance band shaping applies ONLY to the distance component, not base_fare.
         # Base fare is a fixed cost (driver showing up, loading) and should not be
         # scaled by distance. The distance component is the variable cost.
         band_multiplier = calculate_distance_band_multiplier(@config.vehicle_type, distance_m)
         shaped_distance = distance_component.to_f * band_multiplier
-        raw_subtotal = base_fare + shaped_distance + time_component + dead_km_charge + waiting_charge
+        raw_subtotal = base_fare + shaped_distance + time_component + dead_km_charge + waiting_charge + loading_charge
         
         # =====================================================================
         # INDUSTRY-STANDARD CHARGE COMPONENTS (Cogoport/ShipX patterns)
@@ -149,11 +159,22 @@ module RoutePricing
         # =====================================================================
         weather_condition = nil
         weather_mult = 1.0
+        monsoon_surcharge_applied = false
         if !calibration_mode && PricingRolloutFlag.enabled?('weather_pricing', city_code: @config.city_code)
           weather = RoutePricing::Services::WeatherProvider.new.current_weather(city_code: @config.city_code)
           weather_condition = weather[:condition]
           weather_mult = (@config.weather_multipliers || {})[weather[:multiplier_key]]&.to_f || 1.0
           raw_subtotal *= weather_mult
+
+          # Monsoon surcharge: additional 15% during Jun-Sep for rain conditions
+          monsoon_months = (6..9)
+          rain_conditions = %w[RAIN HEAVY_RAIN]
+          if rain_conditions.include?(weather_condition.to_s) &&
+             monsoon_months.cover?(local_time.month) &&
+             PricingRolloutFlag.enabled?('monsoon_surcharge', city_code: @config.city_code)
+            raw_subtotal *= 1.15
+            monsoon_surcharge_applied = true
+          end
         end
 
         # =====================================================================
@@ -201,8 +222,8 @@ module RoutePricing
           # -----------------------------------------------------------
           # PURE CALIBRATION MODE or TIME-AWARE ZONE PRICING
           # -----------------------------------------------------------
-          # We want to tune the BASE SLABS against Porter's base.
-          # Porter's price includes their zone/demand logic, but our 
+          # We want to tune the BASE SLABS against the competitor's base.
+          # The competitor's price includes their zone/demand logic, but our
           # baseline shouldn't chase their surges.
           # -----------------------------------------------------------
           traffic_multiplier = 1.0
@@ -274,7 +295,7 @@ module RoutePricing
         # MULTIPLICATIVE CAP — prevent runaway stacking
         # =====================================================================
         all_mults = [zone_type_mult, oda_mult, weather_mult, backhaul_mult, cancel_risk_mult,
-                     weight_multiplier, combined_surge, @config.vehicle_multiplier.to_f,
+                     weight_multiplier, @config.vehicle_multiplier.to_f,
                      @config.city_multiplier.to_f]
         total_mult_effect = all_mults.reduce(1.0, :*)
         mult_cap_applied = false
@@ -427,6 +448,8 @@ module RoutePricing
           estimated_pickup_distance_m: @last_estimated_pickup_distance_m || 0,
           # Waiting charge (Phase 5)
           waiting_charge: waiting_charge.round,
+          # Loading charge (goods delivery: explicit loading time at pickup)
+          loading_charge: loading_charge.round,
           distance_band_multiplier: band_multiplier,
           shaped_distance_component: shaped_distance.round,
           slab_pricing_used: @config.pricing_distance_slabs.any?,
@@ -439,6 +462,7 @@ module RoutePricing
           # Weather (Phase 2)
           weather_condition: weather_condition,
           weather_multiplier: weather_mult.round(3),
+          monsoon_surcharge_applied: monsoon_surcharge_applied,
           # Backhaul (Phase 3)
           backhaul_multiplier: backhaul_mult.round(3),
           # Cancellation risk (Phase 6)
@@ -486,6 +510,7 @@ module RoutePricing
           time_charge: time_component.round,
           dead_km: dead_km_charge.round,
           waiting: waiting_charge.round,
+          loading: loading_charge.round,
           subtotal: raw_subtotal.round,
           surge_impact: surge_impact,
           final: final_price_paise
@@ -528,7 +553,7 @@ module RoutePricing
         # Extreme congestion (>3x normal): apply max multiplier
         return TRAFFIC_MAX_MULTIPLIER if traffic_ratio > 3.0
 
-        # Smooth curve: y = 1 + 0.5 * (x - 1)^0.8, capped at 1.5
+        # Smooth curve: y = 1 + 0.5 * (x - 1)^0.8, capped at TRAFFIC_MAX_MULTIPLIER
         return 1.0 if traffic_ratio <= 1.0
 
         base = (traffic_ratio - 1.0) ** TRAFFIC_CURVE_EXPONENT
@@ -582,16 +607,18 @@ module RoutePricing
           break if remaining_m <= 0
           
           slab_start_m = slab[:min_distance_m]
-          slab_end_m = slab[:max_distance_m] || Float::INFINITY
-          
+          slab_end_m = slab[:max_distance_m]
+
           meters_in_slab = if distance_m <= slab_start_m
                              0
+                           elsif slab_end_m.nil?
+                             distance_m - slab_start_m
                            elsif distance_m >= slab_end_m
                              slab_end_m - slab_start_m
                            else
                              distance_m - slab_start_m
                            end
-          
+
           meters_to_charge = [meters_in_slab, remaining_m].min
           
           if meters_to_charge > 0
@@ -632,10 +659,12 @@ module RoutePricing
           break if remaining_m <= 0
 
           slab_start_m = slab.min_distance_m
-          slab_end_m = slab.max_distance_m || Float::INFINITY
+          slab_end_m = slab.max_distance_m
 
           meters_in_slab = if distance_m <= slab_start_m
                              0
+                           elsif slab_end_m.nil?
+                             distance_m - slab_start_m
                            elsif distance_m >= slab_end_m
                              slab_end_m - slab_start_m
                            else
@@ -656,7 +685,7 @@ module RoutePricing
 
       def calculate_distance_band_multiplier(vehicle_type, distance_m)
         # Distance band multipliers for shaping the price curve
-        # Tuned based on Porter benchmark analysis:
+        # Tuned based on competitor benchmark analysis:
         # - Micro trips: Cheaper (high competition, customer price sensitivity)
         # - Short trips: Baseline (well-calibrated global rates)
         # - Medium trips: Slight premium (less competition, operational costs)
@@ -670,12 +699,12 @@ module RoutePricing
                else              :long
                end
 
-        # Tuned multipliers for Porter alignment (v6.1 calibration)
+        # Tuned multipliers for benchmark alignment (v6.1 calibration)
         category = RoutePricing::VehicleCategories.category_for(vehicle_type)
         case category
         when :small
-          # Small vehicles: Aggressive micro discount (high competition segment)
-          { micro: 0.85, short: 1.00, medium: 1.05, long: 1.00 }[band]
+          # Small vehicles: No micro discount — micro deliveries have highest fixed-cost ratio
+          { micro: 1.00, short: 1.00, medium: 1.05, long: 1.00 }[band]
         when :mid
           # Mid vehicles: Moderate micro discount (operational efficiency at short range)
           { micro: 0.90, short: 1.00, medium: 1.05, long: 1.00 }[band]
@@ -990,11 +1019,40 @@ module RoutePricing
         if result[:predicted_paise]
           result[:predicted_paise]
         else
-          raw_subtotal.round
+          (raw_subtotal * vendor_cost_ratio).round
         end
       rescue StandardError => e
-        Rails.logger.warn("[VENDOR_COST] Fallback to raw_subtotal: #{e.message}")
-        raw_subtotal.round
+        Rails.logger.warn("[VENDOR_COST] Fallback to #{(vendor_cost_ratio * 100).round}% of raw_subtotal: #{e.message}")
+        (raw_subtotal * vendor_cost_ratio).round
+      end
+
+      # Vehicle-category-aware vendor cost ratio (industry benchmarks)
+      def vendor_cost_ratio
+        category = RoutePricing::VehicleCategories.category_for(@config.vehicle_type)
+        case category
+        when :small then 0.78  # Two-wheeler/scooter: high driver payout ratio
+        when :mid   then 0.70  # 3W/Ace/Pickup: moderate
+        when :heavy then 0.62  # Eeco/407/Canter: lower driver share, higher platform margin
+        else 0.70
+        end
+      end
+
+      # Cancellation fee model (Phase 6)
+      # Returns fee in paise based on cancellation stage
+      def calculate_cancellation_fee(quote_price_paise, cancellation_stage)
+        case cancellation_stage
+        when :before_acceptance then 0
+        when :after_acceptance then (quote_price_paise * 0.20).round  # 20%
+        when :in_transit then (quote_price_paise * 0.50).round  # 50%
+        else 0
+        end
+      end
+
+      # Multi-stop surcharge (not yet wired into main calculate flow)
+      # Returns surcharge in paise for additional stops beyond the first drop
+      def calculate_multi_stop_surcharge(additional_stops)
+        return 0 unless additional_stops.to_i > 0
+        additional_stops.to_i * 2000  # ₹20 per additional stop (2000 paise)
       end
 
       # Recursively freeze a hash and all nested values
