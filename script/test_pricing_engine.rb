@@ -24,7 +24,7 @@ Time.zone = 'Asia/Kolkata'
 TIMES = {
   morning:   Time.zone.parse('2026-01-15 09:00'),
   afternoon: Time.zone.parse('2026-01-15 15:00'),
-  evening:   Time.zone.parse('2026-01-15 23:00')
+  evening:   Time.zone.parse('2026-01-15 18:00')
 }
 
 VEHICLES = %w[two_wheeler scooter mini_3w three_wheeler tata_ace pickup_8ft canter_14ft]

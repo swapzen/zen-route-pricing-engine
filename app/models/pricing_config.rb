@@ -66,6 +66,7 @@ class PricingConfig < ApplicationRecord
       .where(
         vehicle_type: vehicle_type,
         active: true,
+        approval_status: 'approved',
         effective_until: nil
       )
       .where('effective_from <= ?', Time.current)

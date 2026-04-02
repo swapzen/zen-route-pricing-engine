@@ -185,18 +185,20 @@ class Zone < ApplicationRecord
   # Get polygon coordinates as array (for display/export)
   def polygon_coords
     return nil unless boundary.present?
-    
-    # Query to extract coordinates from boundary
-    result = Zone.connection.execute(
-      "SELECT ST_AsText(boundary) FROM zones WHERE id = #{id}"
+
+    # Query to extract coordinates from boundary (parameterized to prevent SQL injection)
+    result = Zone.connection.exec_query(
+      "SELECT ST_AsText(boundary) FROM zones WHERE id = $1",
+      "SQL",
+      [ActiveRecord::Relation::QueryAttribute.new("id", id, ActiveRecord::Type::BigInteger.new)]
     ).first
-    
+
     return nil unless result && result['st_astext']
-    
+
     # Parse WKT: POLYGON((lng lat, lng lat, ...))
     wkt = result['st_astext']
     return nil unless wkt.start_with?('POLYGON')
-    
+
     coords_str = wkt.gsub(/POLYGON\(\(|\)\)/, '')
     coords_str.split(',').map do |pair|
       lng, lat = pair.strip.split(' ').map(&:to_f)

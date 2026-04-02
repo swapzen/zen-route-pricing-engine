@@ -88,11 +88,7 @@ module RoutePricing
         http.open_timeout = 5
         http.read_timeout = 5
 
-        if Rails.env.development? || Rails.env.test?
-          http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-        else
-          http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        end
+        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
 
         request = Net::HTTP::Get.new(uri)
         response = http.request(request)

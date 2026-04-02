@@ -341,35 +341,35 @@ global_time_rates:
       rate: 6610
   night:
     two_wheeler:
-      base: 5100
-      rate: 1500
+      base: 5610
+      rate: 1650
     scooter:
-      base: 6400
-      rate: 1600
+      base: 7040
+      rate: 1760
     mini_3w:
-      base: 10700
-      rate: 1300
+      base: 11770
+      rate: 1430
     three_wheeler:
-      base: 17200
-      rate: 1900
+      base: 18920
+      rate: 2090
     three_wheeler_ev:
-      base: 17200
-      rate: 1900
+      base: 18920
+      rate: 2090
     tata_ace:
-      base: 23300
-      rate: 2100
+      base: 25630
+      rate: 2310
     pickup_8ft:
-      base: 34000
-      rate: 2700
+      base: 37400
+      rate: 2970
     eeco:
-      base: 37500
-      rate: 3400
+      base: 41250
+      rate: 3740
     tata_407:
-      base: 59000
-      rate: 4500
+      base: 64900
+      rate: 4950
     canter_14ft:
-      base: 160500
-      rate: 5900
+      base: 176550
+      rate: 6490
   weekend_day:
     two_wheeler:
       base: 4850

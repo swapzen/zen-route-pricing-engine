@@ -5,12 +5,14 @@
 
 # Read more: https://github.com/cyu/rack-cors
 
+# TODO: Uncomment `gem "rack-cors"` in Gemfile and run `bundle install` to enable.
+#
 # Rails.application.config.middleware.insert_before 0, Rack::Cors do
 #   allow do
-#     origins "example.com"
+#     origins 'localhost:3001', 'localhost:3000', '127.0.0.1:3001', '127.0.0.1:3000'
 #
-#     resource "*",
+#     resource '/route_pricing/*',
 #       headers: :any,
-#       methods: [:get, :post, :put, :patch, :delete, :options, :head]
+#       methods: [:get, :post, :patch, :put, :delete, :options, :head]
 #   end
 # end

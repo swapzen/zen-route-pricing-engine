@@ -66,7 +66,7 @@ module RoutePricing
         Rails.logger.info("Pricing Source: #{zone_pricing.source} | Zone Info: #{zone_pricing.zone_info}")
 
         # Step 1: Base fare (from resolved pricing)
-        base_fare = [zone_pricing.base_fare_paise, zone_pricing.min_fare_paise].max
+        base_fare = zone_pricing.base_fare_paise.to_i
 
         # Step 2: Chargeable distance
         # Use resolved base_distance (defaults to config if not overridden)

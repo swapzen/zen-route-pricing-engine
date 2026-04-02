@@ -13,7 +13,12 @@ module RoutePricing
 
         # Create new version
         new_config = config.create_new_version(
-          params[:updates].permit!.to_h,
+          params.require(:updates).permit(
+            :base_fare_paise, :per_km_rate_paise, :min_fare_paise,
+            :per_min_rate_paise, :dead_km_enabled, :free_pickup_radius_m,
+            :dead_km_per_km_rate_paise, :base_distance_m, :timezone,
+            :quote_validity_minutes
+          ).to_h,
           current_user # TODO: Implement authentication
         )
 

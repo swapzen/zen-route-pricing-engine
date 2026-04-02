@@ -53,9 +53,22 @@ class H3ZoneConfigLoader
       sync_corridors!(force: force_pricing)
     end
 
-    # Rebuild H3 in-memory maps + compute boundaries outside transaction
-    rebuild_h3_maps!
-    compute_boundaries!
+    # Rebuild H3 in-memory maps + compute boundaries outside transaction.
+    # These are cache-only operations — if they fail, the DB state is still correct.
+    # We log errors but don't raise, since a manual cache rebuild can fix it.
+    begin
+      rebuild_h3_maps!
+      compute_boundaries!
+    rescue StandardError => e
+      Rails.logger.error "[H3ZoneConfigLoader] Post-transaction cache rebuild failed: #{e.message}. DB state is committed. Run rebuild manually."
+      stats[:errors] << { phase: 'post_transaction_cache', error: e.message }
+    end
+
+    # Log warning if any individual zone syncs failed
+    zone_errors = stats[:errors].select { |err| err[:zone_code].present? }
+    if zone_errors.any?
+      Rails.logger.warn "[H3ZoneConfigLoader] #{zone_errors.size} zone(s) had sync errors: #{zone_errors.map { |e| e[:zone_code] }.join(', ')}"
+    end
 
     log_results
     { success: true, stats: stats }
