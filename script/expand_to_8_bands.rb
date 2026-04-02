@@ -13,14 +13,14 @@ require 'yaml'
 
 # Multipliers to derive 8-band rates from parent 3-band rates.
 # CRITICAL: morning_rush, afternoon, night MUST be 1.0 to preserve
-# Porter calibration (test uses 9 AM, 3 PM, 11 PM as benchmark times).
+# benchmark calibration (test uses 9 AM, 3 PM, 11 PM as benchmark times).
 BAND_DERIVATION = {
   'early_morning' => { parent: 'morning',   mult: 0.92 }, # 5-8 AM: less demand than rush hour
-  'morning_rush'  => { parent: 'morning',   mult: 1.00 }, # 8-11 AM: Porter-calibrated at 9 AM
+  'morning_rush'  => { parent: 'morning',   mult: 1.00 }, # 8-11 AM: Benchmark-calibrated at 9 AM
   'midday'        => { parent: 'afternoon', mult: 0.95 }, # 11 AM-2 PM: moderate lull
-  'afternoon'     => { parent: 'afternoon', mult: 1.00 }, # 2-5 PM: Porter-calibrated at 3 PM
+  'afternoon'     => { parent: 'afternoon', mult: 1.00 }, # 2-5 PM: Benchmark-calibrated at 3 PM
   'evening_rush'  => { parent: 'evening',   mult: 1.12 }, # 5-9 PM: peak return commute premium
-  'night'         => { parent: 'evening',   mult: 1.00 }, # 9 PM-5 AM: Porter-calibrated at 11 PM
+  'night'         => { parent: 'evening',   mult: 1.00 }, # 9 PM-5 AM: Benchmark-calibrated at 11 PM
   'weekend_day'   => { parent: 'afternoon', mult: 0.95 }, # Sat/Sun 8 AM-8 PM: less commercial
   'weekend_night' => { parent: 'evening',   mult: 0.90 }, # Sat/Sun 8 PM-8 AM: lower demand
 }.freeze

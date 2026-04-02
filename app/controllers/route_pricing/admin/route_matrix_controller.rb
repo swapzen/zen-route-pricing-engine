@@ -154,7 +154,7 @@ module RoutePricing
       end
 
       # GET /route_pricing/admin/route_matrix/calibration_routes
-      # Returns the 10 calibrated Porter benchmark routes with current prices
+      # Returns the 10 calibrated competitor benchmark routes with current prices
       def calibration_routes
         time_band = params[:time_band] || 'morning_rush'
         quote_time = band_to_quote_time(time_band)

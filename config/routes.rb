@@ -88,7 +88,7 @@ Rails.application.routes.draw do
       get 'route_matrix/calibration_routes', to: 'route_matrix#calibration_routes'
       post 'route_matrix/generate_quote', to: 'route_matrix#generate_quote'
 
-      # Porter benchmarks
+      # Competitor benchmarks
       get 'porter_benchmarks', to: 'porter_benchmarks#index'
       post 'porter_benchmarks/bulk_save', to: 'porter_benchmarks#bulk_save'
       post 'porter_benchmarks/recalibrate', to: 'porter_benchmarks#recalibrate'

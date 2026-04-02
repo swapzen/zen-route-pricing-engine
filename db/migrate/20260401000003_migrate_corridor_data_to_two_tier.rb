@@ -30,7 +30,7 @@ class MigrateCorridorDataToTwoTier < ActiveRecord::Migration[8.0]
 
       next if records.empty?
 
-      # Pick morning_rush as base (Porter-calibrated, 1.0x multiplier)
+      # Pick morning_rush as base (benchmark-calibrated, 1.0x multiplier)
       base_record = records.find { |r| r['time_band'] == 'morning_rush' } || records.first
 
       # Check if a base record (time_band: nil) already exists for this group

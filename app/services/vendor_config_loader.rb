@@ -7,7 +7,7 @@
 # Pattern mirrors ZoneConfigLoader for consistency.
 #
 # USAGE:
-#   VendorConfigLoader.new('porter', 'hyd').sync!
+#   VendorConfigLoader.new('vendor_name', 'hyd').sync!
 # =============================================================================
 
 class VendorConfigLoader

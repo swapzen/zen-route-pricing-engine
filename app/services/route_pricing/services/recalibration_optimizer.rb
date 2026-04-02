@@ -277,14 +277,14 @@ module RoutePricing
         end
       end
 
-      def best_guardrail_target(porter_paise)
-        lo_mult = ((porter_paise * 0.97) / 1000.0).floor * 1000
-        hi_mult = ((porter_paise * 1.16) / 1000.0).ceil * 1000
+      def best_guardrail_target(benchmark_paise)
+        lo_mult = ((benchmark_paise * 0.97) / 1000.0).floor * 1000
+        hi_mult = ((benchmark_paise * 1.16) / 1000.0).ceil * 1000
 
         best = nil
         best_diff = Float::INFINITY
         (lo_mult..hi_mult).step(1000).each do |candidate|
-          pct = (candidate - porter_paise).to_f / porter_paise * 100
+          pct = (candidate - benchmark_paise).to_f / benchmark_paise * 100
           next unless pct >= TOLERANCE_LOW && pct <= TOLERANCE_HIGH
           diff = pct.abs
           if diff < best_diff
@@ -292,7 +292,7 @@ module RoutePricing
             best = candidate
           end
         end
-        best || porter_paise
+        best || benchmark_paise
       end
 
       def find_raw_for_guardrail_target(guardrail_target)
@@ -313,8 +313,8 @@ module RoutePricing
         ((guardrail_target / 1.05 - 210) / 1.02 * 0.99).round
       end
 
-      def find_target_raw_subtotal(porter_paise)
-        target = best_guardrail_target(porter_paise)
+      def find_target_raw_subtotal(benchmark_paise)
+        target = best_guardrail_target(benchmark_paise)
         find_raw_for_guardrail_target(target)
       end
 

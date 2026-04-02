@@ -3,7 +3,7 @@
 module RoutePricing
   module Admin
     class PorterBenchmarksController < ApplicationController
-      # GET /route_pricing/admin/porter_benchmarks
+      # GET /route_pricing/admin/porter_benchmarks (competitor benchmarks)
       def index
         city_code = params[:city_code] || 'hyd'
         time_band = params[:time_band]
@@ -31,7 +31,7 @@ module RoutePricing
         }
       end
 
-      # POST /route_pricing/admin/porter_benchmarks/bulk_save
+      # POST /route_pricing/admin/porter_benchmarks/bulk_save (competitor benchmarks)
       def bulk_save
         entries = params[:benchmarks] || []
         saved = 0
@@ -69,7 +69,7 @@ module RoutePricing
         render json: { success: true, saved: saved, errors: errors }
       end
 
-      # POST /route_pricing/admin/porter_benchmarks/recalibrate
+      # POST /route_pricing/admin/porter_benchmarks/recalibrate (competitor benchmarks)
       def recalibrate
         city_code = params[:city_code] || 'hyd'
         time_band = params[:time_band]

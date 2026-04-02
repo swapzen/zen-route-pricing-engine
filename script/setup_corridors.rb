@@ -47,7 +47,7 @@ puts "   Deactivated all existing corridors"
 # =============================================================================
 
 # Route 1 & 2: fin_district → hitech_madhapur (short routes ~7km)
-# Porter 2W: ₹100-111 at 7km → base + 7*rate ≈ 10000
+# Benchmark 2W: ₹100-111 at 7km → base + 7*rate ≈ 10000
 # Pattern: Tech-to-Tech, same zone type, moderate pricing
 create_corridor('fin_district', 'hitech_madhapur', {
   'two_wheeler' => [4000, 850],    # 4000 + 7*850 = 9950 ≈ ₹100
@@ -60,7 +60,7 @@ create_corridor('fin_district', 'hitech_madhapur', {
 })
 
 # Route 3: lb_nagar_east → tcs_synergy (32km long route)
-# Porter 2W: ₹291 at 32km → base + 32*rate ≈ 29100
+# Benchmark 2W: ₹291 at 32km → base + 32*rate ≈ 29100
 # Pattern: Residential → Tech, long distance, low per-km
 create_corridor('lb_nagar_east', 'tcs_synergy', {
   'two_wheeler' => [6000, 700],     # 6000 + 32*700 = 28400 ≈ ₹284
@@ -73,7 +73,7 @@ create_corridor('lb_nagar_east', 'tcs_synergy', {
 })
 
 # Route 4: fin_district → ameerpet_core (16km medium route)
-# Porter 2W: ₹188 morning at 16km → base + 16*rate ≈ 18800
+# Benchmark 2W: ₹188 morning at 16km → base + 16*rate ≈ 18800
 # Pattern: Tech → CBD, medium distance
 create_corridor('fin_district', 'ameerpet_core', {
   'two_wheeler' => [4500, 900],     # 4500 + 16*900 = 18900 ≈ ₹189
@@ -89,7 +89,7 @@ create_corridor('fin_district', 'ameerpet_core', {
 # This is intra-zone, no corridor needed - uses zone pricing
 
 # Route 6: ameerpet_core → jntu_kukatpally (10km short)
-# Porter 2W: ₹102 at 10km
+# Benchmark 2W: ₹102 at 10km
 create_corridor('ameerpet_core', 'jntu_kukatpally', {
   'two_wheeler' => [4000, 650],     # 4000 + 10*650 = 10500 ≈ ₹105
   'scooter' => [5500, 800],         # ~₹135
@@ -101,7 +101,7 @@ create_corridor('ameerpet_core', 'jntu_kukatpally', {
 })
 
 # Route 7: jntu_kukatpally → old_city (25km long)
-# Porter 2W: ₹219 at 25km
+# Benchmark 2W: ₹219 at 25km
 create_corridor('jntu_kukatpally', 'old_city', {
   'two_wheeler' => [5000, 750],     # 5000 + 25*750 = 23750 ≈ ₹238
   'scooter' => [7000, 950],         # ~₹307
@@ -113,7 +113,7 @@ create_corridor('jntu_kukatpally', 'old_city', {
 })
 
 # Route 8: vanasthali → old_city (13km medium)
-# Porter 2W: ₹129 at 13km
+# Benchmark 2W: ₹129 at 13km
 create_corridor('vanasthali', 'old_city', {
   'two_wheeler' => [4000, 700],     # 4000 + 13*700 = 13100 ≈ ₹131
   'scooter' => [5500, 900],         # ~₹172
@@ -125,7 +125,7 @@ create_corridor('vanasthali', 'old_city', {
 })
 
 # Route 9: hitech_madhapur → fin_district (5km micro)
-# Porter 2W: ₹64 at 5km - VERY LOW micro pricing
+# Benchmark 2W: ₹64 at 5km - VERY LOW micro pricing
 create_corridor('hitech_madhapur', 'fin_district', {
   'two_wheeler' => [3000, 650],     # 3000 + 5*650 = 6250 ≈ ₹63
   'scooter' => [4500, 800],         # ~₹85

@@ -17,7 +17,7 @@ module RoutePricing
       # INDUSTRY-STANDARD PRICING COMPONENTS (Cogoport/ShipX patterns)
       # =====================================================================
       # FSC: Fuel Surcharge - applied as % of base fare (industry: 5-15%)
-      FUEL_SURCHARGE_PCT = 0.0  # Set to 0 during Porter calibration, enable later
+      FUEL_SURCHARGE_PCT = 0.0  # Set to 0 during benchmark calibration, enable later
       
       # SLS: Special Location Surcharge multipliers by zone type
       # Maps zone_type to pricing premium multiplier
@@ -222,8 +222,8 @@ module RoutePricing
           # -----------------------------------------------------------
           # PURE CALIBRATION MODE or TIME-AWARE ZONE PRICING
           # -----------------------------------------------------------
-          # We want to tune the BASE SLABS against Porter's base.
-          # Porter's price includes their zone/demand logic, but our 
+          # We want to tune the BASE SLABS against the competitor's base.
+          # The competitor's price includes their zone/demand logic, but our
           # baseline shouldn't chase their surges.
           # -----------------------------------------------------------
           traffic_multiplier = 1.0
@@ -685,7 +685,7 @@ module RoutePricing
 
       def calculate_distance_band_multiplier(vehicle_type, distance_m)
         # Distance band multipliers for shaping the price curve
-        # Tuned based on Porter benchmark analysis:
+        # Tuned based on competitor benchmark analysis:
         # - Micro trips: Cheaper (high competition, customer price sensitivity)
         # - Short trips: Baseline (well-calibrated global rates)
         # - Medium trips: Slight premium (less competition, operational costs)
@@ -699,7 +699,7 @@ module RoutePricing
                else              :long
                end
 
-        # Tuned multipliers for Porter alignment (v6.1 calibration)
+        # Tuned multipliers for benchmark alignment (v6.1 calibration)
         category = RoutePricing::VehicleCategories.category_for(vehicle_type)
         case category
         when :small

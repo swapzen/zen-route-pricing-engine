@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 puts "🌱 Starting Zen Route Pricing Engine seed data..."
-puts "   Dynamic Pricing Engine v3.1 (Porter Benchmark Calibration)"
-puts "   Strategy: Time-Based Pricing + Porter-Aligned Slabs"
+puts "   Dynamic Pricing Engine v3.1 (Competitor Benchmark Calibration)"
+puts "   Strategy: Time-Based Pricing + Benchmark-Aligned Slabs"
 puts
 
 # =============================================================================
-# VEHICLE TYPES WITH SLAB PRICING - v3.1 (Porter Benchmark Calibration)
+# VEHICLE TYPES WITH SLAB PRICING - v3.1 (Competitor Benchmark Calibration)
 # Base Fares: Reduced for competitive micro/short routes
-# Slabs: MICRO -40%, SHORT -25%, MEDIUM -10% (match Porter baseline)
-# Target: 75%+ within -10% to +15% vs Porter across all distance bands
+# Slabs: MICRO -40%, SHORT -25%, MEDIUM -10% (match competitor baseline)
+# Target: 75%+ within -10% to +15% vs competitor across all distance bands
 # =============================================================================
 VEHICLE_TYPES = {
   'two_wheeler' => {
@@ -156,7 +156,7 @@ VEHICLE_TYPES = {
 
 # =============================================================================
 # HYDERABAD ZONES - v4.0 (Vehicle-Category Multipliers + Zone Types)
-# Based on real GHMC zones, Porter benchmarks, and Hyderabad business geography
+# Based on real GHMC zones, competitor benchmarks, and Hyderabad business geography
 # =============================================================================
 HYDERABAD_ZONES = [
   # TECH CORRIDOR - Financial District (Gachibowli, Nanakramguda)
@@ -470,7 +470,7 @@ ZonePairVehiclePricing.destroy_all
 
 # 1. GLOBAL BASELINE RATES (Attempt #1 Calibration)
 # -----------------------------------------------------------------------------
-# Derived from linear regression on 210 Porter data points.
+# Derived from linear regression on 210 competitor data points.
 # These provide the "statistical average" best fit before shaping.
 GLOBAL_TIME_RATES = {
   morning: {
@@ -503,7 +503,7 @@ GLOBAL_TIME_RATES = {
 }.freeze
 
 # -----------------------------------------------------------------------------
-# ZONE-SPECIFIC RATE OVERRIDES (Porter-calibrated)
+# ZONE-SPECIFIC RATE OVERRIDES (benchmark-calibrated)
 # -----------------------------------------------------------------------------
 # Each zone has its own pricing characteristics based on:
 # - Local competition intensity
@@ -511,16 +511,16 @@ GLOBAL_TIME_RATES = {
 # - Demand density
 # - Driver availability
 #
-# Rates calibrated from Porter benchmark data for each zone.
+# Rates calibrated from competitor benchmark data for each zone.
 # Format: {base: paise, rate: paise/km}
 # -----------------------------------------------------------------------------
 ZONE_SPECIFIC_RATES = {
   # fin_district: Tech hub - Routes 1, 2, 10 are INTRA-ZONE here
-  # Route 1/2 actual distance: ~4.4km, Porter 2W morning: ₹100-111
-  # Route 10 actual distance: ~3.87km, Porter 2W morning: ₹140-152 (premium pricing!)
+  # Route 1/2 actual distance: ~4.4km, Benchmark 2W morning: ₹100-111
+  # Route 10 actual distance: ~3.87km, Benchmark 2W morning: ₹140-152 (premium pricing!)
   # Route 10 afternoon: 2W=₹152, mini_3w=₹321, 3W=₹601-769
   # Route 10 evening: 3W=₹769, Ace=₹811, Pickup=₹939
-  # CONSTRAINT: Must stay within -3% to +15% of Porter
+  # CONSTRAINT: Must stay within -3% to +15% of benchmark
   # Balance: Set at Routes 1&2 levels +10% boost to help Route 10
   'fin_district' => {
     morning: {
@@ -553,7 +553,7 @@ ZONE_SPECIFIC_RATES = {
   },
   
   # hitech_madhapur: IT hub - Route 9 INTRA-ZONE (uses these rates)
-  # Route 9: AMB Cinemas → Ayyappa Society (4.9km micro, Porter 2W=₹64)
+  # Route 9: AMB Cinemas → Ayyappa Society (4.9km micro, Benchmark 2W=₹64)
   # Route 10 uses corridor pricing (hitech_madhapur → fin_district)
   # IMPORTANT: These rates are for Route 9 (intra-zone), NOT Route 10!
   # v7.0: Boosted all rates by ~8% to fix -4% to -8% negative variances
@@ -570,7 +570,7 @@ ZONE_SPECIFIC_RATES = {
       'canter_14ft'   => {base: 166316, rate: 0},    # Route 9: ₹1580 target
     },
     afternoon: {
-      # Route 9 afternoon: Porter 2W=₹74, Scooter=₹101, etc. (boosted 8%)
+      # Route 9 afternoon: Benchmark 2W=₹74, Scooter=₹101, etc. (boosted 8%)
       'two_wheeler'   => {base: 6500, rate: 760},    # Route 9: ₹74 target (boosted 8%)
       'scooter'       => {base: 9100, rate: 970},    # Route 9: ₹101 target (boosted 8%)
       'mini_3w'       => {base: 16600, rate: 1730},  # Route 9: ₹195 target (boosted 8%)
@@ -580,7 +580,7 @@ ZONE_SPECIFIC_RATES = {
       'canter_14ft'   => {base: 166316, rate: 0},    # Route 9: ₹1580 target
     },
     evening: {
-      # Route 9 evening: Porter 2W=₹64, Scooter=₹91, 3W=₹524, etc. (boosted 8%)
+      # Route 9 evening: Benchmark 2W=₹64, Scooter=₹91, 3W=₹524, etc. (boosted 8%)
       'two_wheeler'   => {base: 5600, rate: 650},    # Route 9: ₹64 target (same as morning)
       'scooter'       => {base: 8200, rate: 870},    # Route 9: ₹91 target (same as morning)
       'mini_3w'       => {base: 12400, rate: 1300},  # Route 9: ₹146 target (same as morning)
@@ -593,10 +593,10 @@ ZONE_SPECIFIC_RATES = {
   
   # lb_nagar_east: Outer suburb - Route 5 is INTRA-ZONE here
   # Route 5 actual distance: 3.35km (chargeable: 2.35km)
-  # Porter morning: 2W=₹52, Scooter=₹77, 3W=₹266, Ace=₹308, Pickup=₹418, Canter=₹1492
-  # Porter evening: 3W=₹466, Ace=₹508, Pickup=₹658, Canter=₹1792
+  # Benchmark morning: 2W=₹52, Scooter=₹77, 3W=₹266, Ace=₹308, Pickup=₹418, Canter=₹1492
+  # Benchmark evening: 3W=₹466, Ace=₹508, Pickup=₹658, Canter=₹1792
   # Currently showing -22% to -30% negative → need to BOOST ALL rates
-  # CONSTRAINT: Must stay within -3% to +15% of Porter
+  # CONSTRAINT: Must stay within -3% to +15% of benchmark
   'lb_nagar_east' => {
     morning: {
       # Route 5: 1.4km micro, chargeable ~0.4km, micro mult 0.85
@@ -727,7 +727,7 @@ ZONE_SPECIFIC_RATES = {
   },
   
   # vanasthali: Outer residential, Route 8 pickup zone
-  # Porter morning 2W=₹129 for 13.7km (but using corridor)
+  # Benchmark morning 2W=₹129 for 13.7km (but using corridor)
   # This is fallback for intra-zone trips
   'vanasthali' => {
     morning: {
@@ -761,10 +761,10 @@ ZONE_SPECIFIC_RATES = {
   
   # ayyappa_society: Premium residential (Route 10 origin)
   # Route 10: ayyappa_society → fin_district (8.1km, premium pricing)
-  # Porter morning: 2W=₹140, Scooter=₹179, mini_3w=₹245, 3W=₹569, Ace=₹611, Pickup=₹699, Canter=₹2042
-  # Porter afternoon: 2W=₹152, Scooter=₹191, mini_3w=₹321, 3W=₹601, Ace=₹645, Pickup=₹773, Canter=₹2051
-  # Porter evening: 2W=₹140, Scooter=₹179, mini_3w=₹245, 3W=₹769, Ace=₹811, Pickup=₹939, Canter=₹2342
-  # NOTE: Accounting for base_distance (1km) and margins, reducing rates by ~30% to match Porter
+  # Benchmark morning: 2W=₹140, Scooter=₹179, mini_3w=₹245, 3W=₹569, Ace=₹611, Pickup=₹699, Canter=₹2042
+  # Benchmark afternoon: 2W=₹152, Scooter=₹191, mini_3w=₹321, 3W=₹601, Ace=₹645, Pickup=₹773, Canter=₹2051
+  # Benchmark evening: 2W=₹140, Scooter=₹179, mini_3w=₹245, 3W=₹769, Ace=₹811, Pickup=₹939, Canter=₹2342
+  # NOTE: Accounting for base_distance (1km) and margins, reducing rates by ~30% to match benchmark
   # Chargeable distance = 8.1 - 1.0 = 7.1km, and margins add ~5-10%
   'ayyappa_society' => {
     morning: {
@@ -818,7 +818,7 @@ zones.each do |zone|
         base_fare_paise: r[:base], min_fare_paise: r[:base], per_km_rate_paise: r[:rate], active: true)
     end
   end
-  suffix = is_zone_specific ? " (Porter-calibrated)" : ""
+  suffix = is_zone_specific ? " (benchmark-calibrated)" : ""
   puts "   ✅ Created Baseline Pricing for #{zone.zone_code}#{suffix}"
 end
 
@@ -831,25 +831,25 @@ puts "\n🔗 Creating Zone-Pair Overrides..."
 def zid(code) = Zone.find_by(zone_code: code).id
 
 # =====================================================================
-# CORRIDOR RATES - Porter-calibrated
+# CORRIDOR RATES - benchmark-calibrated
 # =====================================================================
 # KEY CONSTRAINT: SwapZen prices must be within:
-#   - Negative variance (cheaper): ≤ -3% of Porter
-#   - Positive variance (costlier): ≤ +15% of Porter
+#   - Negative variance (cheaper): ≤ -3% of benchmark
+#   - Positive variance (costlier): ≤ +15% of benchmark
 # Target: 100% acceptance rate (MANDATORY)
 # 
 # NOTE: Routes 1, 2, 5, 10 are INTRA-ZONE (use zone rates, not corridors)
 # =====================================================================
 PAIRS = [
   # Route 10: hitech_madhapur → fin_district (INTER-ZONE corridor, 8.1km short)
-  # Porter morning: 2W=₹140, Scooter=₹179, mini_3w=₹245, 3W=₹569, Ace=₹611, Pickup=₹699, Canter=₹2042
-  # Porter afternoon: 2W=₹152, Scooter=₹191, mini_3w=₹321, 3W=₹601, Ace=₹645, Pickup=₹773, Canter=₹2051
-  # Porter evening: 2W=₹140, Scooter=₹179, mini_3w=₹245, 3W=₹769, Ace=₹811, Pickup=₹939, Canter=₹2342
+  # Benchmark morning: 2W=₹140, Scooter=₹179, mini_3w=₹245, 3W=₹569, Ace=₹611, Pickup=₹699, Canter=₹2042
+  # Benchmark afternoon: 2W=₹152, Scooter=₹191, mini_3w=₹321, 3W=₹601, Ace=₹645, Pickup=₹773, Canter=₹2051
+  # Benchmark evening: 2W=₹140, Scooter=₹179, mini_3w=₹245, 3W=₹769, Ace=₹811, Pickup=₹939, Canter=₹2342
   # NOTE: Route 9 (intra-zone) uses hitech_madhapur zone rates, NOT this corridor!
   # v7.0: Reduced all rates by 33% to fix +50% variance (actual distance longer than expected)
   {from: 'hitech_madhapur', to: 'fin_district', time_bands: {
     morning: {
-      # Route 10: Reduced by 33% to match Porter targets
+      # Route 10: Reduced by 33% to match benchmark targets
       'two_wheeler'   => [4600, 670],    # Route 10: ₹140 target (reduced 33%)
       'scooter'       => [5800, 870],    # Route 10: ₹179 target (reduced 33%)
       'mini_3w'       => [7800, 1200],   # Route 10: ₹245 target (reduced 33%)
@@ -881,9 +881,9 @@ PAIRS = [
   }},
 
   # Route 4: fin_district → ameerpet_core (ACTUAL: 18.74km, chargeable 17.74km)
-  # Porter morning: 2W=₹188, Scooter=₹241, 3W=₹706, Ace=₹748, Pickup=₹820, Canter=₹2321
-  # Porter afternoon: 2W=₹278, Scooter=₹334, 3W=₹894, Ace=₹936, Pickup=₹1045
-  # Porter evening: 2W=₹268, 3W=₹1050, Ace=₹1090, Pickup=₹1189
+  # Benchmark morning: 2W=₹188, Scooter=₹241, 3W=₹706, Ace=₹748, Pickup=₹820, Canter=₹2321
+  # Benchmark afternoon: 2W=₹278, Scooter=₹334, 3W=₹894, Ace=₹936, Pickup=₹1045
+  # Benchmark evening: 2W=₹268, 3W=₹1050, Ace=₹1090, Pickup=₹1189
   {from: 'fin_district', to: 'ameerpet_core', time_bands: {
     morning: {
       'two_wheeler'   => [3800, 750],    # Route 4: ₹188 ✅
@@ -915,9 +915,9 @@ PAIRS = [
   }},
 
   # Route 6: ameerpet_core → jntu_kukatpally (ACTUAL: ~10km short)
-  # Porter morning: 2W=₹102, Scooter=₹138, 3W=₹470, Ace=₹512, Pickup=₹611, Canter=₹1863
-  # Porter afternoon: 2W=₹112, Scooter=₹148, 3W=₹494, Ace=₹538, Pickup=₹672
-  # Porter evening: 3W=₹670, Ace=₹712, Pickup=₹851
+  # Benchmark morning: 2W=₹102, Scooter=₹138, 3W=₹470, Ace=₹512, Pickup=₹611, Canter=₹1863
+  # Benchmark afternoon: 2W=₹112, Scooter=₹148, 3W=₹494, Ace=₹538, Pickup=₹672
+  # Benchmark evening: 3W=₹670, Ace=₹712, Pickup=₹851
   {from: 'ameerpet_core', to: 'jntu_kukatpally', time_bands: {
     morning: {
       # Route 6: Calibrated ratios (reduce 20-30%): 2W:0.785, Scooter:0.767, 3W:0.81, Ace:0.813, Pickup:0.815
@@ -952,9 +952,9 @@ PAIRS = [
   }},
 
   # Route 8: lb_nagar_east → old_city (ACTUAL: 15.54km, chargeable 14.54km)
-  # Porter morning: 2W=₹129, Scooter=₹167, 3W=₹543, Ace=₹603, Pickup=₹696, Canter=₹1998
-  # Porter afternoon: 2W=₹161, Scooter=₹200, 3W=₹606, Ace=₹693, Pickup=₹799, Canter=₹2092
-  # Porter evening: 3W=₹743, Ace=₹803, Pickup=₹936, Canter=₹2298
+  # Benchmark morning: 2W=₹129, Scooter=₹167, 3W=₹543, Ace=₹603, Pickup=₹696, Canter=₹1998
+  # Benchmark afternoon: 2W=₹161, Scooter=₹200, 3W=₹606, Ace=₹693, Pickup=₹799, Canter=₹2092
+  # Benchmark evening: 3W=₹743, Ace=₹803, Pickup=₹936, Canter=₹2298
   {from: 'lb_nagar_east', to: 'old_city', time_bands: {
     morning: {
       # Route 8: Calibrated ratios (boost 16-19%): 2W:1.173, Scooter:1.193, 3W:1.18, Ace:1.04, Pickup:1.18, Canter:1.189
@@ -989,9 +989,9 @@ PAIRS = [
   }},
 
   # Route 7: jntu_kukatpally → old_city (ACTUAL: ~21km long)
-  # Porter morning: 2W=₹219, Scooter=₹274, 3W=₹786, Ace=₹848, Pickup=₹916, Canter=₹2456
-  # Porter afternoon: 2W=₹229, Scooter=₹284, 3W=₹825, Ace=₹891, Pickup=₹1007
-  # Porter evening: 3W=₹986, Ace=₹1048, Pickup=₹1156, Canter=₹2756
+  # Benchmark morning: 2W=₹219, Scooter=₹274, 3W=₹786, Ace=₹848, Pickup=₹916, Canter=₹2456
+  # Benchmark afternoon: 2W=₹229, Scooter=₹284, 3W=₹825, Ace=₹891, Pickup=₹1007
+  # Benchmark evening: 3W=₹986, Ace=₹1048, Pickup=₹1156, Canter=₹2756
   {from: 'jntu_kukatpally', to: 'old_city', time_bands: {
     morning: {
       # Route 7: 24.6km long, chargeable ~23.6km, long mult = 1.0
@@ -1026,9 +1026,9 @@ PAIRS = [
   }},
 
   # Route 3: lb_nagar_east → tcs_synergy (ACTUAL: ~11km)
-  # Porter morning: 2W=₹291, Scooter=₹358, 3W=₹928, Ace=₹986, Pickup=₹1042, Canter=₹2705
-  # Porter afternoon: 3W=₹974, Ace=₹1035, Pickup=₹1145
-  # Porter evening: 3W=₹1128, Ace=₹1186, Pickup=₹1282, Canter=₹3005
+  # Benchmark morning: 2W=₹291, Scooter=₹358, 3W=₹928, Ace=₹986, Pickup=₹1042, Canter=₹2705
+  # Benchmark afternoon: 3W=₹974, Ace=₹1035, Pickup=₹1145
+  # Benchmark evening: 3W=₹1128, Ace=₹1186, Pickup=₹1282, Canter=₹3005
   {from: 'lb_nagar_east', to: 'tcs_synergy', time_bands: {
     morning: {
       'two_wheeler'   => [8000, 2200],   # Route 3: ₹291 ✅
