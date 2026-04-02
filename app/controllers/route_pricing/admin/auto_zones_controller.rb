@@ -20,6 +20,7 @@ module RoutePricing
         city_code = params[:city_code] || 'hyd'
 
         result = RoutePricing::AutoZones::Orchestrator.new(city_code).run!
+        RoutePricing::Services::H3ZoneResolver.invalidate!(city_code)
 
         if result[:success]
           render json: result, status: :ok
@@ -167,6 +168,7 @@ module RoutePricing
         end
 
         mappings.update_all(serviceable: serviceable)
+        RoutePricing::Services::H3ZoneResolver.invalidate!(city_code)
         mapping = mappings.first
 
         zone = mapping.zone
@@ -205,6 +207,7 @@ module RoutePricing
         end
 
         auto_zones.destroy_all
+        RoutePricing::Services::H3ZoneResolver.invalidate!(city_code)
 
         render json: { success: true, removed: count }, status: :ok
       rescue StandardError => e

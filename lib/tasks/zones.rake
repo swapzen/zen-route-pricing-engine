@@ -115,53 +115,20 @@ namespace :zones do
     puts "\n" + "=" * 80
   end
 
-  desc "Show corridor stats"
+  desc "Show corridor stats (corridors deactivated — inter-zone formula handles cross-zone)"
   task corridors: :environment do
     city = ENV['city'] || 'hyd'
-    
+
     puts "=" * 80
-    puts "🛤️  CORRIDOR STATS: #{city.upcase}"
+    puts "CORRIDOR STATS: #{city.upcase} (ALL DEACTIVATED)"
     puts "=" * 80
-    
-    total_corridors = ZonePairVehiclePricing.where(city_code: city.to_s.downcase).count
-    unique_pairs = ZonePairVehiclePricing.where(city_code: city.to_s.downcase)
-                                          .distinct
-                                          .pluck(:from_zone_id, :to_zone_id)
-                                          .count
-    
-    puts "\n📊 Summary:"
-    puts "   Total corridor pricings: #{total_corridors}"
-    puts "   Unique zone pairs: #{unique_pairs}"
-    
-    puts "\n🚗 Corridors by vehicle type:"
-    ZonePairVehiclePricing.where(city_code: city.to_s.downcase)
-                          .group(:vehicle_type)
-                          .count
-                          .each do |vtype, count|
-      puts "   #{vtype}: #{count}"
-    end
-    
-    puts "\n⏰ Corridors by time band:"
-    ZonePairVehiclePricing.where(city_code: city.to_s.downcase)
-                          .group(:time_band)
-                          .count
-                          .each do |band, count|
-      puts "   #{band || 'all-day'}: #{count}"
-    end
-    
-    puts "\n🛤️  Corridor pairs:"
-    pairs = ZonePairVehiclePricing.where(city_code: city.to_s.downcase)
-                                   .joins("LEFT JOIN zones from_z ON from_z.id = zone_pair_vehicle_pricings.from_zone_id")
-                                   .joins("LEFT JOIN zones to_z ON to_z.id = zone_pair_vehicle_pricings.to_zone_id")
-                                   .select("from_z.zone_code as from_code, to_z.zone_code as to_code")
-                                   .distinct
-                                   .limit(30)
-    
-    pairs.each do |p|
-      puts "   #{p.from_code} → #{p.to_code}"
-    end
-    puts "   ... (showing first 30)" if pairs.count >= 30
-    
+
+    total = ZonePairVehiclePricing.where(city_code: city.to_s.downcase, time_band: nil).count
+    active = ZonePairVehiclePricing.where(city_code: city.to_s.downcase, time_band: nil, active: true).count
+
+    puts "\n  Total corridor records: #{total}"
+    puts "  Active: #{active}"
+    puts "  Note: Corridors deactivated — inter-zone formula (Tier 2) handles cross-zone pricing"
     puts "\n" + "=" * 80
   end
 
@@ -186,7 +153,7 @@ namespace :zones do
       db_count = Zone.for_city(city_code).count
       active_count = Zone.for_city(city_code).active.count
       pricing_count = ZoneVehiclePricing.where(city_code: city_code.to_s.downcase).count
-      corridor_count = ZonePairVehiclePricing.where(city_code: city_code.to_s.downcase).count
+      corridor_count = ZonePairVehiclePricing.where(city_code: city_code.to_s.downcase, time_band: nil).count
       
       puts "\n#{city.upcase} (#{city_code}):"
       puts "  YAML zones: #{yaml_count}"

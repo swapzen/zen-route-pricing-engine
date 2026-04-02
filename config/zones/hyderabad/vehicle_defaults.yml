@@ -1,437 +1,437 @@
 ---
 city_code: hyd
-version: '1.0'
+version: '2.0'
 base_distance_m: 1000
 vehicles:
   two_wheeler:
     display_name: 2 Wheeler
     vendor_code: 2W
     capacity_kg: 20
-    base_fare_paise: 4500
+    base_fare_paise: 5100
     slabs:
     - - 0
       - 3000
-      - 350
+      - 1500
     - - 3000
       - 10000
-      - 860
+      - 1200
     - - 10000
       - 25000
-      - 1150
+      - 950
     - - 25000
       -
-      - 750
+      - 700
   scooter:
     display_name: Scooter
     vendor_code: SCOOTER
     capacity_kg: 20
-    base_fare_paise: 6000
+    base_fare_paise: 6400
     slabs:
     - - 0
       - 3000
-      - 450
+      - 1600
     - - 3000
       - 10000
-      - 1100
+      - 1300
+    - - 10000
+      - 25000
+      - 1050
+    - - 25000
+      -
+      - 780
+  mini_3w:
+    display_name: Mini 3W
+    vendor_code: MINI_3W
+    capacity_kg: 300
+    base_fare_paise: 10700
+    slabs:
+    - - 0
+      - 3000
+      - 1300
+    - - 3000
+      - 10000
+      - 1050
+    - - 10000
+      - 25000
+      - 850
+    - - 25000
+      -
+      - 650
+  three_wheeler:
+    display_name: 3 Wheeler
+    vendor_code: 3W
+    capacity_kg: 500
+    base_fare_paise: 17200
+    slabs:
+    - - 0
+      - 3000
+      - 1900
+    - - 3000
+      - 10000
+      - 1600
     - - 10000
       - 25000
       - 1400
     - - 25000
       -
-      - 900
-  mini_3w:
-    display_name: Mini 3W
-    vendor_code: MINI_3W
-    capacity_kg: 500
-    base_fare_paise: 10000
-    slabs:
-    - - 0
-      - 3000
-      - 900
-    - - 3000
-      - 10000
-      - 1265
-    - - 10000
-      - 25000
-      - 1000
-    - - 25000
-      -
-      - 750
-  three_wheeler:
-    display_name: 3 Wheeler
-    vendor_code: 3W
-    capacity_kg: 500
-    base_fare_paise: 20000
-    slabs:
-    - - 0
-      - 3000
-      - 2400
-    - - 3000
-      - 10000
-      - 3000
-    - - 10000
-      - 25000
-      - 2970
-    - - 25000
-      -
-      - 1900
-  tata_ace:
-    display_name: Tata Ace
-    vendor_code: TATA_ACE
-    capacity_kg: 750
-    base_fare_paise: 25000
-    slabs:
-    - - 0
-      - 3000
-      - 2600
-    - - 3000
-      - 10000
-      - 3200
-    - - 10000
-      - 25000
-      - 3080
-    - - 25000
-      -
-      - 2000
-  pickup_8ft:
-    display_name: Pickup 8ft
-    vendor_code: PICKUP_8FT
-    capacity_kg: 1250
-    base_fare_paise: 30000
-    slabs:
-    - - 0
-      - 3000
-      - 3000
-    - - 3000
-      - 10000
-      - 3500
-    - - 10000
-      - 25000
-      - 3300
-    - - 25000
-      -
-      - 2150
+      - 1050
   three_wheeler_ev:
     display_name: 3 Wheeler EV
     vendor_code: 3W_EV
     capacity_kg: 500
-    base_fare_paise: 20000
+    base_fare_paise: 17200
     slabs:
     - - 0
       - 3000
-      - 2400
+      - 1900
     - - 3000
       - 10000
-      - 3000
+      - 1600
     - - 10000
       - 25000
-      - 2970
+      - 1400
     - - 25000
       -
-      - 1900
+      - 1050
+  tata_ace:
+    display_name: Tata Ace
+    vendor_code: TATA_ACE
+    capacity_kg: 750
+    base_fare_paise: 23300
+    slabs:
+    - - 0
+      - 3000
+      - 2100
+    - - 3000
+      - 10000
+      - 1800
+    - - 10000
+      - 25000
+      - 1600
+    - - 25000
+      -
+      - 1200
+  pickup_8ft:
+    display_name: Pickup 8ft
+    vendor_code: PICKUP_8FT
+    capacity_kg: 1250
+    base_fare_paise: 34000
+    slabs:
+    - - 0
+      - 3000
+      - 2700
+    - - 3000
+      - 10000
+      - 2300
+    - - 10000
+      - 25000
+      - 2000
+    - - 25000
+      -
+      - 1500
   eeco:
     display_name: Eeco
     vendor_code: EECO
     capacity_kg: 600
-    base_fare_paise: 35000
+    base_fare_paise: 37500
     slabs:
     - - 0
       - 3000
-      - 3200
+      - 3400
+    - - 3000
+      - 10000
+      - 2900
+    - - 10000
+      - 25000
+      - 2500
+    - - 25000
+      -
+      - 1800
+  tata_407:
+    display_name: Tata 407
+    vendor_code: TATA_407
+    capacity_kg: 2500
+    base_fare_paise: 59000
+    slabs:
+    - - 0
+      - 3000
+      - 4500
     - - 3000
       - 10000
       - 3800
     - - 10000
       - 25000
-      - 3600
+      - 3200
     - - 25000
       -
       - 2400
-  tata_407:
-    display_name: Tata 407
-    vendor_code: TATA_407
-    capacity_kg: 2500
-    base_fare_paise: 40000
-    slabs:
-    - - 0
-      - 3000
-      - 3600
-    - - 3000
-      - 10000
-      - 4200
-    - - 10000
-      - 25000
-      - 4000
-    - - 25000
-      -
-      - 2800
   canter_14ft:
     display_name: Canter 14ft
     vendor_code: CANTER_14FT
     capacity_kg: 3500
-    base_fare_paise: 145000
+    base_fare_paise: 160500
     slabs:
     - - 0
       - 3000
-      - 5000
+      - 5900
     - - 3000
       - 10000
-      - 4600
+      - 5000
     - - 10000
       - 25000
-      - 5200
+      - 4300
     - - 25000
       -
-      - 3500
+      - 3200
 global_time_rates:
   early_morning:
     two_wheeler:
-      base: 3680
-      rate: 740
+      base: 4690
+      rate: 1380
     scooter:
-      base: 7080
-      rate: 830
+      base: 5890
+      rate: 1470
     mini_3w:
-      base: 13430
-      rate: 830
+      base: 9840
+      rate: 1200
     three_wheeler:
-      base: 29260
-      rate: 1930
+      base: 15820
+      rate: 1750
     three_wheeler_ev:
-      base: 29260
-      rate: 1930
+      base: 15820
+      rate: 1750
     tata_ace:
-      base: 32660
-      rate: 2020
+      base: 21440
+      rate: 1930
     pickup_8ft:
-      base: 43520
-      rate: 1840
+      base: 31280
+      rate: 2480
     eeco:
-      base: 50600
-      rate: 3500
+      base: 34500
+      rate: 3130
     tata_407:
-      base: 55200
-      rate: 3860
+      base: 54280
+      rate: 4140
     canter_14ft:
-      base: 150330
-      rate: 3590
+      base: 147660
+      rate: 5430
   morning_rush:
     two_wheeler:
-      base: 4000
-      rate: 800
+      base: 5100
+      rate: 1500
     scooter:
-      base: 7700
-      rate: 900
+      base: 6400
+      rate: 1600
     mini_3w:
-      base: 14600
-      rate: 900
+      base: 10700
+      rate: 1300
     three_wheeler:
-      base: 31800
-      rate: 2100
+      base: 17200
+      rate: 1900
     three_wheeler_ev:
-      base: 31800
-      rate: 2100
+      base: 17200
+      rate: 1900
     tata_ace:
-      base: 35500
-      rate: 2200
+      base: 23300
+      rate: 2100
     pickup_8ft:
-      base: 47300
-      rate: 2000
+      base: 34000
+      rate: 2700
     eeco:
-      base: 55000
-      rate: 3800
+      base: 37500
+      rate: 3400
     tata_407:
-      base: 60000
-      rate: 4200
+      base: 59000
+      rate: 4500
     canter_14ft:
-      base: 163400
-      rate: 3900
+      base: 160500
+      rate: 5900
   midday:
     two_wheeler:
-      base: 6370
-      rate: 760
+      base: 4850
+      rate: 1430
     scooter:
-      base: 8170
-      rate: 950
+      base: 6080
+      rate: 1520
     mini_3w:
-      base: 20330
-      rate: 760
+      base: 10170
+      rate: 1240
     three_wheeler:
-      base: 32490
-      rate: 2190
+      base: 16340
+      rate: 1810
     three_wheeler_ev:
-      base: 32490
-      rate: 2190
+      base: 16340
+      rate: 1810
     tata_ace:
-      base: 36670
-      rate: 2280
+      base: 22140
+      rate: 2000
     pickup_8ft:
-      base: 50070
-      rate: 2190
+      base: 32300
+      rate: 2570
     eeco:
-      base: 55100
-      rate: 3800
+      base: 35630
+      rate: 3230
     tata_407:
-      base: 59850
-      rate: 4180
+      base: 56050
+      rate: 4280
     canter_14ft:
-      base: 156180
-      rate: 3900
+      base: 152480
+      rate: 5610
   afternoon:
     two_wheeler:
-      base: 6700
-      rate: 800
+      base: 5100
+      rate: 1500
     scooter:
-      base: 8600
-      rate: 1000
+      base: 6400
+      rate: 1600
     mini_3w:
-      base: 21400
-      rate: 800
+      base: 10700
+      rate: 1300
     three_wheeler:
-      base: 34200
-      rate: 2300
+      base: 17200
+      rate: 1900
     three_wheeler_ev:
-      base: 34200
-      rate: 2300
+      base: 17200
+      rate: 1900
     tata_ace:
-      base: 38600
-      rate: 2400
+      base: 23300
+      rate: 2100
     pickup_8ft:
-      base: 52700
-      rate: 2300
+      base: 34000
+      rate: 2700
     eeco:
-      base: 58000
-      rate: 4000
+      base: 37500
+      rate: 3400
     tata_407:
-      base: 63000
-      rate: 4400
+      base: 59000
+      rate: 4500
     canter_14ft:
-      base: 164400
-      rate: 4100
+      base: 160500
+      rate: 5900
   evening_rush:
     two_wheeler:
-      base: 5260
-      rate: 900
+      base: 5710
+      rate: 1680
     scooter:
-      base: 8290
-      rate: 1120
+      base: 7170
+      rate: 1790
     mini_3w:
-      base: 15790
-      rate: 1120
+      base: 11980
+      rate: 1460
     three_wheeler:
-      base: 59470
-      rate: 2460
+      base: 19260
+      rate: 2130
     three_wheeler_ev:
-      base: 59470
-      rate: 2460
+      base: 19260
+      rate: 2130
     tata_ace:
-      base: 63500
-      rate: 2580
-    pickup_8ft:
-      base: 81310
+      base: 26100
       rate: 2350
+    pickup_8ft:
+      base: 38080
+      rate: 3020
     eeco:
-      base: 87360
-      rate: 4480
+      base: 42000
+      rate: 3810
     tata_407:
-      base: 95200
-      rate: 4930
+      base: 66080
+      rate: 5040
     canter_14ft:
-      base: 218400
-      rate: 4590
+      base: 179760
+      rate: 6610
   night:
     two_wheeler:
-      base: 4700
-      rate: 800
+      base: 5100
+      rate: 1500
     scooter:
-      base: 7400
-      rate: 1000
+      base: 6400
+      rate: 1600
     mini_3w:
-      base: 14100
-      rate: 1000
+      base: 10700
+      rate: 1300
     three_wheeler:
-      base: 53100
-      rate: 2200
+      base: 17200
+      rate: 1900
     three_wheeler_ev:
-      base: 53100
-      rate: 2200
+      base: 17200
+      rate: 1900
     tata_ace:
-      base: 56700
-      rate: 2300
-    pickup_8ft:
-      base: 72600
+      base: 23300
       rate: 2100
+    pickup_8ft:
+      base: 34000
+      rate: 2700
     eeco:
-      base: 78000
-      rate: 4000
+      base: 37500
+      rate: 3400
     tata_407:
-      base: 85000
-      rate: 4400
+      base: 59000
+      rate: 4500
     canter_14ft:
-      base: 195000
-      rate: 4100
+      base: 160500
+      rate: 5900
   weekend_day:
     two_wheeler:
-      base: 6370
-      rate: 760
+      base: 4850
+      rate: 1430
     scooter:
-      base: 8170
-      rate: 950
+      base: 6080
+      rate: 1520
     mini_3w:
-      base: 20330
-      rate: 760
+      base: 10170
+      rate: 1240
     three_wheeler:
-      base: 32490
-      rate: 2190
+      base: 16340
+      rate: 1810
     three_wheeler_ev:
-      base: 32490
-      rate: 2190
+      base: 16340
+      rate: 1810
     tata_ace:
-      base: 36670
-      rate: 2280
+      base: 22140
+      rate: 2000
     pickup_8ft:
-      base: 50070
-      rate: 2190
+      base: 32300
+      rate: 2570
     eeco:
-      base: 55100
-      rate: 3800
+      base: 35630
+      rate: 3230
     tata_407:
-      base: 59850
-      rate: 4180
+      base: 56050
+      rate: 4280
     canter_14ft:
-      base: 156180
-      rate: 3900
+      base: 152480
+      rate: 5610
   weekend_night:
     two_wheeler:
-      base: 4230
-      rate: 720
+      base: 4590
+      rate: 1350
     scooter:
-      base: 6660
-      rate: 900
+      base: 5760
+      rate: 1440
     mini_3w:
-      base: 12690
-      rate: 900
+      base: 9630
+      rate: 1170
     three_wheeler:
-      base: 47790
-      rate: 1980
+      base: 15480
+      rate: 1710
     three_wheeler_ev:
-      base: 47790
-      rate: 1980
+      base: 15480
+      rate: 1710
     tata_ace:
-      base: 51030
-      rate: 2070
-    pickup_8ft:
-      base: 65340
+      base: 20970
       rate: 1890
+    pickup_8ft:
+      base: 30600
+      rate: 2430
     eeco:
-      base: 70200
-      rate: 3600
+      base: 33750
+      rate: 3060
     tata_407:
-      base: 76500
-      rate: 3960
+      base: 53100
+      rate: 4050
     canter_14ft:
-      base: 175500
-      rate: 3690
+      base: 144450
+      rate: 5310
 inter_zone_formula:
   origin_weight: 0.6
   destination_weight: 0.4

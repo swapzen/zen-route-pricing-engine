@@ -3,6 +3,12 @@
 module RoutePricing
   module Services
     class PricingSnapshotManager
+      ZONE_PRICING_FIELDS = %w[base_fare_paise per_km_rate_paise min_fare_paise per_min_rate_paise active].freeze
+      TIME_PRICING_FIELDS = %w[base_fare_paise per_km_rate_paise min_fare_paise per_min_rate_paise active].freeze
+      CORRIDOR_PRICING_FIELDS = %w[base_fare_paise per_km_rate_paise min_fare_paise per_min_rate_paise active].freeze
+      CORRIDOR_TIME_PRICING_FIELDS = %w[base_fare_paise per_km_rate_paise min_fare_paise per_min_rate_paise active].freeze
+      CONFIG_FIELDS = %w[base_fare_paise per_km_rate_paise min_fare_paise per_min_rate_paise].freeze
+
       # Capture a snapshot of all active pricings for a city
       def capture(city_code, name, description = '', created_by: nil)
         zone_ids = Zone.where('LOWER(city) = LOWER(?)', city_code).where(status: true).pluck(:id)
@@ -12,6 +18,7 @@ module RoutePricing
           zone_vehicle_pricings: serialize_zone_pricings(zone_ids),
           zone_vehicle_time_pricings: serialize_time_pricings(zone_ids),
           zone_pair_vehicle_pricings: serialize_corridor_pricings(city_code),
+          zone_pair_vehicle_time_pricings: serialize_corridor_time_pricings(city_code),
           pricing_configs: serialize_city_configs(city_code)
         }
 
@@ -29,64 +36,38 @@ module RoutePricing
         snapshot = PricingSnapshot.find(snapshot_id)
         data = snapshot.snapshot_data
 
-        restored = { zone_pricings: 0, time_pricings: 0, corridor_pricings: 0, configs: 0 }
+        restored = { zone_pricings: 0, time_pricings: 0, corridor_pricings: 0, corridor_time_pricings: 0, configs: 0 }
 
         ActiveRecord::Base.transaction do
-          # Restore zone vehicle pricings
-          (data['zone_vehicle_pricings'] || []).each do |attrs|
-            record = ZoneVehiclePricing.find_by(id: attrs['id'])
-            next unless record
+          restored[:zone_pricings] = batch_restore(
+            ZoneVehiclePricing,
+            data['zone_vehicle_pricings'] || [],
+            ZONE_PRICING_FIELDS
+          )
 
-            record.update!(
-              base_fare_paise: attrs['base_fare_paise'],
-              per_km_rate_paise: attrs['per_km_rate_paise'],
-              min_fare_paise: attrs['min_fare_paise'],
-              per_min_rate_paise: attrs['per_min_rate_paise']
-            )
-            restored[:zone_pricings] += 1
-          end
+          restored[:time_pricings] = batch_restore(
+            ZoneVehicleTimePricing,
+            data['zone_vehicle_time_pricings'] || [],
+            TIME_PRICING_FIELDS
+          )
 
-          # Restore time band pricings
-          (data['zone_vehicle_time_pricings'] || []).each do |attrs|
-            record = ZoneVehicleTimePricing.find_by(id: attrs['id'])
-            next unless record
+          restored[:corridor_pricings] = batch_restore(
+            ZonePairVehiclePricing,
+            data['zone_pair_vehicle_pricings'] || [],
+            CORRIDOR_PRICING_FIELDS
+          )
 
-            record.update!(
-              base_fare_paise: attrs['base_fare_paise'],
-              per_km_rate_paise: attrs['per_km_rate_paise'],
-              min_fare_paise: attrs['min_fare_paise'],
-              per_min_rate_paise: attrs['per_min_rate_paise']
-            )
-            restored[:time_pricings] += 1
-          end
+          restored[:corridor_time_pricings] = batch_restore(
+            ZonePairVehicleTimePricing,
+            data['zone_pair_vehicle_time_pricings'] || [],
+            CORRIDOR_TIME_PRICING_FIELDS
+          )
 
-          # Restore corridor pricings
-          (data['zone_pair_vehicle_pricings'] || []).each do |attrs|
-            record = ZonePairVehiclePricing.find_by(id: attrs['id'])
-            next unless record
-
-            record.update!(
-              base_fare_paise: attrs['base_fare_paise'],
-              per_km_rate_paise: attrs['per_km_rate_paise'],
-              min_fare_paise: attrs['min_fare_paise'],
-              per_min_rate_paise: attrs['per_min_rate_paise']
-            )
-            restored[:corridor_pricings] += 1
-          end
-
-          # Restore city configs
-          (data['pricing_configs'] || []).each do |attrs|
-            record = PricingConfig.find_by(id: attrs['id'])
-            next unless record
-
-            record.update!(
-              base_fare_paise: attrs['base_fare_paise'],
-              per_km_rate_paise: attrs['per_km_rate_paise'],
-              min_fare_paise: attrs['min_fare_paise'],
-              per_min_rate_paise: attrs['per_min_rate_paise']
-            )
-            restored[:configs] += 1
-          end
+          restored[:configs] = batch_restore(
+            PricingConfig,
+            data['pricing_configs'] || [],
+            CONFIG_FIELDS
+          )
         end
 
         { success: true, restored: restored, snapshot_name: snapshot.name }
@@ -97,13 +78,13 @@ module RoutePricing
         snapshot = PricingSnapshot.find(snapshot_id)
         data = snapshot.snapshot_data
 
-        diffs = { zone_pricings: [], time_pricings: [], corridor_pricings: [], configs: [] }
+        diffs = { zone_pricings: [], time_pricings: [], corridor_pricings: [], corridor_time_pricings: [], configs: [] }
 
         (data['zone_vehicle_pricings'] || []).each do |attrs|
           record = ZoneVehiclePricing.find_by(id: attrs['id'])
           next unless record
 
-          diff = compute_diff(record, attrs, %w[base_fare_paise per_km_rate_paise min_fare_paise per_min_rate_paise])
+          diff = compute_diff(record, attrs, ZONE_PRICING_FIELDS)
           if diff.any?
             diffs[:zone_pricings] << {
               id: record.id,
@@ -118,7 +99,7 @@ module RoutePricing
           record = ZoneVehicleTimePricing.find_by(id: attrs['id'])
           next unless record
 
-          diff = compute_diff(record, attrs, %w[base_fare_paise per_km_rate_paise min_fare_paise per_min_rate_paise])
+          diff = compute_diff(record, attrs, TIME_PRICING_FIELDS)
           if diff.any?
             zvp = record.zone_vehicle_pricing
             diffs[:time_pricings] << {
@@ -135,13 +116,31 @@ module RoutePricing
           record = ZonePairVehiclePricing.find_by(id: attrs['id'])
           next unless record
 
-          diff = compute_diff(record, attrs, %w[base_fare_paise per_km_rate_paise min_fare_paise per_min_rate_paise])
+          diff = compute_diff(record, attrs, CORRIDOR_PRICING_FIELDS)
           if diff.any?
             diffs[:corridor_pricings] << {
               id: record.id,
               from_zone: record.from_zone&.zone_code,
               to_zone: record.to_zone&.zone_code,
               vehicle_type: record.vehicle_type,
+              time_band: record.time_band,
+              changes: diff
+            }
+          end
+        end
+
+        (data['zone_pair_vehicle_time_pricings'] || []).each do |attrs|
+          record = ZonePairVehicleTimePricing.find_by(id: attrs['id'])
+          next unless record
+
+          diff = compute_diff(record, attrs, CORRIDOR_TIME_PRICING_FIELDS)
+          if diff.any?
+            parent = record.zone_pair_vehicle_pricing
+            diffs[:corridor_time_pricings] << {
+              id: record.id,
+              from_zone: parent&.from_zone&.zone_code,
+              to_zone: parent&.to_zone&.zone_code,
+              vehicle_type: parent&.vehicle_type,
               time_band: record.time_band,
               changes: diff
             }
@@ -163,6 +162,31 @@ module RoutePricing
 
       private
 
+      # Batch restore: load all records at once, update in bulk
+      def batch_restore(model_class, snapshot_records, fields)
+        return 0 if snapshot_records.empty?
+
+        ids = snapshot_records.map { |a| a['id'] }.compact
+        existing = model_class.where(id: ids).index_by(&:id)
+        count = 0
+
+        snapshot_records.each do |attrs|
+          record = existing[attrs['id']]
+          next unless record
+
+          updates = {}
+          fields.each do |field|
+            val = attrs[field]
+            updates[field.to_sym] = val unless val.nil?
+          end
+
+          record.update!(updates) if updates.any?
+          count += 1
+        end
+
+        count
+      end
+
       def serialize_zone_pricings(zone_ids)
         ZoneVehiclePricing.where(zone_id: zone_ids, active: true).map do |zvp|
           {
@@ -172,7 +196,8 @@ module RoutePricing
             base_fare_paise: zvp.base_fare_paise,
             per_km_rate_paise: zvp.per_km_rate_paise,
             min_fare_paise: zvp.min_fare_paise,
-            per_min_rate_paise: zvp.try(:per_min_rate_paise)
+            per_min_rate_paise: zvp.try(:per_min_rate_paise),
+            active: zvp.active
           }
         end
       end
@@ -187,7 +212,8 @@ module RoutePricing
             base_fare_paise: tp.base_fare_paise,
             per_km_rate_paise: tp.per_km_rate_paise,
             min_fare_paise: tp.min_fare_paise,
-            per_min_rate_paise: tp.try(:per_min_rate_paise)
+            per_min_rate_paise: tp.try(:per_min_rate_paise),
+            active: tp.active
           }
         end
       end
@@ -203,7 +229,25 @@ module RoutePricing
             base_fare_paise: zpvp.base_fare_paise,
             per_km_rate_paise: zpvp.per_km_rate_paise,
             min_fare_paise: zpvp.min_fare_paise,
-            per_min_rate_paise: zpvp.try(:per_min_rate_paise)
+            per_min_rate_paise: zpvp.try(:per_min_rate_paise),
+            active: zpvp.active
+          }
+        end
+      end
+
+      def serialize_corridor_time_pricings(city_code)
+        base_ids = ZonePairVehiclePricing.where('LOWER(city_code) = LOWER(?)', city_code)
+                                          .where(active: true, time_band: nil).pluck(:id)
+        ZonePairVehicleTimePricing.where(zone_pair_vehicle_pricing_id: base_ids, active: true).map do |tp|
+          {
+            id: tp.id,
+            zone_pair_vehicle_pricing_id: tp.zone_pair_vehicle_pricing_id,
+            time_band: tp.time_band,
+            base_fare_paise: tp.base_fare_paise,
+            per_km_rate_paise: tp.per_km_rate_paise,
+            min_fare_paise: tp.min_fare_paise,
+            per_min_rate_paise: tp.try(:per_min_rate_paise),
+            active: tp.active
           }
         end
       end

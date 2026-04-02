@@ -12,7 +12,7 @@ module RoutePricing
     class RecalibrationOptimizer
       BASE_DISTANCE_M = 1000
       TOLERANCE_LOW = -3.0   # Minimum acceptable % deviation
-      TOLERANCE_HIGH = 16.0  # Maximum acceptable % deviation
+      TOLERANCE_HIGH = 10.0  # Maximum acceptable % deviation (5-10% target margin)
 
       BenchmarkRoute = Struct.new(
         :origin_zone_id, :dest_zone_id, :vehicle_type, :time_band,
@@ -145,15 +145,13 @@ module RoutePricing
           failed: 0, failures: [], summary: message }
       end
 
-      # Group benchmark routes by their pricing entity (intra-zone or corridor)
+      # Group benchmark routes by their pricing entity
+      # All routes group by origin zone (corridors deactivated — inter-zone formula handles cross-zone)
       def group_by_pricing_entity(routes)
         groups = {}
         routes.each do |route|
-          if route.origin_zone_id == route.dest_zone_id
-            key = [:intra, route.origin_zone_id, route.vehicle_type, route.time_band]
-          else
-            key = [:corridor, route.origin_zone_id, route.dest_zone_id, route.vehicle_type, route.time_band]
-          end
+          # Group by origin zone for all routes (intra and inter-zone alike)
+          key = [:intra, route.origin_zone_id, route.vehicle_type, route.time_band]
           (groups[key] ||= []) << route
         end
         groups
@@ -269,11 +267,11 @@ module RoutePricing
       def simulate_guardrail(raw)
         final_price = raw.round
         pg_fee = (final_price * 0.02).round
-        total_cost = raw + pg_fee + 200 + 10
+        total_cost = raw + pg_fee + 200 + 10 # PG 2%, support Rs 2, maps Rs 0.10
         margin_pct = total_cost > 0 ? ((final_price - total_cost).to_f / total_cost * 100) : 0.0
         if margin_pct < 5.0
           required = (total_cost * 1.05).ceil
-          ((required / 1000.0).ceil * 1000).to_i
+          ((required / 1000.0).round * 1000).to_i # Use .round to match PriceCalculator
         else
           final_price
         end
@@ -342,83 +340,42 @@ module RoutePricing
         recommendations = []
         results = []
 
-        if key[0] == :intra
-          _, zone_id, vehicle_type, time_band = key
-          zvp = ZoneVehiclePricing.find_by(
-            city_code: @city_code, zone_id: zone_id,
-            vehicle_type: vehicle_type, active: true
-          )
+        _, zone_id, vehicle_type, time_band = key
+        zvp = ZoneVehiclePricing.find_by(
+          city_code: @city_code, zone_id: zone_id,
+          vehicle_type: vehicle_type, active: true
+        )
 
-          if zvp
-            zvtp = zvp.time_pricings.where(active: true).find_by(time_band: time_band)
-            target = zvtp || zvp
+        if zvp
+          zvtp = zvp.time_pricings.where(active: true).find_by(time_band: time_band)
+          target = zvtp || zvp
 
-            if target.base_fare_paise != base_fare
-              recommendations << Recommendation.new(
-                pricing_type: zvtp ? 'ZoneVehicleTimePricing' : 'ZoneVehiclePricing',
-                zone_id: zone_id,
-                vehicle_type: vehicle_type,
-                time_band: time_band,
-                field: 'base_fare_paise',
-                old_value: target.base_fare_paise,
-                new_value: base_fare,
-                impact_routes: data_points.size,
-                confidence: compute_confidence(data_points, base_fare, per_km_rate)
-              )
-            end
-
-            if target.per_km_rate_paise != per_km_rate
-              recommendations << Recommendation.new(
-                pricing_type: zvtp ? 'ZoneVehicleTimePricing' : 'ZoneVehiclePricing',
-                zone_id: zone_id,
-                vehicle_type: vehicle_type,
-                time_band: time_band,
-                field: 'per_km_rate_paise',
-                old_value: target.per_km_rate_paise,
-                new_value: per_km_rate,
-                impact_routes: data_points.size,
-                confidence: compute_confidence(data_points, base_fare, per_km_rate)
-              )
-            end
-          end
-        elsif key[0] == :corridor
-          _, from_zone_id, to_zone_id, vehicle_type, time_band = key
-          zpvp = ZonePairVehiclePricing.where('LOWER(city_code) = LOWER(?)', @city_code)
-            .find_by(
-              from_zone_id: from_zone_id, to_zone_id: to_zone_id,
-              vehicle_type: vehicle_type, time_band: time_band, active: true
+          if target.base_fare_paise != base_fare
+            recommendations << Recommendation.new(
+              pricing_type: zvtp ? 'ZoneVehicleTimePricing' : 'ZoneVehiclePricing',
+              zone_id: zone_id,
+              vehicle_type: vehicle_type,
+              time_band: time_band,
+              field: 'base_fare_paise',
+              old_value: target.base_fare_paise,
+              new_value: base_fare,
+              impact_routes: data_points.size,
+              confidence: compute_confidence(data_points, base_fare, per_km_rate)
             )
+          end
 
-          if zpvp
-            if zpvp.base_fare_paise != base_fare
-              recommendations << Recommendation.new(
-                pricing_type: 'ZonePairVehiclePricing',
-                from_zone_id: from_zone_id,
-                to_zone_id: to_zone_id,
-                vehicle_type: vehicle_type,
-                time_band: time_band,
-                field: 'base_fare_paise',
-                old_value: zpvp.base_fare_paise,
-                new_value: base_fare,
-                impact_routes: data_points.size,
-                confidence: compute_confidence(data_points, base_fare, per_km_rate)
-              )
-            end
-
-            if zpvp.per_km_rate_paise != per_km_rate
-              recommendations << Recommendation.new(
-                pricing_type: 'ZonePairVehiclePricing',
-                from_zone_id: from_zone_id,
-                to_zone_id: to_zone_id,
-                vehicle_type: vehicle_type,
-                time_band: time_band,
-                field: 'per_km_rate_paise',
-                old_value: zpvp.per_km_rate_paise,
-                new_value: per_km_rate,
-                impact_routes: data_points.size,
-                confidence: compute_confidence(data_points, base_fare, per_km_rate)
-              )
-            end
+          if target.per_km_rate_paise != per_km_rate
+            recommendations << Recommendation.new(
+              pricing_type: zvtp ? 'ZoneVehicleTimePricing' : 'ZoneVehiclePricing',
+              zone_id: zone_id,
+              vehicle_type: vehicle_type,
+              time_band: time_band,
+              field: 'per_km_rate_paise',
+              old_value: target.per_km_rate_paise,
+              new_value: per_km_rate,
+              impact_routes: data_points.size,
+              confidence: compute_confidence(data_points, base_fare, per_km_rate)
+            )
           end
         end
 
@@ -448,6 +405,7 @@ module RoutePricing
         return 0.0 if data_points.empty?
 
         passed = data_points.count do |pt|
+          next false if pt[:route].benchmark_price_paise.to_i.zero?
           final = simulate_full_price(base_fare, per_km_rate, pt[:effective_x])
           deviation = (final - pt[:route].benchmark_price_paise).to_f / pt[:route].benchmark_price_paise * 100
           deviation >= TOLERANCE_LOW && deviation <= TOLERANCE_HIGH
@@ -517,25 +475,15 @@ module RoutePricing
       end
 
       def current_pricing_for(route)
-        same_zone = route.origin_zone_id == route.dest_zone_id
-
-        if same_zone
-          zvp = ZoneVehiclePricing.find_by(
-            city_code: @city_code, zone_id: route.origin_zone_id,
-            vehicle_type: route.vehicle_type, active: true
-          )
-          if zvp
-            zvtp = zvp.time_pricings.where(active: true).find_by(time_band: route.time_band)
-            target = zvtp || zvp
-            return [target.base_fare_paise, target.per_km_rate_paise]
-          end
-        else
-          zpvp = ZonePairVehiclePricing.where('LOWER(city_code) = LOWER(?)', @city_code)
-            .find_by(
-              from_zone_id: route.origin_zone_id, to_zone_id: route.dest_zone_id,
-              vehicle_type: route.vehicle_type, time_band: route.time_band, active: true
-            )
-          return [zpvp.base_fare_paise, zpvp.per_km_rate_paise] if zpvp
+        # Look up zone pricing for origin zone
+        zvp = ZoneVehiclePricing.find_by(
+          city_code: @city_code, zone_id: route.origin_zone_id,
+          vehicle_type: route.vehicle_type, active: true
+        )
+        if zvp
+          zvtp = zvp.time_pricings.where(active: true).find_by(time_band: route.time_band)
+          target = zvtp || zvp
+          return [target.base_fare_paise, target.per_km_rate_paise]
         end
 
         # Fallback to city default
@@ -546,16 +494,10 @@ module RoutePricing
 
       def matches_route?(key, route)
         pricing_type = key[0]
-        same_zone = route.origin_zone_id == route.dest_zone_id
-
         case pricing_type
         when 'ZoneVehiclePricing', 'ZoneVehicleTimePricing'
-          same_zone && key.include?(route.origin_zone_id) &&
+          key.include?(route.origin_zone_id) &&
             key.include?(route.vehicle_type) && key.include?(route.time_band)
-        when 'ZonePairVehiclePricing'
-          !same_zone && key.include?(route.origin_zone_id) &&
-            key.include?(route.dest_zone_id) && key.include?(route.vehicle_type) &&
-            key.include?(route.time_band)
         else
           false
         end

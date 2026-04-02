@@ -1,71 +1,36 @@
 class ZonePairVehiclePricing < ApplicationRecord
   belongs_to :from_zone, class_name: 'Zone'
   belongs_to :to_zone, class_name: 'Zone'
+  has_many :time_pricings, class_name: 'ZonePairVehicleTimePricing', dependent: :destroy
 
   validates :city_code, presence: true
   validates :vehicle_type, presence: true
-  
+
   scope :active, -> { where(active: true) }
+  scope :base_records, -> { where(time_band: nil) }
 
+  # Two-tier lookup: find base record (time_band: nil), then check time_pricings for override
   def self.find_override(city_code, from_zone_id, to_zone_id, vehicle_type, time_band: nil)
-    # Check exact directive match with time_band support
-    # Index: idx_zpvp_routing_with_time_band [city_code, from_zone_id, to_zone_id, vehicle_type, time_band]
-    # Note: city_code is case-insensitive
-    # time_band can be nil (for backward compatibility) or one of the 8 granular bands
-    
-    # Try exact match with time_band first
-    override = where(city_code: city_code.to_s.downcase)
-      .where(
-        from_zone_id: from_zone_id,
-        to_zone_id: to_zone_id,
-        vehicle_type: vehicle_type,
-        time_band: time_band,
-        active: true
-      ).first
+    normalized_city = city_code.to_s.downcase
 
-    return override if override
+    # 1. Find directional base record (time_band: nil)
+    base = where(city_code: normalized_city, from_zone_id: from_zone_id, to_zone_id: to_zone_id,
+                 vehicle_type: vehicle_type, time_band: nil, active: true).includes(:time_pricings).first
 
-    # If no time-band specific match, try without time_band (backward compatibility)
+    # 2. Non-directional swapped base
+    base ||= where(city_code: normalized_city, from_zone_id: to_zone_id, to_zone_id: from_zone_id,
+                   vehicle_type: vehicle_type, time_band: nil, active: true, directional: false)
+                   .includes(:time_pricings).first
+
+    return nil unless base
+
+    # 3. If time_band requested, check for override in time_pricings
     if time_band.present?
-      override = where(city_code: city_code.to_s.downcase)
-        .where(
-          from_zone_id: from_zone_id,
-          to_zone_id: to_zone_id,
-          vehicle_type: vehicle_type,
-          time_band: nil,
-          active: true
-        ).first
-      
+      override = base.time_pricings.find { |tp| tp.time_band == time_band && tp.active? }
       return override if override
     end
 
-    # Check non-directional match (A -> B might be stored as B -> A with directional=false)
-    # Try with time_band first
-    override = where(city_code: city_code.to_s.downcase)
-      .where(
-        from_zone_id: to_zone_id, # Swapped
-        to_zone_id: from_zone_id, # Swapped
-        vehicle_type: vehicle_type,
-        time_band: time_band,
-        active: true,
-        directional: false
-      ).first
-
-    return override if override
-
-    # If no time-band specific match, try without time_band
-    if time_band.present?
-      where(city_code: city_code.to_s.downcase)
-        .where(
-          from_zone_id: to_zone_id, # Swapped
-          to_zone_id: from_zone_id, # Swapped
-          vehicle_type: vehicle_type,
-          time_band: nil,
-          active: true,
-          directional: false
-        ).first
-    else
-      nil
-    end
+    # 4. Fall back to base
+    base
   end
 end

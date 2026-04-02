@@ -84,34 +84,7 @@ module RoutePricing
           per_min_rate_paise: global_config&.per_min_rate_paise || 0
         }
 
-        # 3. Check Zone Pair Override (Corridor Pricing) - Time-Band Aware
-        # Allow both inter-zone and intra-zone corridors (for premium routes like Route 10)
-        if pickup_zone && drop_zone
-          pair_pricing = cached_pair_pricing(city_code, pickup_zone.id, drop_zone.id, vehicle_type, time_band)
-          if pair_pricing
-             # Corridor pricing uses linear mode with explicit rates
-             # Zone multipliers are bypassed (corridor rates are fully calibrated)
-             zone_slabs = cached_zone_slabs(pickup_zone, vehicle_type)
-             return Result.new(
-               base_fare_paise: pair_pricing.base_fare_paise || defaults[:base_fare_paise],
-               min_fare_paise: pair_pricing.min_fare_paise || defaults[:min_fare_paise],
-               per_km_rate_paise: pair_pricing.per_km_rate_paise || defaults[:per_km_rate_paise],
-               base_distance_m: defaults[:base_distance_m],
-               source: :corridor_override,
-               pricing_mode: :linear,
-               zone_info: defaults[:zone_info],
-               zone_slabs: zone_slabs,
-               # Corridor pricing bypasses zone multipliers (rates are pre-calibrated)
-               fuel_surcharge_pct: 0.0,
-               zone_multiplier: 1.0,
-               special_location_surcharge: 0,
-               oda_config: { both_oda: false, surcharge_pct: 0 },
-               per_min_rate_paise: pair_pricing.per_min_rate_paise || 0
-             )
-          end
-        end
-
-        # 4. Check for Inter-Zone Formula (when both zones exist but no corridor)
+        # 3. Check for Inter-Zone Formula (when both zones exist and are different)
         if pickup_zone && drop_zone && pickup_zone.id != drop_zone.id
           inter_zone_result = calculate_inter_zone_pricing(
             pickup_zone, drop_zone, vehicle_type, time_band, defaults, inter_zone_config
@@ -119,7 +92,7 @@ module RoutePricing
           return inter_zone_result if inter_zone_result
         end
 
-        # 5. Check Zone-Specific Override (with Time Awareness) - INTRA-ZONE pricing
+        # 4. Check Zone-Specific Override (with Time Awareness) - INTRA-ZONE pricing
         reference_zone = pickup_zone
         
         if reference_zone
@@ -129,7 +102,7 @@ module RoutePricing
             # Fetch zone-specific slabs
             zone_slabs = cached_zone_slabs(reference_zone, vehicle_type)
             
-            # 5a. Try exact 8-band time-specific pricing
+            # 4a. Try exact 8-band time-specific pricing
             if time_band.present?
               time_pricing = zone_pricing.time_pricings.detect { |tp| tp.active && tp.time_band == time_band }
               if time_pricing
@@ -142,7 +115,7 @@ module RoutePricing
                   per_km_rate_paise: time_pricing.per_km_rate_paise,
                   base_distance_m: zone_pricing.base_distance_m,
                   source: :zone_time_override,
-                  pricing_mode: zone_slabs.present? ? :zone_slab : :linear,
+                  pricing_mode: zone_slabs.present? ? :zone_slab : :slab,
                   zone_info: defaults[:zone_info],
                   zone_slabs: zone_slabs,
                   # Zone-specific rates are pre-calibrated, so set zone_multiplier to 1.0
@@ -154,8 +127,8 @@ module RoutePricing
                 )
               end
             end
-            
-            # 5b. Fallback to base zone pricing (time-neutral)
+
+            # 4b. Fallback to base zone pricing (time-neutral)
             # Zone-specific rates are pre-calibrated, so bypass zone multipliers
             zone_pricing_configs = extract_zone_pricing_configs(pickup_zone, drop_zone)
             zone_min = reference_zone&.try(:min_fare_overrides)&.dig(vehicle_type)
@@ -165,7 +138,7 @@ module RoutePricing
               per_km_rate_paise: zone_pricing.per_km_rate_paise,
               base_distance_m: zone_pricing.base_distance_m,
               source: :zone_override,
-              pricing_mode: zone_slabs.present? ? :zone_slab : :linear,
+              pricing_mode: zone_slabs.present? ? :zone_slab : :slab,
               zone_info: defaults[:zone_info],
               zone_slabs: zone_slabs,
               # Zone-specific rates are pre-calibrated, so set zone_multiplier to 1.0
@@ -178,7 +151,7 @@ module RoutePricing
           end
         end
 
-        # 6. Return Default (with zone slabs if available)
+        # 5. Return Default (with zone slabs if available)
         zone_slabs = pickup_zone ? cached_zone_slabs(pickup_zone, vehicle_type) : nil
         Result.new(defaults.merge(zone_slabs: zone_slabs))
       end
@@ -274,7 +247,7 @@ module RoutePricing
           per_km_rate_paise: per_km_rate.round,
           base_distance_m: defaults[:base_distance_m],
           source: :inter_zone_formula,
-          pricing_mode: :linear,
+          pricing_mode: :slab,
           zone_info: {
             pickup_zone: pickup_zone&.zone_code,
             pickup_type: pickup_zone&.zone_type,
@@ -493,46 +466,6 @@ module RoutePricing
           .where(city_code: city_code.to_s.downcase, active: true)
           .to_a
         @city_configs_cache[city_code].find { |c| c.vehicle_type == vehicle_type }
-      end
-
-      # Cache all active ZonePairVehiclePricings for a zone pair, filter in Ruby
-      # Replicates ZonePairVehiclePricing.find_override priority logic without DB queries
-      def cached_pair_pricing(city_code, from_zone_id, to_zone_id, vehicle_type, time_band)
-        @pair_pricings_cache ||= {}
-        key = "#{city_code}:#{from_zone_id}:#{to_zone_id}"
-        @pair_pricings_cache[key] ||= ZonePairVehiclePricing
-          .where(city_code: city_code.to_s.downcase, active: true)
-          .where(
-            "(from_zone_id = :from AND to_zone_id = :to) OR " \
-            "(from_zone_id = :to AND to_zone_id = :from AND directional = false)",
-            from: from_zone_id, to: to_zone_id
-          )
-          .to_a
-
-        pairs = @pair_pricings_cache[key]
-
-        # 1. Exact 8-band match
-        result = pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band == time_band &&
-                                   p.from_zone_id == from_zone_id && p.to_zone_id == to_zone_id }
-        return result if result
-
-        # 2. Without time_band (all-day corridor fallback)
-        if time_band.present?
-          result = pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band.nil? &&
-                                     p.from_zone_id == from_zone_id && p.to_zone_id == to_zone_id }
-          return result if result
-        end
-
-        # 3. Non-directional swapped with exact 8-band
-        result = pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band == time_band &&
-                                   p.from_zone_id == to_zone_id && p.to_zone_id == from_zone_id && !p.directional }
-        return result if result
-
-        # 4. Non-directional swapped without time_band
-        if time_band.present?
-          pairs.find { |p| p.vehicle_type == vehicle_type && p.time_band.nil? &&
-                            p.from_zone_id == to_zone_id && p.to_zone_id == from_zone_id && !p.directional }
-        end
       end
 
       # Cache all active ZoneVehiclePricings for a zone (with eager-loaded time_pricings)

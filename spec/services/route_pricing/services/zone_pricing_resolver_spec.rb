@@ -132,17 +132,17 @@ RSpec.describe RoutePricing::Services::ZonePricingResolver do
       end
     end
 
-    context 'time-band corridor' do
-      let!(:time_corridor) do
-        create(:zone_pair_vehicle_pricing,
-          from_zone: pickup_zone, to_zone: drop_zone,
-          city_code: city_code, vehicle_type: vehicle_type,
+    context 'time-band corridor override' do
+      let!(:time_corridor_override) do
+        create(:zone_pair_vehicle_time_pricing,
+          zone_pair_vehicle_pricing: corridor_pricing,
+          time_band: 'evening_rush',
           base_fare_paise: 7500, min_fare_paise: 7000, per_km_rate_paise: 1900,
-          active: true, time_band: 'evening_rush'
+          active: true
         )
       end
 
-      it 'matches time-band-specific corridor over all-day corridor' do
+      it 'matches time-band override over base corridor' do
         result = resolver.resolve(
           city_code: city_code, vehicle_type: vehicle_type,
           pickup_lat: 17.44, pickup_lng: 78.37,
@@ -151,6 +151,17 @@ RSpec.describe RoutePricing::Services::ZonePricingResolver do
         )
         expect(result.source).to eq(:corridor_override)
         expect(result.base_fare_paise).to eq(7500)
+      end
+
+      it 'falls back to base corridor for bands without override' do
+        result = resolver.resolve(
+          city_code: city_code, vehicle_type: vehicle_type,
+          pickup_lat: 17.44, pickup_lng: 78.37,
+          drop_lat: 17.44, drop_lng: 78.32,
+          time_band: 'midday'
+        )
+        expect(result.source).to eq(:corridor_override)
+        expect(result.base_fare_paise).to eq(corridor_pricing.base_fare_paise)
       end
     end
   end

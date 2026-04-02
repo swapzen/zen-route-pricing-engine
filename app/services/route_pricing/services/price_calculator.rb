@@ -190,7 +190,7 @@ module RoutePricing
         # =====================================================================
         # v5.0: Routes with time-aware zone pricing bypass all multipliers
         # Time-specific base prices already encode time-of-day demand
-        time_aware_bypass = [:zone_time_override, :corridor_override].include?(zone_pricing.source)
+        time_aware_bypass = zone_pricing.source == :zone_time_override
 
         # =====================================================================
 
@@ -329,9 +329,16 @@ module RoutePricing
         # =====================================================================
         # UNIT ECONOMICS (Internal - Not shown to user)
         # =====================================================================
-        # Use raw_subtotal as proxy for vendor cost (calibrated to Porter)
-        # Round once here for unit economics (internal calc, not user-facing)
-        estimated_vendor_cost_paise = raw_subtotal.round
+        estimated_vendor_cost_paise = estimate_vendor_cost(
+          city_code: @config.city_code,
+          vehicle_type: @config.vehicle_type,
+          distance_m: distance_m,
+          duration_in_traffic_s: duration_in_traffic_s,
+          time_band: time_band,
+          pickup_lat: pickup_lat,
+          pickup_lng: pickup_lng,
+          raw_subtotal: raw_subtotal
+        )
         
         # Payment gateway fee (~2% of final price)
         pg_fee_paise = (final_price_paise * 0.02).round
@@ -353,7 +360,7 @@ module RoutePricing
         # UNIT ECONOMICS GUARDRAIL (Never lose money on a trip)
         # =====================================================================
         guardrail_applied = false
-        if margin_pct < MIN_TARGET_MARGIN_PCT
+        if !calibration_mode && margin_pct < MIN_TARGET_MARGIN_PCT
           # Bump price to achieve minimum margin
           required_price_paise = (total_cost_paise * (1 + MIN_TARGET_MARGIN_PCT / 100.0)).ceil
           
@@ -966,6 +973,28 @@ module RoutePricing
         # Convert percentage to multiplier (e.g., 5% → 1.05)
         surcharge_pct = oda_config[:surcharge_pct] || 5.0
         1.0 + (surcharge_pct / 100.0)
+      end
+
+      # Estimate vendor cost using VendorPayoutCalculator if available,
+      # falling back to raw_subtotal (our own price) if no rate card exists.
+      def estimate_vendor_cost(city_code:, vehicle_type:, distance_m:, duration_in_traffic_s:, time_band:, pickup_lat:, pickup_lng:, raw_subtotal:)
+        result = VendorPayoutCalculator.new.calculate(
+          city_code: city_code,
+          vehicle_type: vehicle_type,
+          distance_m: distance_m,
+          duration_in_traffic_s: duration_in_traffic_s,
+          time_band: time_band,
+          pickup_lat: pickup_lat,
+          pickup_lng: pickup_lng
+        )
+        if result[:predicted_paise]
+          result[:predicted_paise]
+        else
+          raw_subtotal.round
+        end
+      rescue StandardError => e
+        Rails.logger.warn("[VENDOR_COST] Fallback to raw_subtotal: #{e.message}")
+        raw_subtotal.round
       end
 
       # Recursively freeze a hash and all nested values

@@ -107,13 +107,10 @@ Rails.application.routes.draw do
       # Zone toggle
       patch 'zones/:id/toggle', to: 'zones#toggle'
 
-      # Zone map (boundaries + corridors)
+      # Zone map (boundaries)
       get 'zone_map/zones', to: 'zone_map#zones'
-      get 'zone_map/corridors', to: 'zone_map#corridors'
       get 'zone_map/zone_pricing_summary', to: 'zone_map#zone_pricing_summary'
-      get 'zone_map/corridor_pricing', to: 'zone_map#corridor_pricing'
       post 'zone_map/compute_boundaries', to: 'zone_map#compute_boundaries'
-      post 'zone_map/detect_corridors', to: 'zone_map#detect_corridors'
     end
   end
 end

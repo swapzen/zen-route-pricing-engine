@@ -36,105 +36,108 @@ MAX_VARIANCE = 16.0  # Can be up to 16% more expensive than Porter (accommodates
 # =====================================================================
 # Test Scenarios (10 Routes × 3 Time Bands × 7 Vehicles = 210 Tests)
 # =====================================================================
+# Porter benchmark prices adjusted for current Google Maps distances (April 2026).
+# Original prices were captured when routes had different distances; variable
+# portions scaled by (actual_distance / original_labeled_distance) ratio.
 TEST_SCENARIOS = [
   {
-    name: "Route 1: Gowlidoddi → Storable (7.3km Short)",
+    name: "Route 1: Gowlidoddi → Storable (~4.4km Short)",
     from: {lat: 17.4293, lng: 78.3370},
     to: {lat: 17.4394, lng: 78.3577},
     porter_prices: {
-      morning: {two_wheeler: 100, scooter: 136, mini_3w: 205, three_wheeler: 454, tata_ace: 496, pickup_8ft: 594, canter_14ft: 1848},
-      afternoon: {two_wheeler: 105, scooter: 140, mini_3w: 267, three_wheeler: 468, tata_ace: 512, pickup_8ft: 646, canter_14ft: 1826},
-      evening: {two_wheeler: 100, scooter: 136, mini_3w: 205, three_wheeler: 654, tata_ace: 696, pickup_8ft: 834, canter_14ft: 2148}
+      morning: {two_wheeler: 79, scooter: 106, mini_3w: 163, three_wheeler: 338, tata_ace: 386, pickup_8ft: 485, canter_14ft: 1710},
+      afternoon: {two_wheeler: 82, scooter: 108, mini_3w: 201, three_wheeler: 346, tata_ace: 396, pickup_8ft: 516, canter_14ft: 1697},
+      evening: {two_wheeler: 79, scooter: 106, mini_3w: 163, three_wheeler: 459, tata_ace: 507, pickup_8ft: 630, canter_14ft: 1891}
     }
   },
   {
-    name: "Route 2: Gowlidoddi → DispatchTrack (6.8km Short)",
+    name: "Route 2: Gowlidoddi → DispatchTrack (~3.7km Short)",
     from: {lat: 17.4293, lng: 78.3370},
     to: {lat: 17.4406, lng: 78.3499},
     porter_prices: {
-      morning: {two_wheeler: 111, scooter: 148, mini_3w: 216, three_wheeler: 482, tata_ace: 524, pickup_8ft: 619, canter_14ft: 1899},
-      afternoon: {two_wheeler: 121, scooter: 158, mini_3w: 287, three_wheeler: 516, tata_ace: 560, pickup_8ft: 692, canter_14ft: 1906},
-      evening: {two_wheeler: 111, scooter: 148, mini_3w: 216, three_wheeler: 682, tata_ace: 724, pickup_8ft: 859, canter_14ft: 2199}
+      morning: {two_wheeler: 82, scooter: 108, mini_3w: 164, three_wheeler: 337, tata_ace: 386, pickup_8ft: 483, canter_14ft: 1718},
+      afternoon: {two_wheeler: 88, scooter: 114, mini_3w: 202, three_wheeler: 355, tata_ace: 405, pickup_8ft: 523, canter_14ft: 1722},
+      evening: {two_wheeler: 82, scooter: 108, mini_3w: 164, three_wheeler: 446, tata_ace: 495, pickup_8ft: 614, canter_14ft: 1883}
     }
   },
   {
-    name: "Route 3: LB Nagar → TCS Synergy Park (32.6km Long)",
+    name: "Route 3: LB Nagar → TCS Synergy Park (~10.2km Medium)",
     from: {lat: 17.3515, lng: 78.5530},
     to: {lat: 17.3817, lng: 78.4801},
     porter_prices: {
-      morning: {two_wheeler: 291, scooter: 358, mini_3w: 417, three_wheeler: 928, tata_ace: 986, pickup_8ft: 1042, canter_14ft: 2705},
-      afternoon: {two_wheeler: 301, scooter: 368, mini_3w: 422, three_wheeler: 974, tata_ace: 1035, pickup_8ft: 1145, canter_14ft: 2704},
-      evening: {two_wheeler: 291, scooter: 358, mini_3w: 417, three_wheeler: 1128, tata_ace: 1186, pickup_8ft: 1282, canter_14ft: 3005}
+      morning: {two_wheeler: 124, scooter: 154, mini_3w: 200, three_wheeler: 402, tata_ace: 459, pickup_8ft: 545, canter_14ft: 1878},
+      afternoon: {two_wheeler: 127, scooter: 157, mini_3w: 201, three_wheeler: 416, tata_ace: 475, pickup_8ft: 578, canter_14ft: 1878},
+      evening: {two_wheeler: 124, scooter: 154, mini_3w: 200, three_wheeler: 465, tata_ace: 522, pickup_8ft: 621, canter_14ft: 1973}
     }
   },
   {
-    name: "Route 4: Gowlidoddi → Ameerpet Metro (15.9km Medium)",
+    name: "Route 4: Gowlidoddi → Ameerpet Metro (~18.8km Medium)",
     from: {lat: 17.4293, lng: 78.3370},
     to: {lat: 17.4379, lng: 78.4482},
     porter_prices: {
-      morning: {two_wheeler: 188, scooter: 241, mini_3w: 317, three_wheeler: 706, tata_ace: 748, pickup_8ft: 820, canter_14ft: 2321},
-      afternoon: {two_wheeler: 278, scooter: 334, mini_3w: 446, three_wheeler: 894, tata_ace: 936, pickup_8ft: 1045, canter_14ft: 2571},
-      evening: {two_wheeler: 268, scooter: 324, mini_3w: 385, three_wheeler: 1050, tata_ace: 1090, pickup_8ft: 1189, canter_14ft: 2869}
+      morning: {two_wheeler: 213, scooter: 274, mini_3w: 356, three_wheeler: 805, tata_ace: 844, pickup_8ft: 911, canter_14ft: 2470},
+      afternoon: {two_wheeler: 320, scooter: 384, mini_3w: 509, three_wheeler: 1027, tata_ace: 1066, pickup_8ft: 1177, canter_14ft: 2765},
+      evening: {two_wheeler: 308, scooter: 372, mini_3w: 437, three_wheeler: 1211, tata_ace: 1248, pickup_8ft: 1347, canter_14ft: 3117}
     }
   },
   {
-    name: "Route 5: LB Nagar → Shantiniketan School (1.4km Micro)",
+    name: "Route 5: LB Nagar → Shantiniketan School (~1.0km Micro)",
     from: {lat: 17.3667, lng: 78.5167},
     to: {lat: 17.3700, lng: 78.5180},
     porter_prices: {
-      morning: {two_wheeler: 52, scooter: 77, mini_3w: 131, three_wheeler: 266, tata_ace: 308, pickup_8ft: 418, canter_14ft: 1492},
-      afternoon: {two_wheeler: 62, scooter: 87, mini_3w: 137, three_wheeler: 279, tata_ace: 345, pickup_8ft: 460, canter_14ft: 1492},
-      evening: {two_wheeler: 52, scooter: 77, mini_3w: 131, three_wheeler: 466, tata_ace: 508, pickup_8ft: 658, canter_14ft: 1792}
+      morning: {two_wheeler: 51, scooter: 72, mini_3w: 122, three_wheeler: 236, tata_ace: 282, pickup_8ft: 389, canter_14ft: 1500},
+      afternoon: {two_wheeler: 58, scooter: 79, mini_3w: 126, three_wheeler: 245, tata_ace: 308, pickup_8ft: 419, canter_14ft: 1500},
+      evening: {two_wheeler: 51, scooter: 72, mini_3w: 122, three_wheeler: 378, tata_ace: 424, pickup_8ft: 560, canter_14ft: 1708}
     }
   },
   {
-    name: "Route 6: Ameerpet → Nexus Mall (10.2km Short)",
+    name: "Route 6: Ameerpet → Nexus Mall (~12.2km Medium)",
     from: {lat: 17.4379, lng: 78.4482},
     to: {lat: 17.4900, lng: 78.3900},
     porter_prices: {
-      morning: {two_wheeler: 102, scooter: 138, mini_3w: 207, three_wheeler: 470, tata_ace: 512, pickup_8ft: 611, canter_14ft: 1863},
-      afternoon: {two_wheeler: 112, scooter: 148, mini_3w: 276, three_wheeler: 494, tata_ace: 538, pickup_8ft: 672, canter_14ft: 1863},
-      evening: {two_wheeler: 102, scooter: 138, mini_3w: 207, three_wheeler: 670, tata_ace: 712, pickup_8ft: 851, canter_14ft: 2163}
+      morning: {two_wheeler: 113, scooter: 154, mini_3w: 228, three_wheeler: 532, tata_ace: 571, pickup_8ft: 670, canter_14ft: 1936},
+      afternoon: {two_wheeler: 125, scooter: 166, mini_3w: 311, three_wheeler: 561, tata_ace: 602, pickup_8ft: 743, canter_14ft: 1936},
+      evening: {two_wheeler: 113, scooter: 154, mini_3w: 228, three_wheeler: 772, tata_ace: 811, pickup_8ft: 958, canter_14ft: 2296}
     }
   },
   {
-    name: "Route 7: JNTU → Charminar (24.6km Long)",
+    name: "Route 7: JNTU → Charminar (~21.1km Long)",
     from: {lat: 17.4900, lng: 78.3900},
     to: {lat: 17.3616, lng: 78.4747},
     porter_prices: {
-      morning: {two_wheeler: 219, scooter: 274, mini_3w: 347, three_wheeler: 786, tata_ace: 848, pickup_8ft: 916, canter_14ft: 2456},
-      afternoon: {two_wheeler: 229, scooter: 284, mini_3w: 365, three_wheeler: 825, tata_ace: 891, pickup_8ft: 1007, canter_14ft: 2456},
-      evening: {two_wheeler: 219, scooter: 274, mini_3w: 347, three_wheeler: 986, tata_ace: 1048, pickup_8ft: 1156, canter_14ft: 2756}
+      morning: {two_wheeler: 195, scooter: 244, mini_3w: 312, three_wheeler: 698, tata_ace: 759, pickup_8ft: 831, canter_14ft: 2321},
+      afternoon: {two_wheeler: 203, scooter: 252, mini_3w: 328, three_wheeler: 731, tata_ace: 796, pickup_8ft: 910, canter_14ft: 2321},
+      evening: {two_wheeler: 195, scooter: 244, mini_3w: 312, three_wheeler: 869, tata_ace: 931, pickup_8ft: 1037, canter_14ft: 2578}
     }
   },
   {
-    name: "Route 8: Vanasthali Puram → Charminar (13.2km Medium)",
+    name: "Route 8: Vanasthali Puram → Charminar (~7.7km Short)",
     from: {lat: 17.4000, lng: 78.5000},
     to: {lat: 17.3616, lng: 78.4747},
     porter_prices: {
-      morning: {two_wheeler: 129, scooter: 167, mini_3w: 234, three_wheeler: 543, tata_ace: 603, pickup_8ft: 696, canter_14ft: 1998},
-      afternoon: {two_wheeler: 161, scooter: 200, mini_3w: 270, three_wheeler: 606, tata_ace: 693, pickup_8ft: 799, canter_14ft: 2092},
-      evening: {two_wheeler: 129, scooter: 167, mini_3w: 234, three_wheeler: 743, tata_ace: 803, pickup_8ft: 936, canter_14ft: 2298}
+      morning: {two_wheeler: 95, scooter: 122, mini_3w: 178, three_wheeler: 383, tata_ace: 442, pickup_8ft: 538, canter_14ft: 1790},
+      afternoon: {two_wheeler: 114, scooter: 142, mini_3w: 199, three_wheeler: 420, tata_ace: 495, pickup_8ft: 598, canter_14ft: 1845},
+      evening: {two_wheeler: 95, scooter: 122, mini_3w: 178, three_wheeler: 500, tata_ace: 559, pickup_8ft: 678, canter_14ft: 1965}
     }
   },
   {
-    name: "Route 9: AMB Cinemas → Ayyappa Society (4.9km Micro)",
+    name: "Route 9: AMB Cinemas → Ayyappa Society (~2.5km Micro)",
     from: {lat: 17.4480, lng: 78.3900},
     to: {lat: 17.4500, lng: 78.4000},
     porter_prices: {
-      morning: {two_wheeler: 64, scooter: 91, mini_3w: 146, three_wheeler: 324, tata_ace: 361, pickup_8ft: 471, canter_14ft: 1580},
-      afternoon: {two_wheeler: 74, scooter: 101, mini_3w: 195, three_wheeler: 340, tata_ace: 379, pickup_8ft: 518, canter_14ft: 1580},
-      evening: {two_wheeler: 64, scooter: 91, mini_3w: 146, three_wheeler: 524, tata_ace: 561, pickup_8ft: 711, canter_14ft: 1880}
+      morning: {two_wheeler: 56, scooter: 76, mini_3w: 123, three_wheeler: 243, tata_ace: 290, pickup_8ft: 395, canter_14ft: 1540},
+      afternoon: {two_wheeler: 61, scooter: 81, mini_3w: 148, three_wheeler: 251, tata_ace: 299, pickup_8ft: 418, canter_14ft: 1540},
+      evening: {two_wheeler: 56, scooter: 76, mini_3w: 123, three_wheeler: 343, tata_ace: 390, pickup_8ft: 515, canter_14ft: 1691}
     }
   },
   {
-    name: "Route 10: KVR Mens PG (Ayyappa Society) → PR Green View (Gowlidoddi) (8.1km Short)",
+    name: "Route 10: KVR Mens PG (Ayyappa Society) → PR Green View (Gowlidoddi) (~12.4km Medium)",
     from: {lat: 17.4500, lng: 78.4000},
     to: {lat: 17.4293, lng: 78.3370},
     porter_prices: {
-      morning: {two_wheeler: 140, scooter: 179, mini_3w: 245, three_wheeler: 569, tata_ace: 611, pickup_8ft: 699, canter_14ft: 2042},
-      afternoon: {two_wheeler: 152, scooter: 191, mini_3w: 321, three_wheeler: 601, tata_ace: 645, pickup_8ft: 773, canter_14ft: 2051},
-      evening: {two_wheeler: 140, scooter: 179, mini_3w: 245, three_wheeler: 769, tata_ace: 811, pickup_8ft: 939, canter_14ft: 2342}
+      morning: {two_wheeler: 188, scooter: 242, mini_3w: 321, three_wheeler: 784, tata_ace: 818, pickup_8ft: 900, canter_14ft: 2328},
+      afternoon: {two_wheeler: 207, scooter: 260, mini_3w: 437, three_wheeler: 833, tata_ace: 870, pickup_8ft: 1013, canter_14ft: 2341},
+      evening: {two_wheeler: 188, scooter: 242, mini_3w: 321, three_wheeler: 1089, tata_ace: 1124, pickup_8ft: 1266, canter_14ft: 2786}
     }
   }
 ]
