@@ -18,7 +18,7 @@ module RoutePricing
 
         zones_data = zones.map do |z|
           {
-            id: z.id,
+            id: z.id.to_s,
             zone_code: z.zone_code,
             name: z.name,
             zone_type: z.zone_type,
