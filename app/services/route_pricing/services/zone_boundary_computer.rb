@@ -62,44 +62,25 @@ module RoutePricing
       private
 
       def compute_from_h3(h3_indexes)
-        # Collect all edges from all hex cells
-        edge_count = Hash.new(0)
+        # Render each H3 cell as its own polygon — exact boundaries, no inflation.
+        # Only actual zone coverage is colored.
+        cell_rings = []
 
         h3_indexes.each do |h3_hex|
           h3_int = h3_hex.to_i(16)
-          vertices = H3.to_boundary(h3_int).map { |v| [v[0].round(PRECISION), v[1].round(PRECISION)] }
+          vertices = H3.to_boundary(h3_int)
 
-          # Each hex has 6 edges connecting consecutive vertices
-          vertices.each_with_index do |v, i|
-            next_v = vertices[(i + 1) % vertices.size]
-            # Canonical edge key: sort vertices so (A,B) == (B,A)
-            edge_key = [v, next_v].sort
-            edge_count[edge_key] += 1
-          end
+          ring = vertices.map { |v| [v[1].round(PRECISION), v[0].round(PRECISION)] }
+          ring << ring.first unless ring.first == ring.last
+          cell_rings << ring
         end
 
-        # Boundary edges appear exactly once (not shared with another hex in same zone)
-        boundary_edges = edge_count.select { |_, count| count == 1 }.keys
+        return compute_from_bbox if cell_rings.empty?
 
-        return compute_from_bbox if boundary_edges.empty?
-
-        # Chain boundary edges into closed rings
-        rings = chain_edges_into_rings(boundary_edges)
-
-        if rings.empty?
-          compute_from_bbox
-        elsif rings.size == 1
-          # Single polygon
-          {
-            type: 'Polygon',
-            coordinates: [rings.first.map { |v| [v[1], v[0]] }] # GeoJSON uses [lng, lat]
-          }
+        if cell_rings.size == 1
+          { type: 'Polygon', coordinates: [cell_rings.first] }
         else
-          # MultiPolygon (disconnected regions)
-          {
-            type: 'MultiPolygon',
-            coordinates: rings.map { |ring| [ring.map { |v| [v[1], v[0]] }] }
-          }
+          { type: 'MultiPolygon', coordinates: cell_rings.map { |ring| [ring] } }
         end
       end
 
