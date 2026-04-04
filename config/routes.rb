@@ -110,6 +110,7 @@ Rails.application.routes.draw do
       # Zone map (boundaries)
       get 'zone_map/zones', to: 'zone_map#zones'
       get 'zone_map/zone_pricing_summary', to: 'zone_map#zone_pricing_summary'
+      get 'zone_map/inactive_cells', to: 'zone_map#inactive_cells'
       post 'zone_map/compute_boundaries', to: 'zone_map#compute_boundaries'
     end
   end

@@ -34,6 +34,10 @@ module RoutePricing
 
       INTER_ZONE_CACHE_TTL = 1.hour
 
+      def initialize(include_inactive: false)
+        @include_inactive = include_inactive
+      end
+
       class << self
         def inter_zone_config_cache
           @inter_zone_config_cache ||= {}
@@ -486,16 +490,44 @@ module RoutePricing
         h3_resolver = h3_resolver_for(city_code)
         zone = h3_resolver&.resolve(lat, lng)
         return zone if zone&.active?
+        return zone if zone && @include_inactive
+
+        # Admin mode: H3 resolver skips inactive zones at map-build time,
+        # so do a direct DB lookup via the R7/R8 mapping tables.
+        if @include_inactive
+          direct_zone = find_zone_by_h3_direct(city_code, lat, lng)
+          return direct_zone if direct_zone
+        end
 
         # Safety fallback: bbox scan (handles H3 gaps or unpopulated staging)
         @zones_cache ||= {}
-        @zones_cache[city_code] ||= Zone.for_city(city_code).active
-          .order(priority: :desc, zone_code: :asc).to_a
+        cache_key = @include_inactive ? "#{city_code}:all" : city_code
+        @zones_cache[cache_key] ||= begin
+          scope = Zone.for_city(city_code)
+          scope = scope.active unless @include_inactive
+          scope.order(priority: :desc, zone_code: :asc).to_a
+        end
 
-        @zones_cache[city_code].each do |z|
+        @zones_cache[cache_key].each do |z|
           return z if z.contains_point?(lat, lng)
         end
 
+        nil
+      end
+
+      # Direct DB H3 lookup that includes inactive zones (admin-only path).
+      def find_zone_by_h3_direct(city_code, lat, lng)
+        return nil unless defined?(H3)
+
+        r8_hex = H3.from_geo_coordinates([lat.to_f, lng.to_f], 8).to_s(16)
+        mapping = ZoneH3Mapping.for_city(city_code).where(h3_index_r8: r8_hex).includes(:zone).first
+        return mapping.zone if mapping&.zone
+
+        r7_hex = H3.from_geo_coordinates([lat.to_f, lng.to_f], 7).to_s(16)
+        mapping = ZoneH3Mapping.for_city(city_code).where(h3_index_r7: r7_hex).includes(:zone).first
+        mapping&.zone
+      rescue StandardError => e
+        Rails.logger.debug("find_zone_by_h3_direct failed: #{e.message}")
         nil
       end
 

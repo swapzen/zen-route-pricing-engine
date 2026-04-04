@@ -132,7 +132,8 @@ module RoutePricing
             drop_lng: params[:drop_lng].to_f,
             vehicle_type: vt,
             city_code: params[:city_code] || 'hyd',
-            quote_time: quote_time
+            quote_time: quote_time,
+            include_inactive: true
           )
 
           if result[:success]
@@ -186,7 +187,8 @@ module RoutePricing
               drop_lng: route[:to][1],
               vehicle_type: vt,
               city_code: 'hyd',
-              quote_time: quote_time
+              quote_time: quote_time,
+              include_inactive: true
             )
 
             if result[:success]

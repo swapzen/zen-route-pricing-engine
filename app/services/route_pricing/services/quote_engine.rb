@@ -8,7 +8,7 @@ module RoutePricing
         @route_resolver = route_resolver
       end
 
-      def create_quote(city_code:, vehicle_type:, pickup_lat:, pickup_lng:, drop_lat:, drop_lng:, item_value_paise: nil, request_id: nil, quote_time: Time.current, weight_kg: nil, merchant_id: nil)
+      def create_quote(city_code:, vehicle_type:, pickup_lat:, pickup_lng:, drop_lat:, drop_lng:, item_value_paise: nil, request_id: nil, quote_time: Time.current, weight_kg: nil, merchant_id: nil, include_inactive: false)
         # 0. Compute H3 indices for caching and logging
         h3_indices = compute_h3_indices(pickup_lat, pickup_lng, drop_lat, drop_lng)
         pickup_h3_r8 = h3_indices[:pickup_h3_r8]
@@ -24,7 +24,7 @@ module RoutePricing
 
         pricing_cache_key = nil
         cached_pricing = nil
-        if pickup_h3_r8 && drop_h3_r8
+        if pickup_h3_r8 && drop_h3_r8 && !include_inactive
           pricing_cache_key = "qp:#{city_code}:#{pickup_h3_r8}:#{drop_h3_r8}:#{vehicle_type}:#{time_band_for_cache}:#{time_bucket}"
           cached_pricing = Rails.cache.read(pricing_cache_key)
         end
@@ -76,7 +76,7 @@ module RoutePricing
         end
 
         # 3. Calculate price (pass coordinates for zone multiplier + quote_time for v3.0)
-        calculator = PriceCalculator.new(config: config)
+        calculator = PriceCalculator.new(config: config, include_inactive: include_inactive)
         pricing_result = calculator.calculate(
           distance_m: route_data[:distance_m],
           duration_s: route_data[:duration_s],

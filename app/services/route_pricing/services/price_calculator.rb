@@ -36,9 +36,9 @@ module RoutePricing
       ODA_DOUBLE_ZONE_TYPES = %w[outer_ring industrial airport_logistics].freeze
       ODA_SURCHARGE_MULTIPLIER = 1.05  # 5% surcharge for both-ODA routes
 
-      def initialize(config:, zone_resolver: nil)
+      def initialize(config:, zone_resolver: nil, include_inactive: false)
         @config = config
-        @zone_resolver = zone_resolver || ZonePricingResolver.new
+        @zone_resolver = zone_resolver || ZonePricingResolver.new(include_inactive: include_inactive)
       end
 
       def calculate(distance_m:, pickup_lat: nil, pickup_lng: nil, drop_lat: nil, drop_lng: nil,
