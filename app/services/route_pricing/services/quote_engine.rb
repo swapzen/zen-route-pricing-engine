@@ -31,7 +31,17 @@ module RoutePricing
 
         # 1. Fetch current config
         config = PricingConfig.current_version(city_code, vehicle_type)
-        return { error: 'Config not found for city/vehicle combination', code: 404 } unless config
+        unless config
+          log_quote_failure(
+            city_code: city_code, vehicle_type: vehicle_type, request_id: request_id,
+            pickup_lat: pickup_lat, pickup_lng: pickup_lng, drop_lat: drop_lat, drop_lng: drop_lng,
+            pickup_h3_r7: pickup_h3_r7, drop_h3_r7: drop_h3_r7,
+            failure_code: 'no_config',
+            error_message: 'Config not found for city/vehicle combination',
+            http_status: 404, include_inactive: include_inactive
+          )
+          return { error: 'Config not found for city/vehicle combination', code: 404 }
+        end
 
         # 2. Resolve route (use Directions API for segment pricing if enabled)
         route_segments = nil
@@ -65,13 +75,22 @@ module RoutePricing
         end
 
         # 2b. Validate route data — abort early if Google Maps failed
+        route_failure_common = {
+          city_code: city_code, vehicle_type: vehicle_type, request_id: request_id,
+          pickup_lat: pickup_lat, pickup_lng: pickup_lng, drop_lat: drop_lat, drop_lng: drop_lng,
+          pickup_h3_r7: pickup_h3_r7, drop_h3_r7: drop_h3_r7,
+          failure_code: 'route_failed', http_status: 502, include_inactive: include_inactive
+        }
         if route_data.nil?
+          log_quote_failure(**route_failure_common, error_message: 'Route resolution: no data returned')
           return { error: 'Route resolution failed: no data returned', code: 502 }
         end
         if route_data[:error]
+          log_quote_failure(**route_failure_common, error_message: "Route resolution: #{route_data[:error]}")
           return { error: "Route resolution failed: #{route_data[:error]}", code: 502 }
         end
         if route_data[:distance_m].nil? || route_data[:distance_m] <= 0
+          log_quote_failure(**route_failure_common, error_message: 'Route resolution: invalid distance')
           return { error: 'Route resolution failed: invalid distance', code: 502 }
         end
 
@@ -493,6 +512,31 @@ module RoutePricing
       end
 
       private
+
+      # Log a quote failure for admin visibility (coverage gaps, config gaps, route errors).
+      # Silently skips logging for admin probes (include_inactive: true) to avoid noise.
+      def log_quote_failure(city_code:, vehicle_type:, request_id:, pickup_lat:, pickup_lng:,
+                            drop_lat:, drop_lng:, pickup_h3_r7:, drop_h3_r7:,
+                            failure_code:, error_message:, http_status:, include_inactive: false)
+        return if include_inactive # admin price-test probes shouldn't pollute the log
+
+        PricingQuoteFailure.create!(
+          city_code: city_code.to_s.downcase,
+          vehicle_type: vehicle_type,
+          request_id: request_id,
+          pickup_lat: pickup_lat,
+          pickup_lng: pickup_lng,
+          drop_lat: drop_lat,
+          drop_lng: drop_lng,
+          pickup_h3_r7: pickup_h3_r7,
+          drop_h3_r7: drop_h3_r7,
+          failure_code: failure_code,
+          error_message: error_message.to_s[0, 500],
+          http_status: http_status
+        )
+      rescue StandardError => e
+        Rails.logger.warn("log_quote_failure: #{e.message}")
+      end
 
       # Predict vendor payout using VendorPayoutCalculator
       def predict_vendor_payout(city_code:, vehicle_type:, distance_m:, duration_in_traffic_s:, time_band:, pickup_lat:, pickup_lng:)

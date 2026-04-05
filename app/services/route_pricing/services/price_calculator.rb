@@ -147,7 +147,9 @@ module RoutePricing
         special_location_surcharge = zone_pricing.special_location_surcharge || 0
         
         # Apply industry-standard components
-        raw_subtotal = raw_subtotal * zone_type_mult * oda_mult
+        # NOTE: zone_type_mult is applied at the END (after guardrail) for predictable admin behavior.
+        # So a 0.85x zone setting reliably gives 15% off the final price, not a surprise discount.
+        raw_subtotal = raw_subtotal * oda_mult
         raw_subtotal += fuel_surcharge_paise
         raw_subtotal += special_location_surcharge
 
@@ -344,7 +346,7 @@ module RoutePricing
         scheduled_discount_info = calculate_scheduled_discount(final_price_paise, quote_time)
         final_price_paise = scheduled_discount_info[:discounted_price_paise]
 
-        # Price floor
+        # Price floor — applied before zone multiplier so discounts can legitimately go below baseline floor.
         final_price_paise = [final_price_paise, @config.min_fare_paise.to_i].max
 
         # =====================================================================
@@ -379,27 +381,38 @@ module RoutePricing
         
         # =====================================================================
         # UNIT ECONOMICS GUARDRAIL (Never lose money on a trip)
+        # Runs BEFORE the zone_type_mult final step, so it floors the pre-multiplier baseline.
         # =====================================================================
         guardrail_applied = false
         if !calibration_mode && margin_pct < MIN_TARGET_MARGIN_PCT
           # Bump price to achieve minimum margin
           required_price_paise = (total_cost_paise * (1 + MIN_TARGET_MARGIN_PCT / 100.0)).ceil
-          
+
           # Round up to nearest Rs 10 for guardrail (ceiling to preserve margin)
           guardrail_price_paise = ((required_price_paise / 1000.0).ceil * 1000).to_i
-          
+
           # Log the adjustment
           Rails.logger.warn(
             "[UNIT_ECON_GUARDRAIL] Price bumped: " \
             "#{final_price_paise/100.0} → #{guardrail_price_paise/100.0} " \
             "(margin was #{margin_pct}%, needed #{MIN_TARGET_MARGIN_PCT}%)"
           )
-          
+
           # Apply guardrail
           final_price_paise = guardrail_price_paise.to_i
           guardrail_applied = true
-          
+
           # Recalculate with new price
+          pg_fee_paise = (final_price_paise * 0.02).round
+          total_cost_paise = estimated_vendor_cost_paise + pg_fee_paise + support_buffer_paise + maps_cost_paise
+          margin_paise = final_price_paise - total_cost_paise
+          margin_pct = total_cost_paise > 0 ? ((margin_paise.to_f / total_cost_paise) * 100).round(1) : 0.0
+        end
+
+        # Apply zone-level multiplier (launch discount or premium surge) as a FINAL step
+        # — after guardrail — so the admin gets predictable ±% vs baseline.
+        if zone_type_mult.to_f != 1.0
+          final_price_paise = (final_price_paise * zone_type_mult).round
           pg_fee_paise = (final_price_paise * 0.02).round
           total_cost_paise = estimated_vendor_cost_paise + pg_fee_paise + support_buffer_paise + maps_cost_paise
           margin_paise = final_price_paise - total_cost_paise

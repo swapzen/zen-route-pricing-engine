@@ -128,7 +128,7 @@ module RoutePricing
                   zone_info: defaults[:zone_info],
                   zone_slabs: zone_slabs,
                   fuel_surcharge_pct: zone_pricing_configs[:fuel_surcharge_pct],
-                  zone_multiplier: reference_zone&.zone_multiplier || 1.0,
+                  zone_multiplier: reference_zone&.try(:effective_zone_multiplier) || 1.0,
                   special_location_surcharge: zone_pricing_configs[:special_location_surcharge],
                   oda_config: zone_pricing_configs[:oda_config],
                   per_min_rate_paise: time_pricing.per_min_rate_paise || 0
@@ -317,7 +317,8 @@ module RoutePricing
           },
           zone_slabs: zone_slabs,
           fuel_surcharge_pct: zone_pricing_configs[:fuel_surcharge_pct],
-          zone_multiplier: 1.0,  # Pre-calculated, no additional multiplier
+          # Use pickup zone's effective multiplier so launch/surge multipliers flow through cross-zone quotes too.
+          zone_multiplier: pickup_zone.try(:effective_zone_multiplier) || 1.0,
           special_location_surcharge: zone_pricing_configs[:special_location_surcharge],
           oda_config: zone_pricing_configs[:oda_config],
           per_min_rate_paise: per_min_rate.round
