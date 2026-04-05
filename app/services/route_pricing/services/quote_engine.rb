@@ -29,6 +29,23 @@ module RoutePricing
           cached_pricing = Rails.cache.read(pricing_cache_key)
         end
 
+        # 0c. Serviceability pre-check — return a structured response if pickup/drop
+        # is outside any active zone. Skipped for admin probes (include_inactive).
+        unless include_inactive
+          serviceability = check_serviceability(city_code, pickup_lat, pickup_lng, drop_lat, drop_lng)
+          if serviceability
+            log_quote_failure(
+              city_code: city_code, vehicle_type: vehicle_type, request_id: request_id,
+              pickup_lat: pickup_lat, pickup_lng: pickup_lng, drop_lat: drop_lat, drop_lng: drop_lng,
+              pickup_h3_r7: pickup_h3_r7, drop_h3_r7: drop_h3_r7,
+              failure_code: 'zone_not_found',
+              error_message: serviceability[:error],
+              http_status: 404, include_inactive: include_inactive
+            )
+            return serviceability
+          end
+        end
+
         # 1. Fetch current config
         config = PricingConfig.current_version(city_code, vehicle_type)
         unless config
@@ -40,7 +57,13 @@ module RoutePricing
             error_message: 'Config not found for city/vehicle combination',
             http_status: 404, include_inactive: include_inactive
           )
-          return { error: 'Config not found for city/vehicle combination', code: 404 }
+          return {
+            success: false,
+            code: 'no_config',
+            http_status: 404,
+            error: "Vehicle type #{vehicle_type} is not configured for #{city_code}",
+            reason: 'vehicle_not_configured'
+          }
         end
 
         # 2. Resolve route (use Directions API for segment pricing if enabled)
@@ -190,6 +213,7 @@ module RoutePricing
           provider: route_data[:provider],
           valid_until: quote.valid_until&.iso8601,
           expires_in_seconds: quote.remaining_seconds,
+          warnings: pricing_result[:warnings] || [],
           breakdown: pricing_result[:breakdown]
         }
 
@@ -512,6 +536,45 @@ module RoutePricing
       end
 
       private
+
+      # Check if pickup/drop are both in serviceable zones. Returns nil if OK,
+      # or a structured "not serviceable" response if one/both are outside coverage.
+      def check_serviceability(city_code, pickup_lat, pickup_lng, drop_lat, drop_lng)
+        pickup_ok = point_serviceable?(city_code, pickup_lat, pickup_lng)
+        drop_ok = point_serviceable?(city_code, drop_lat, drop_lng)
+        return nil if pickup_ok && drop_ok
+
+        # Identify which point is the problem and find nearest active zone to it.
+        problem = pickup_ok ? 'drop' : 'pickup'
+        lat = pickup_ok ? drop_lat : pickup_lat
+        lng = pickup_ok ? drop_lng : pickup_lng
+        nearest, distance_km = Zone.nearest_active_to(city_code, lat, lng)
+
+        nearest_info = nearest && {
+          zone_code: nearest.zone_code,
+          name: nearest.name,
+          distance_km: distance_km
+        }
+
+        {
+          success: false,
+          code: 'not_serviceable',
+          http_status: 404,
+          error: "Delivery not available at #{problem} location",
+          reason: 'no_coverage',
+          problem_point: problem,
+          nearest_zone: nearest_info
+        }
+      end
+
+      # Is this point inside an active, serviceable zone?
+      def point_serviceable?(city_code, lat, lng)
+        resolver = RoutePricing::Services::H3ZoneResolver.new(city_code)
+        !resolver.resolve(lat.to_f, lng.to_f).nil?
+      rescue StandardError => e
+        Rails.logger.debug("point_serviceable? failed: #{e.message}")
+        true # fail-open: don't block quotes if the check itself errors
+      end
 
       # Log a quote failure for admin visibility (coverage gaps, config gaps, route errors).
       # Silently skips logging for admin probes (include_inactive: true) to avoid noise.

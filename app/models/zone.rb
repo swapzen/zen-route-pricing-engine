@@ -98,6 +98,36 @@ class Zone < ApplicationRecord
       .order(priority: :desc, zone_code: :asc)
       .find { |z| z.contains_point?(lat, lng) }
   end
+
+  # Find the closest active zone center to a given point. Returns [zone, distance_km].
+  # Used for "not serviceable — nearest zone is X, Y km away" responses.
+  def self.nearest_active_to(city_code, lat, lng)
+    zones = for_city(city_code).active.where.not(center_lat: nil, center_lng: nil).to_a
+    return [nil, nil] if zones.empty?
+
+    closest = nil
+    closest_km = Float::INFINITY
+    zones.each do |z|
+      km = haversine_km(lat.to_f, lng.to_f, z.center_lat.to_f, z.center_lng.to_f)
+      if km < closest_km
+        closest = z
+        closest_km = km
+      end
+    end
+    [closest, closest_km.round(2)]
+  end
+
+  # Haversine distance in km between two lat/lng points.
+  def self.haversine_km(lat1, lng1, lat2, lng2)
+    r = 6371.0 # Earth radius in km
+    to_rad = ->(d) { d * Math::PI / 180.0 }
+    dlat = to_rad.call(lat2 - lat1)
+    dlng = to_rad.call(lng2 - lng1)
+    a = Math.sin(dlat / 2)**2 +
+        Math.cos(to_rad.call(lat1)) * Math.cos(to_rad.call(lat2)) *
+        Math.sin(dlng / 2)**2
+    r * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  end
   
   # Check if point is in zone
   # Currently uses bbox (bounding box) - simple and fast

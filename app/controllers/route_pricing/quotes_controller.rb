@@ -28,15 +28,19 @@ module RoutePricing
       )
 
       if result[:error]
-        status = case result[:code].to_i
+        # New structured responses use `http_status` + string `code` (e.g. 'not_serviceable').
+        # Legacy responses use numeric `code` (e.g. 404). Handle both.
+        http_status = result[:http_status] || result[:code].to_i
+        status = case http_status
                  when 400 then :bad_request
                  when 401 then :unauthorized
                  when 404 then :not_found
                  when 422 then :unprocessable_entity
                  else
-                   result[:code].to_i >= 500 ? :internal_server_error : :unprocessable_entity
+                   http_status >= 500 ? :internal_server_error : :unprocessable_entity
                  end
-        render json: { error: result[:error], code: result[:code] }, status: status
+        # Pass the full structured payload through so clients get reason/nearest_zone etc.
+        render json: result.except(:http_status), status: status
       else
         render json: result, status: :ok
       end

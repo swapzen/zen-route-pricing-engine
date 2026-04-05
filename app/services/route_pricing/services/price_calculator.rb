@@ -418,6 +418,29 @@ module RoutePricing
           margin_paise = final_price_paise - total_cost_paise
           margin_pct = total_cost_paise > 0 ? ((margin_paise.to_f / total_cost_paise) * 100).round(1) : 0.0
         end
+
+        # =====================================================================
+        # MAX FARE CEILING (safety cap — never charge more than configured ceiling)
+        # =====================================================================
+        max_fare_cap_applied = false
+        max_fare_limit = @config.try(:max_fare_paise).to_i
+        if max_fare_limit > 0 && final_price_paise > max_fare_limit
+          Rails.logger.warn(
+            "[MAX_FARE_CAP] Price capped: ₹#{final_price_paise/100.0} → ₹#{max_fare_limit/100.0} " \
+            "(#{@config.vehicle_type} in #{@config.city_code})"
+          )
+          final_price_paise = max_fare_limit
+          max_fare_cap_applied = true
+          pg_fee_paise = (final_price_paise * 0.02).round
+          total_cost_paise = estimated_vendor_cost_paise + pg_fee_paise + support_buffer_paise + maps_cost_paise
+          margin_paise = final_price_paise - total_cost_paise
+          margin_pct = total_cost_paise > 0 ? ((margin_paise.to_f / total_cost_paise) * 100).round(1) : 0.0
+        elsif max_fare_limit > 0 && final_price_paise > (max_fare_limit * 0.9)
+          Rails.logger.info(
+            "[MAX_FARE_CAP] Approaching ceiling: ₹#{final_price_paise/100.0} " \
+            "(#{((final_price_paise.to_f / max_fare_limit) * 100).round(1)}% of ₹#{max_fare_limit/100.0})"
+          )
+        end
         # =====================================================================
         
         unit_economics = {
@@ -429,7 +452,8 @@ module RoutePricing
           margin_paise: margin_paise,
           margin_pct: margin_pct,
           profitable: margin_paise >= 0,
-          guardrail_applied: guardrail_applied
+          guardrail_applied: guardrail_applied,
+          max_fare_cap_applied: max_fare_cap_applied
         }
         
         # =====================================================================
@@ -542,11 +566,42 @@ module RoutePricing
         )
 
         breakdown[:unit_economics] = unit_economics if ENV['PRICING_EXPOSE_INTERNALS'] == 'true'
+
+        # =====================================================================
+        # WARNINGS (advisory flags for the client — app decides how to surface)
+        # =====================================================================
+        warnings = []
+
+        # Delivery-to-item-value ratio: delivery shouldn't eat too much of the item value.
+        if item_value_paise && item_value_paise > 0
+          ratio_threshold = @config.try(:high_value_ratio_threshold).to_f
+          ratio_threshold = 0.40 if ratio_threshold <= 0
+          ratio = final_price_paise.to_f / item_value_paise.to_f
+          if ratio > ratio_threshold
+            warnings << {
+              code: 'high_delivery_ratio',
+              ratio: ratio.round(3),
+              threshold: ratio_threshold,
+              message: "Delivery is #{(ratio * 100).round(1)}% of item value (₹#{final_price_paise/100.0} / ₹#{item_value_paise/100.0})"
+            }
+          end
+        end
+
+        # Max fare cap was hit: client might want to show a "heavy route" message.
+        if max_fare_cap_applied
+          warnings << {
+            code: 'max_fare_capped',
+            message: "Price capped at configured ceiling for #{@config.vehicle_type}"
+          }
+        end
+
+        breakdown[:warnings] = warnings
         deep_freeze(breakdown)
 
         {
           final_price_paise: final_price_paise,
-          breakdown: breakdown
+          breakdown: breakdown,
+          warnings: warnings
         }
       end
 
