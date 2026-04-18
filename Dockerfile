@@ -6,6 +6,7 @@ ENV LANG=C.UTF-8 \
 # Install base packages
 RUN apt-get update -qq && apt-get install -y \
   build-essential \
+  cmake \
   libpq-dev \
   curl \
   git \
