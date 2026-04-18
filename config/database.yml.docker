@@ -1,0 +1,26 @@
+default: &default
+  adapter: cockroachdb
+
+development:
+  <<: *default
+  host: 127.0.0.1
+  port: 26257
+  username: root
+  sslmode: disable
+  database: swapzen_development
+
+test:
+  <<: *default
+  host: 127.0.0.1
+  port: 26257
+  username: root
+  sslmode: disable
+  database: swapzen_test
+
+staging:
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>
+
+production:
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>
