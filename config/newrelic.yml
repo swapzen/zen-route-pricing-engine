@@ -1,0 +1,23 @@
+common: &default_settings
+  license_key: <%= ENV['NEW_RELIC_LICENSE_KEY'] %>
+  app_name: <%= ENV.fetch('NEW_RELIC_APP_NAME', 'SwapZen Pricing Engine') %>
+  distributed_tracing:
+    enabled: true
+  application_logging:
+    forwarding:
+      enabled: true
+  log_level: info
+
+production:
+  <<: *default_settings
+
+staging:
+  <<: *default_settings
+
+development:
+  <<: *default_settings
+  monitor_mode: false
+
+test:
+  <<: *default_settings
+  monitor_mode: false
