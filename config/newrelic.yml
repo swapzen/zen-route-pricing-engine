@@ -7,6 +7,7 @@ common: &default_settings
     forwarding:
       enabled: true
   log_level: info
+  host: collector.eu01.nr-data.net
 
 production:
   <<: *default_settings
