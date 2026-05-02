@@ -8,7 +8,6 @@ services:
       - RAILS_ENV=production
       - PORT=3002
       - RAILS_LOG_TO_STDOUT=1
-      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
       - NEW_RELIC_APP_NAME=SwapZen Pricing Engine
       - REDIS_URL=redis://swapzen-redis:6379/0
     ports:
