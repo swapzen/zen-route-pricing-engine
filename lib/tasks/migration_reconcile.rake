@@ -16,11 +16,16 @@ namespace :db do
 
     applied = 0
 
+    migration_applied = lambda do |version|
+      sql = "SELECT 1 FROM schema_migrations WHERE version = #{conn.quote(version)} LIMIT 1"
+      conn.select_value(sql).present?
+    end
+
     checks.each do |version, predicate|
-      next if ActiveRecord::SchemaMigration.where(version: version).exists?
+      next if migration_applied.call(version)
       next unless predicate.call
 
-      ActiveRecord::SchemaMigration.create!(version: version)
+      conn.execute("INSERT INTO schema_migrations (version) VALUES (#{conn.quote(version)})")
       puts "Marked migration #{version} as applied (schema already present)"
       applied += 1
     end
