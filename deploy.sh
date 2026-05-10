@@ -60,12 +60,7 @@ case $CMD in
       echo '→ Building Docker image...'
       docker compose -f ${COMPOSE_FILE} build
 
-      echo '→ Running migrations...'
-      docker compose -f ${COMPOSE_FILE} run --rm pricing bundle exec rails db:reconcile_legacy_migrations
-      docker compose -f ${COMPOSE_FILE} run --rm pricing bundle exec rails db:migrate || {
-        echo '✗ Migration failed. Deployment aborted.'
-        exit 1
-      }
+      echo '→ Migration owner is swapzen-api; skipping pricing migrations in deploy.'
 
       echo '→ Restarting services...'
       docker compose -f ${COMPOSE_FILE} up -d
@@ -84,6 +79,17 @@ case $CMD in
       fi
     "
     echo -e "\n${GREEN}✓ zen-route-pricing-engine deployed to ${ENV}${NC}"
+    ;;
+
+  migrate)
+    header "Running zen-route-pricing-engine migrations only ($ENV)"
+    ssh_run "
+      set -e
+      cd ${APP_DIR}
+      docker compose -f ${COMPOSE_FILE} run --rm pricing bundle exec rails db:reconcile_legacy_migrations
+      docker compose -f ${COMPOSE_FILE} run --rm pricing bundle exec rails db:migrate
+    "
+    echo -e "\n${GREEN}✓ zen-route-pricing-engine migrations completed (${ENV})${NC}"
     ;;
 
   status)
@@ -112,6 +118,6 @@ case $CMD in
     ;;
 
   *)
-    echo "Usage: ./deploy.sh [staging|production] [deploy|status|logs|rollback]"
+    echo "Usage: ./deploy.sh [staging|production] [deploy|migrate|status|logs|rollback]"
     ;;
 esac
