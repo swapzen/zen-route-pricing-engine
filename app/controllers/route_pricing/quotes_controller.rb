@@ -208,8 +208,24 @@ module RoutePricing
 
     private
 
+    def normalize_vehicle_type(value)
+      return nil if value.blank?
+
+      normalized = value.to_s.strip.downcase.tr(" ", "_")
+      aliases = {
+        "2w" => "two_wheeler",
+        "3w" => "three_wheeler",
+        "4w" => "tata_ace",
+        "bike" => "two_wheeler",
+        "auto" => "three_wheeler"
+      }
+
+      aliases[normalized] || normalized
+    end
+
     def validate_vehicle_and_city!(skip_vehicle: false)
       unless skip_vehicle
+        params[:vehicle_type] = normalize_vehicle_type(params[:vehicle_type])
         valid_vehicles = %w[two_wheeler scooter mini_3w three_wheeler three_wheeler_ev tata_ace pickup_8ft eeco tata_407 canter_14ft]
         raise ArgumentError, "Invalid vehicle_type: #{params[:vehicle_type]}" unless valid_vehicles.include?(params[:vehicle_type])
       end
