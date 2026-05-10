@@ -61,6 +61,7 @@ case $CMD in
       docker compose -f ${COMPOSE_FILE} build
 
       echo '→ Running migrations...'
+      docker compose -f ${COMPOSE_FILE} run --rm pricing bundle exec rails db:reconcile_legacy_migrations
       docker compose -f ${COMPOSE_FILE} run --rm pricing bundle exec rails db:migrate || {
         echo '✗ Migration failed. Deployment aborted.'
         exit 1
