@@ -33,6 +33,11 @@ module RoutePricing
         zone_id = city_map_r7[h3_r7]
         return Zone.find_by(id: zone_id) if zone_id
 
+        # Safety net: direct DB lookup on miss to avoid stale in-memory cache causing
+        # false "not_serviceable" results in long-lived web workers.
+        zone = resolve_from_db(h3_r8: h3_r8, h3_r7: h3_r7)
+        return zone if zone
+
         nil
       rescue StandardError => e
         Rails.logger.debug("H3ZoneResolver error: #{e.message}")
@@ -154,6 +159,21 @@ module RoutePricing
         defined?(H3) && defined?(ZoneH3Mapping) && ZoneH3Mapping.table_exists?
       rescue StandardError
         false
+      end
+
+      def resolve_from_db(h3_r8:, h3_r7:)
+        scope = ZoneH3Mapping.for_city(@city_code).includes(:zone)
+        scope = scope.where(serviceable: true) if ZoneH3Mapping.column_names.include?("serviceable")
+
+        mapping = scope.find_by(h3_index_r8: h3_r8)
+        mapping ||= scope.find_by(h3_index_r7: h3_r7)
+        zone = mapping&.zone
+        return nil unless zone&.active?
+
+        zone
+      rescue StandardError => e
+        Rails.logger.debug("H3ZoneResolver DB fallback error: #{e.message}")
+        nil
       end
     end
   end
